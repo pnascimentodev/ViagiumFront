@@ -10,7 +10,7 @@ function LoginClient() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
 
-  function validarEmail(email: string) {
+  function validateEmail(email: string) {
 
       return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
   }
@@ -21,7 +21,7 @@ function LoginClient() {
       setError("Preencha todos os campos.");
       return;
     }
-    if (!validarEmail(email)) {
+    if (!validateEmail(email)) {
       setError("Digite um e-mail válido.");
       return;
     }
