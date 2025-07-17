@@ -8,46 +8,62 @@ import { useState } from "react";
 function LoginClient() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [senha, setSenha] = useState("");
-  const [senhaError, setSenhaError] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
 
   function validateEmail(email: string) {
     return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
   }
 
+  function validatePassword(password: string): string | null {
+    if (password.length < 8) {
+      return "A senha deve ter pelo menos 8 caracteres.";
+    }
+    if (!/[A-Z]/.test(password)) {
+      return "A senha deve conter pelo menos uma letra maiúscula.";
+    }
+    if (!/\d/.test(password)) {
+      return "A senha deve conter pelo menos um número.";
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return "A senha deve conter pelo menos um símbolo.";
+    }
+    return null;
+  }
+
   function handleEmailBlur() {
     if (email && !validateEmail(email)) {
       setEmailError("Digite um e-mail válido.");
-    } else if (email && validateEmail(email)) {
-      setEmailError("");
     }
   }
 
   function handlePasswordBlur() {
-    if (senha && senha.length < 6) {
-      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
-    } else if (senha && senha.length >= 6) {
-      setSenhaError("");
-    }
+    const error = validatePassword(password);
+    setPasswordError(error ?? "");
   }
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !senha) {
+    let valid = true;
+
+    if (!email || !password) {
       setEmailError("Preencha todos os campos.");
-      return;
+      valid = false;
     }
+
     if (!validateEmail(email)) {
-      setEmailError("Digite um e-mail válido.");
-      return;
+      valid = false;
     }
-    if (senha.length < 6) {
-      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
-      return;
+
+    const passwordValidation = validatePassword(password);
+    if (passwordValidation) {
+      setPasswordError(passwordValidation);
+      valid = false;
     }
-    setEmailError("");
-    setSenhaError("");
+
+    if (!valid) return;
+
     // Aqui você pode seguir com o login (ex: chamar API)
     alert("Login realizado com sucesso!");
   }
@@ -70,7 +86,7 @@ function LoginClient() {
             <div>
               <Input
                 type="email"
-                placeholder="EMAIL"
+                placeholder="Email"
                 icon={<FaEnvelope size={16} />}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -85,16 +101,16 @@ function LoginClient() {
             )}
             <Input
               type="password"
-              placeholder="SENHA"
+              placeholder="Senha"
               icon={<FaLock size={16} />}
-              value={senha}
-              onChange={e => setSenha(e.target.value)}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               onBlur={handlePasswordBlur}
-              hasError={!!senhaError}
+              hasError={!!passwordError}
             />
-            {senhaError && (
+            {passwordError && (
               <div style={{ color: "red", fontWeight: 500 }}>
-                {senhaError}
+                {passwordError}
               </div>
             )}
             <div>
