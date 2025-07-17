@@ -6,7 +6,7 @@ import { Input } from "../../components/Input.tsx";
 
 function Login() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFA62B] font-montserrat">
+    <div className="min-h-screen flex items-center justify-center bg-[#FFA62B]">
       <style>{`body { background: #FFA62B !important; }`}</style>
       {/* Card branco centralizado */}
       <div className="bg-white rounded-3xl shadow-lg w-[400px] p-8 flex flex-col items-center" style={{ 
@@ -16,17 +16,19 @@ function Login() {
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
       }}>
         {/* Logo */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-12" style={{ marginTop: '35px' }}>
           <img src={logo} alt="Logo Viagium" className="h-20" />
         </div>
        {/* Formulário */}
 <div className="w-full flex flex-col items-center">
-  <div className="w-full max-w-[320px]">
-    <Input
-      type="email"
-      placeholder="EMAIL"
-      icon={<FaEnvelope size={16} />}
-    />
+  <div className="w-full max-w-[320px]" style={{ marginTop: '20px' }}>
+    <div style={{ marginBottom: '20px' }}>
+      <Input
+        type="email"
+        placeholder="EMAIL"
+        icon={<FaEnvelope size={16} />}
+      />
+    </div>
     <Input
       type="password"
       placeholder="SENHA"
@@ -40,6 +42,7 @@ function Login() {
           width: '100%',
           borderRadius: 10,
           boxShadow: '0 4px 8px 0 rgba(0,0,0,0.10)',
+          marginTop: '20px',
         }}
       >
         ENTRAR
@@ -47,22 +50,25 @@ function Login() {
     </div>
   </div>
 </div>
-
         {/* Links */}
         <div className="w-full text-center space-y-4 mt-8">
           <a
             href="#"
-            className="text-[#003194] font-bold text-base hover:underline transition-all block"
-            style={{ textDecoration: 'none' }}
+            className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]"
+            style={{ 
+              textDecoration: 'none', 
+              fontWeight: '700', 
+              marginTop: '20px',
+            }}
           >
             Esqueceu sua senha?
           </a>
-          <p className="text-base text-[#003194] font-normal">
+          <p className="text-base text-[#003194]" style={{ fontWeight: '400'}}>
             Não tem conta Viagium?{' '}
             <a
               href="#"
-              className="font-bold text-[#003194] hover:underline transition-all"
-              style={{ textDecoration: 'none' }}
+              className="font-bold text-[#003194] hover:underline transition-all hover:text-[#FFA62B]"
+              style={{ textDecoration: 'none', fontWeight: '700'}}
             >
               Crie sua conta
             </a>
