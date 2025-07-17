@@ -1,9 +1,14 @@
 import './App.css'
-import Login from './pages/login/Login'
+import { Routes, Route } from 'react-router-dom'
+import LoginClient from './pages/login/LoginClient'
+import LoginAdmin from './pages/login/LoginAdmin'
 
 function App() {
   return (
-    <Login />
+    <Routes>
+      <Route path="/client" element={<LoginClient />} />
+      <Route path="/admin" element={<LoginAdmin />} />
+    </Routes>
   )
 }
 
