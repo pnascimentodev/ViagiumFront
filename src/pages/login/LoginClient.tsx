@@ -7,69 +7,97 @@ import { useState } from "react";
 
 function LoginClient() {
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [senha, setSenha] = useState("");
-  const [error, setError] = useState("");
+  const [senhaError, setSenhaError] = useState("");
+
 
   function validateEmail(email: string) {
+    return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
+  }
 
-      return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
+  function handleEmailBlur() {
+    if (email && !validateEmail(email)) {
+      setEmailError("Digite um e-mail válido.");
+    } else if (email && validateEmail(email)) {
+      setEmailError("");
+    }
+  }
+
+  function handlePasswordBlur() {
+    if (senha && senha.length < 6) {
+      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
+    } else if (senha && senha.length >= 6) {
+      setSenhaError("");
+    }
   }
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !senha) {
-      setError("Preencha todos os campos.");
+      setEmailError("Preencha todos os campos.");
       return;
     }
     if (!validateEmail(email)) {
-      setError("Digite um e-mail válido.");
+      setEmailError("Digite um e-mail válido.");
       return;
     }
     if (senha.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres.");
+      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
-    setError("");
+    setEmailError("");
+    setSenhaError("");
     // Aqui você pode seguir com o login (ex: chamar API)
     alert("Login realizado com sucesso!");
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FFA62B]">
-      <style>{`body { background: #FFA62B !important; }`}</style>
-      <div className="bg-white rounded-3xl shadow-lg w-[400px] p-8 flex flex-col items-center" style={{
+      <div className="flex flex-col rounded-3xl shadow-lg w-[400px] justify-center" style={{
         backgroundColor: 'white',
         minHeight: '500px',
         borderRadius: '24px',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        gap: '30px',
       }}>
-        <div className="flex justify-center mb-12" style={{ marginTop: '35px' }}>
-          <img src={logo} alt="Logo Viagium" className="h-20" />
+        <div className="flex justify-center">
+          <img src={logo} alt="Logo Viagium" className="h-20"/>
         </div>
+
         <form className="w-full flex flex-col items-center" onSubmit={handleLogin}>
-          <div className="w-full max-w-[320px]" style={{ marginTop: '20px' }}>
-            <div style={{ marginBottom: '20px' }}>
+          <div className="w-full max-w-[320px] flex flex-col" style={{gap: '8px'}}>
+            <div>
               <Input
                 type="email"
                 placeholder="EMAIL"
                 icon={<FaEnvelope size={16} />}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                onBlur={handleEmailBlur}
+                hasError={!!emailError}
               />
             </div>
+            {emailError && (
+              <div style={{ color: "red", fontWeight: 500 }}>
+                {emailError}
+              </div>
+            )}
             <Input
               type="password"
               placeholder="SENHA"
               icon={<FaLock size={16} />}
               value={senha}
               onChange={e => setSenha(e.target.value)}
+              onBlur={handlePasswordBlur}
+              hasError={!!senhaError}
             />
-            {error && (
-              <div style={{ color: "red", marginTop: 10, fontWeight: 500 }}>
-                {error}
+            {senhaError && (
+              <div style={{ color: "red", fontWeight: 500 }}>
+                {senhaError}
               </div>
             )}
-            <div className="mt-4">
+            <div>
               <Button
                 style={{
                   fontSize: 16,
@@ -77,7 +105,6 @@ function LoginClient() {
                   width: '100%',
                   borderRadius: 10,
                   boxShadow: '0 4px 8px 0 rgba(0,0,0,0.10)',
-                  marginTop: '20px',
                 }}
                 type="submit"
               >
@@ -87,14 +114,13 @@ function LoginClient() {
           </div>
         </form>
         {/* Links */}
-        <div className="w-full text-center space-y-4 mt-8">
+        <div className="w-full text-center">
           <a
             href="#"
             className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]"
             style={{
               textDecoration: 'none',
               fontWeight: '700',
-              marginTop: '20px',
             }}
           >
             Esqueceu sua senha?
