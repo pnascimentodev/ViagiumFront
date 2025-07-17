@@ -1,28 +1,44 @@
-import type { ReactNode } from 'react';
+import React from "react";
 
-interface InputProps {
+export interface InputProps {
   type: string;
   placeholder: string;
-  icon: ReactNode;
+  icon?: React.ReactNode;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const Input = ({ type, placeholder, icon }: InputProps) => {
-  return (
-    <div className="w-full mb-8">
-      <div className="relative flex items-center w-full">
-        {/* Quadrado do ícone igual ao SVG */}
-        <span className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center h-[22px] w-[22px] bg-white border border-[#003194] rounded-[4px]" style={{ left: '10px' }}>
-          <span className="text-[#003194] text-lg flex items-center justify-center">
-            {icon}
-          </span>
-        </span>
-        <input
-          type={type}
-          placeholder={placeholder}
-          className="w-full pr-4 h-[44px] border border-[#003194] rounded-[10px] bg-white text-[#003194] placeholder:uppercase placeholder:text-[#003194] placeholder:font-bold placeholder:text-[15px] focus:outline-none focus:border-[#003194] transition-all"
-          style={{ boxShadow: 'none', paddingLeft: '40px' }}
-        />
-      </div>
-    </div>
-  );
-};
+export const Input: React.FC<InputProps> = ({
+  type,placeholder,icon,value,
+  onChange,}) => (
+ <div className="w-full mb-8"
+    style={{
+      display: "flex",
+      alignItems: "center",
+      border: "1px solid #003194",
+      borderRadius: "10px",
+      padding: "0 0px",
+      marginBottom: "8px",
+      background: "#fff",
+      height: "48px",
+      width: "100%",
+    }}
+  >
+    {icon && (
+      <span style={{ color: "#003194", marginLeft: 10, marginRight: 10 }}>{icon}</span>
+    )}
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      style={{
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        fontSize: "17px",
+        width: "100%",
+      }}
+    />
+  </div>
+);
