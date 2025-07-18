@@ -12,9 +12,7 @@ export const Button = styled.button`
     font-family: 'Montserrat', sans-serif;
     font-size: 14px;
     cursor: pointer;
-    margin-top: 8px;
     transition: background 0.3s;
-
     &:hover {
         background-color: #002377;
     }
