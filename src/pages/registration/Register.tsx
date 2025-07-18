@@ -155,11 +155,106 @@ function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FFA62B]">
-      <style>{`body { background: #FFA62B !important; }`}</style>
+      <style>{`
+        body { background: #FFA62B !important; }
+        .mobile-image {
+          display: none;
+        }
+        .desktop-image {
+          display: block;
+        }
+        .form-side {
+          width: 100%;
+        }
+        .form-container {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0px 25px;
+        }
+        @media (max-width: 700px) {
+          .mobile-image {
+            display: block;
+          }
+          .mobile-image img {
+            border-radius: 35px;
+            margin-top: 12px;
+          }
+          .logo-mobile {
+            margin-top: 24px;
+            margin-bottom: 10px;
+          }
+          .desktop-image {
+            display: none;
+          }
+          .card-container {
+            width: 100% !important;
+            max-width: 420px !important;
+            height: auto !important;
+            min-height: 100vh;
+            flex-direction: column !important;
+            padding: 10px !important;
+            box-sizing: border-box;
+            margin: 32px auto !important;
+          }
+          .form-side {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            width: 100%;
+            max-width: 100%;
+          }
+          .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+          }
+          .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+          }
+          .form-grid > div {
+            margin-bottom: 4px !important;
+          }
+          .input-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+          form {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+          }
+        }
+        @media (min-width: 701px) {
+          form {
+            margin-top: 10px !important;
+            margin-bottom: 10px !important;
+          }
+          .login-link-desktop {
+            margin-bottom: -30px !important;
+            margin-top: 0 !important;
+          }
+          .register-btn-desktop {
+            margin-top: -5px !important;
+            margin-bottom: -18px !important;
+          }
+          .terms-desktop {
+           
+          }
+        }
+      `}</style>
 
       {/* Card branco centralizado */}
       <div
-        className="bg-white rounded-3xl shadow-lg w-[980px] h-[540px] flex p-6"
+        className="bg-white rounded-3xl shadow-lg w-[980px] h-[540px] flex flex-row p-0 card-container"
         style={{
           backgroundColor: "white",
           borderRadius: "24px",
@@ -167,39 +262,54 @@ function Register() {
             "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         }}
       >
-        {/* Lado esquerdo - Imagem */}
-        <div className="w-[420px] h-full flex items-center justify-center p-8">
+        {/* Lado esquerdo - Imagem (só desktop/tablet) */}
+        <div className="desktop-image flex-1 flex items-center justify-center h-full" style={{ minWidth: 0 }}>
           <div
-            className="w-[320px] h-[410px] overflow-hidden"
+            className="w-full h-[90%] flex items-center justify-center"
             style={{
-              borderRadius: '20px',
-              boxShadow: '0 15px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '90%',
+              width: '100%',
+              padding: 0,
             }}
           >
             <img
               src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg"
               alt="Venice Canal"
-              className="w-full h-full object-cover"
+              style={{
+                borderRadius: '20px',
+                boxShadow: '0 15px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)',
+                width: '75%',
+                height: '75%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                marginTop: '30px',
+              }}
             />
           </div>
         </div>
 
-        
+        {/* Imagem Mobile - Só aparece em telas menores que 700px */}
+        <div className="w-full mobile-image">
+            <img
+              src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg"
+              alt="Imagem mobile"
+              className="w-full h-[180px] object-cover"
+            />
+        </div>
+
         {/* Lado direito - Formulário */}
-        <div className="flex-1 p-8 flex flex-col justify-center">
+        <div className="flex-1 p-8 flex flex-col justify-center form-side" style={{ minWidth: 0, paddingLeft: '30px' }}>
           {/* Logo */}
-          <div className="flex justify-center" style={{ marginBottom: '10px' }}> 
+          <div className="logo-mobile" style={{ marginLeft: '145px' }}> 
             <img src={logo} alt="Logo Viagium" className="h-15" />
           </div>
 
           {/* Formulário */}
-          <form onSubmit={handleRegister} className="w-full max-w-[500px] mx-auto">
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr', 
-              gap: '0px 15px',
-              marginTop: '5px' 
-            }}>
+          <form onSubmit={handleRegister} className="w-full max-w-[500px] form-container" style={{ marginTop: '5px', marginLeft: '-50px' }}>
+            <div className="form-grid" style={{ marginTop: '5px' }}>
               <div style={{ marginBottom: '12px' }}>
                 <Input
                   type="text"
@@ -210,7 +320,7 @@ function Register() {
                   onBlur={handleNomeBlur}
                 />
                 {nomeError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{nomeError}</span>}
-              </div>          
+              </div>
               <div>
                 <Input
                   type="text"
@@ -244,8 +354,7 @@ function Register() {
                 />
                 {confirmarEmailError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{confirmarEmailError}</span>}
               </div>
-              
-               <div style={{ marginBottom: '12px' }}>
+              <div style={{ marginBottom: '12px' }}>
                 <Input
                   type="password"
                   placeholder="SENHA"
@@ -270,7 +379,7 @@ function Register() {
             </div>
 
             {/* Checkbox de termos */}
-            <div className="mt-6 text-sm text-gray-700">
+            <div className="mt-6 text-sm text-gray-700 terms-desktop" style={{  }}>
               <label className="flex items-start gap-2">
                 <input 
                   type="checkbox" 
@@ -291,11 +400,11 @@ function Register() {
                   e saiba sobre o tratamento dos seus dados pessoais.
                 </span>
               </label>
-              {termsError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{termsError}</span>}
+              {termsError && <span style={{ color: 'red', fontSize: '12px', display: 'block' }}>{termsError}</span>}
             </div>
 
             {/* Botão */}
-            <div className="mt-6 w-full max-w-[250px] mx-auto">
+            <div className="mt-6 w-full max-w-[250px] mx-auto register-btn-desktop">
               <Button
                 type="submit"
                 style={{
@@ -315,7 +424,7 @@ function Register() {
             </div>
 
             {/* Link para login */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-6 login-link-desktop">
               <p className="text-base text-[#003194]" style={{ fontWeight: "400" }}>
                 Já possui uma conta?{" "}
                 <a
