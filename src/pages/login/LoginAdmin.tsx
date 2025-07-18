@@ -75,7 +75,8 @@ function LoginAdmin() {
         minHeight: '500px',
         borderRadius: '24px',
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        gap: '30px',
+        gap: '55px',
+        
       }}>
         <div className="flex justify-center">
           <img src={logo} alt="Logo Viagium" className="h-20"/>
@@ -130,7 +131,7 @@ function LoginAdmin() {
           </div>
         </form>
         {/* Links */}
-        <div className="w-full text-center">
+        <div className="w-full text-center" >
           <a
             href="#"
             className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]"
