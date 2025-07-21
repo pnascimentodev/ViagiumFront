@@ -5,8 +5,8 @@ function LoginAdmin() {
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(255, 166, 43, 0.9), rgba(0, 0, 0, 0.9)),
-url('https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg')`,
+        backgroundImage: `linear-gradient(to bottom, #FFFFFFE6, #003194E6),
+url('https://images.pexels.com/photos/12271415/pexels-photo-12271415.jpeg')`,
       }}>
 
       <Login userType="admin" newUserOption={true} />
