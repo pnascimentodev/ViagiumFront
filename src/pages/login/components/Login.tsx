@@ -73,13 +73,12 @@ function Login({ userType, newUserOption }: LoginProps) {
     }
 
     return (
-        <div className="flex flex-col rounded-3xl shadow-lg w-[400px] justify-center" style={{
+        <div className="flex flex-col rounded-3xl shadow-lg w-[400px] justify-around" style={{
             backgroundColor: 'white',
             minHeight: '500px',
             borderRadius: '24px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            gap: '55px',
-            padding: '24px 0',
+            padding: '20px 0'
         }}>
             <div className="flex justify-center" style={{ gap: '16px', alignItems: 'center' }}>
                 <img src={logo} alt="Logo Viagium" className="h-20" />
@@ -138,8 +137,26 @@ function Login({ userType, newUserOption }: LoginProps) {
                     </div>
                 </div>
             </form>
-            {/* Links */}
-            <div className="w-full text-center" >
+
+            <div className="flex items-center justify-center w-full" style={{ gap: '8px' }}>
+                <input
+                    type="checkbox"
+                    id="rememberMe"
+                    className="w-4 h-4 text-[#003194] bg-gray-100 border-gray-300 rounded focus:ring-[#003194] focus:ring-2"
+                />
+                <label
+                    htmlFor="rememberMe"
+                    className="text-sm text-[#003194] cursor-pointer select-none"
+                >
+                    Mantenha-me conectado
+                </label>
+            </div>
+
+
+            {/* Checkbox "Mantenha-me conectado" */}
+            <div className="flex flex-col items-center justify-center" >
+
+                {/* Links */}
                 <a
                     href="#"
                     className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]"
@@ -150,12 +167,19 @@ function Login({ userType, newUserOption }: LoginProps) {
                 >
                     Esqueceu sua senha?
                 </a>
-            </div>
+                {newUserOption && (
+                    <div className="flex" style={{gap: '5px'}}>
+                        <p className="text-[#003194] font-bold text-center">Não tem conta Viagium? </p>
 
-            {newUserOption && (
-                <p className="text-[#003194] font-bold text-center">Não tem conta Viagium? <a href="#" className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]">Crie sua conta</a></p>
-            )}
+                        <a href="#" className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]" style={{
+                            textDecoration: 'none',
+                            fontWeight: '700'
+                        }}>Crie sua conta</a>
+                    </div>
+                )}
+            </div>
         </div>
+
     );
 }
 
