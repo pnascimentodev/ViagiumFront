@@ -4,6 +4,8 @@ import LoginClient from './pages/login/LoginClient'
 import LoginAdmin from './pages/login/LoginAdmin'
 import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
+import AffiliatePage from './pages/affiliatepage/affiliatepage'
+
 function App() {
   return (
     <Routes>
@@ -11,6 +13,7 @@ function App() {
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />
       <Route path="/register" element={<Register/>} />
+      <Route path="/affiliatepage" element={<AffiliatePage />} />
     </Routes>
   )
 }
