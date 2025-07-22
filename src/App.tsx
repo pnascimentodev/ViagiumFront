@@ -8,6 +8,7 @@ function App() {
     <Routes>
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
+      <Route path="/affiliate" element={<LoginAffiliate />} />
       <Route path="/register" element={<Register/>} />
     </Routes>
   )
