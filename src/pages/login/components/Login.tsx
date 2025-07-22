@@ -17,53 +17,51 @@ function Login({ userType, newUserOption }: LoginProps) {
     const [passwordError, setPasswordError] = useState("");
 
     function validateEmail(email: string) {
-        return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
+        if (!email || email.trim() === "") {
+            return "O e-mail é obrigatório.";
+        }
     }
 
     function validatePassword(password: string): string | null {
         if (password.length < 8) {
             return "A senha deve ter pelo menos 8 caracteres.";
         }
-        if (!/[A-Z]/.test(password)) {
-            return "A senha deve conter pelo menos uma letra maiúscula.";
-        }
-        if (!/\d/.test(password)) {
-            return "A senha deve conter pelo menos um número.";
-        }
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            return "A senha deve conter pelo menos um símbolo.";
-        }
         return null;
     }
 
     function handleEmailBlur() {
-        if (email && !validateEmail(email)) {
-            setEmailError("Digite um e-mail válido.");
-        }
+        const errorMessage = validateEmail(email);
+        setEmailError(errorMessage || "");
     }
 
     function handlePasswordBlur() {
-        const error = validatePassword(password);
-        setPasswordError(error ?? "");
+        if (!password) {
+            setPasswordError("A senha é obrigatória.");
+        } else {
+            setPasswordError("");
+        }
     }
 
     function handleLogin(e: React.FormEvent) {
         e.preventDefault();
         let valid = true;
 
-        if (!email || !password) {
-            setEmailError("Preencha todos os campos.");
+        // Validar email
+        const emailValidation = validateEmail(email);
+        if (emailValidation) {
+            setEmailError(emailValidation);
             valid = false;
+        } else {
+            setEmailError("");
         }
 
-        if (!validateEmail(email)) {
-            valid = false;
-        }
-
+        // Validar senha
         const passwordValidation = validatePassword(password);
         if (passwordValidation) {
             setPasswordError(passwordValidation);
             valid = false;
+        } else {
+            setPasswordError("");
         }
 
         if (!valid) return;
@@ -73,25 +71,19 @@ function Login({ userType, newUserOption }: LoginProps) {
     }
 
     return (
-        <div className="flex flex-col rounded-3xl shadow-lg w-[400px] justify-around" style={{
-            backgroundColor: 'white',
-            minHeight: '500px',
-            borderRadius: '24px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            padding: '20px 0'
-        }}>
-            <div className="flex justify-center" style={{ gap: '16px', alignItems: 'center' }}>
+        <div className="flex flex-col rounded-3xl shadow-lg w-[80vw] md:w-[450px] justify-around bg-white min-h-[500px] py-5 px-10">
+            <div className="flex justify-center gap-4 items-center">
                 <img src={logo} alt="Logo Viagium" className="h-20" />
 
                 {(userType === "admin" || userType === "affiliate") && (
-                    <h1 className="text-[#003194]">{userType === "admin" ? "Admin" : userType === "affiliate" ? "Afiliado" : ""}</h1>
+                    <p className="font-bold text-4xl">{userType === "admin" ? "Admin" : userType === "affiliate" ? "Afiliado" : ""}</p>
                 )}
 
             </div>
 
             <form className="w-full flex flex-col items-center" onSubmit={handleLogin}>
-                <div className="w-full max-w-[320px] flex flex-col" style={{ gap: '8px' }}>
-                    <div>
+                <div className="w-full flex flex-col gap-3">
+                    <div className="flex flex-col justify-center gap-1">
                         <Input
                             type="email"
                             placeholder="Email"
@@ -101,35 +93,34 @@ function Login({ userType, newUserOption }: LoginProps) {
                             onBlur={handleEmailBlur}
                             hasError={!!emailError}
                         />
+
+                        {emailError && (
+                            <div className="text-red-500 font-medium">
+                                {emailError}
+                            </div>
+                        )}
                     </div>
-                    {emailError && (
-                        <div style={{ color: "red", fontWeight: 500 }}>
-                            {emailError}
-                        </div>
-                    )}
-                    <Input
-                        type="password"
-                        placeholder="Senha"
-                        icon={<FaLock size={16} />}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        onBlur={handlePasswordBlur}
-                        hasError={!!passwordError}
-                    />
-                    {passwordError && (
-                        <div style={{ color: "red", fontWeight: 500 }}>
-                            {passwordError}
-                        </div>
-                    )}
+
+                    <div className="flex flex-col justify-center gap-1">
+                        <Input
+                            type="password"
+                            placeholder="Senha"
+                            icon={<FaLock size={16} />}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            onBlur={handlePasswordBlur}
+                            hasError={!!passwordError}
+                        />
+                        {passwordError && (
+                            <div className="text-red-500 font-medium">
+                                {passwordError}
+                            </div>
+                        )}
+                    </div>
+
                     <div>
                         <Button
-                            style={{
-                                fontSize: 16,
-                                height: 48,
-                                width: '100%',
-                                borderRadius: 10,
-                                boxShadow: '0 4px 8px 0 rgba(0,0,0,0.10)',
-                            }}
+                            className="h-12 w-full rounded-[10px] shadow-lg"
                             type="submit"
                         >
                             ENTRAR
@@ -138,45 +129,40 @@ function Login({ userType, newUserOption }: LoginProps) {
                 </div>
             </form>
 
-            <div className="flex items-center justify-center w-full" style={{ gap: '8px' }}>
-                <input
-                    type="checkbox"
-                    id="rememberMe"
-                    className="w-4 h-4 text-[#003194] bg-gray-100 border-gray-300 rounded focus:ring-[#003194] focus:ring-2"
-                />
-                <label
-                    htmlFor="rememberMe"
-                    className="text-sm text-[#003194] cursor-pointer select-none"
-                >
-                    Mantenha-me conectado
-                </label>
-            </div>
+            <div className="flex flex-col items-center justify-center gap-3">
+                <div className="flex items-center justify-center w-full gap-2">
+                    <input
+                        type="checkbox"
+                        id="rememberMe"
+                        className="w-4 h-4 rounded focus:ring-2"
+                    />
+                    <label
+                        htmlFor="rememberMe"
+                        className="text-md cursor-pointer select-none"
+                    >
+                        Mantenha-me conectado
+                    </label>
+                </div>
 
 
-            {/* Checkbox "Mantenha-me conectado" */}
-            <div className="flex flex-col items-center justify-center" >
+                {/* Checkbox "Mantenha-me conectado" */}
+                <div className="flex flex-col items-center justify-center gap-2" >
 
-                {/* Links */}
-                <a
-                    href="#"
-                    className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]"
-                    style={{
-                        textDecoration: 'none',
-                        fontWeight: '700',
-                    }}
-                >
-                    Esqueceu sua senha?
-                </a>
-                {newUserOption && (
-                    <div className="flex" style={{gap: '5px'}}>
-                        <p className="text-[#003194] font-bold text-center">Não tem conta Viagium? </p>
+                    {/* Links */}
+                    <a
+                        href="#"
+                        className="font-bold text-base hover:underline,no-underline transition-all block hover:text-[#FFA62B]"
+                    >
+                        Esqueceu sua senha?
+                    </a>
+                    {newUserOption && (
+                        <div className="flex flex-col md:flex-row items-center gap-2">
+                            <p className="text-center">Não tem conta Viagium? </p>
 
-                        <a href="#" className="text-[#003194] font-bold text-base hover:underline transition-all block hover:text-[#FFA62B]" style={{
-                            textDecoration: 'none',
-                            fontWeight: '700'
-                        }}>Crie sua conta</a>
-                    </div>
-                )}
+                            <a href="#" className="text-base font-bold hover:underline, no-underline transition-all block hover:text-[#FFA62B]">Crie sua conta</a>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
 
