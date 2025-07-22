@@ -93,59 +93,47 @@ function Register() {
 
     // Validate required fields
     if (!nome) {
-      setNomeError("O nome é obrigatório.");
       hasError = true;
     } else if (!validateName(nome)) {
-      setNomeError("O nome deve ter pelo menos 2 caracteres.");
       hasError = true;
     }
 
     if (!sobrenome) {
-      setSobrenomeError("O sobrenome é obrigatório.");
       hasError = true;
     } else if (!validateName(sobrenome)) {
-      setSobrenomeError("O sobrenome deve ter pelo menos 2 caracteres.");
       hasError = true;
     }
 
     if (!email) {
-      setEmailError("O e-mail é obrigatório.");
       hasError = true;
     } else if (!validateEmail(email)) {
-      setEmailError("Digite um e-mail válido.");
       hasError = true;
     }
 
     if (!confirmarEmail) {
-      setConfirmarEmailError("A confirmação de e-mail é obrigatória.");
       hasError = true;
     } else if (confirmarEmail !== email) {
-      setConfirmarEmailError("Os e-mails não coincidem.");
       hasError = true;
     }
 
     if (!senha) {
-      setSenhaError("A senha é obrigatória.");
       hasError = true;
     } else if (senha.length < 6) {
-      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
       hasError = true;
     }
 
     if (!confirmarSenha) {
-      setConfirmarSenhaError("A confirmação de senha é obrigatória.");
       hasError = true;
     } else if (confirmarSenha !== senha) {
-      setConfirmarSenhaError("As senhas não coincidem.");
       hasError = true;
     }
 
     if (!termsAccepted) {
-      setTermsError("Você deve concordar com os termos e condições.");
       hasError = true;
     }
 
     if (hasError) {
+      alert("Por favor, corrija os erros antes de prosseguir.");
       return;
     }
 
@@ -159,7 +147,7 @@ function Register() {
 
       <div className="flex flex-col md:flex-row items-center bg-white p-4 md:p-8 m-4 gap-8 rounded-4xl shadow-lg min-h-[80vh] w-[95vw] md:w-[80vw] max-w-6xl">
 
-        <img src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg" alt="Background" className="w-full md:w-1/3 h-48 md:h-[75vh] object-cover rounded-4xl" />
+        <img src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg" alt="Background" className="w-full md:w-1/3 h-48 md:h-[700px] object-cover rounded-4xl" />
 
         <form onSubmit={handleRegister} className="w-full md:w-2/3 flex flex-col gap-8 px-4 md:px-0 h-full justify-between items-center">
           <img src={logo} alt="Logo Viagium" className="w-[100px] h-auto" />
