@@ -79,7 +79,7 @@ function Register() {
 
   function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Reset errors
     setNomeError("");
     setSobrenomeError("");
@@ -154,163 +154,20 @@ function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFA62B]">
-      <style>{`
-        body { background: #FFA62B !important; }
-        .mobile-image {
-          display: none;
-        }
-        .desktop-image {
-          display: block;
-        }
-        .form-side {
-          width: 100%;
-        }
-        .form-container {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0px 25px;
-        }
-        @media (max-width: 700px) {
-          .mobile-image {
-            display: block;
-          }
-          .mobile-image img {
-            border-radius: 35px;
-            margin-top: 12px;
-          }
-          .logo-mobile {
-            margin-top: 24px;
-            margin-bottom: 10px;
-          }
-          .desktop-image {
-            display: none;
-          }
-          .card-container {
-            width: 100% !important;
-            max-width: 420px !important;
-            height: auto !important;
-            min-height: 100vh;
-            flex-direction: column !important;
-            padding: 10px !important;
-            box-sizing: border-box;
-            margin: 32px auto !important;
-          }
-          .form-side {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            width: 100%;
-            max-width: 100%;
-          }
-          .form-container {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            width: 100%;
-          }
-          .form-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            width: 100%;
-          }
-          .form-grid > div {
-            margin-bottom: 4px !important;
-          }
-          .input-pair {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-          }
-          form {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-          }
-        }
-        @media (min-width: 701px) {
-          form {
-            margin-top: 10px !important;
-            margin-bottom: 10px !important;
-          }
-          .login-link-desktop {
-            margin-bottom: -30px !important;
-            margin-top: 0 !important;
-          }
-          .register-btn-desktop {
-            margin-top: -5px !important;
-            margin-bottom: -18px !important;
-          }
-          .terms-desktop {
-           
-          }
-        }
-      `}</style>
+    <div className="min-h-screen flex justify-center items-center
+    bg-gradient-to-b from-[#FFA62B] to-[#003194]">
 
-      {/* Card branco centralizado */}
-      <div
-        className="bg-white rounded-3xl shadow-lg w-[980px] h-[540px] flex flex-row p-0 card-container"
-        style={{
-          backgroundColor: "white",
-          borderRadius: "24px",
-          boxShadow:
-            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-        }}
-      >
-        {/* Lado esquerdo - Imagem (só desktop/tablet) */}
-        <div className="desktop-image flex-1 flex items-center justify-center h-full" style={{ minWidth: 0 }}>
-          <div
-            className="w-full h-[90%] flex items-center justify-center"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '90%',
-              width: '100%',
-              padding: 0,
-            }}
-          >
-            <img
-              src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg"
-              alt="Venice Canal"
-              style={{
-                borderRadius: '20px',
-                boxShadow: '0 15px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)',
-                width: '75%',
-                height: '75%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-                marginTop: '30px',
-              }}
-            />
-          </div>
-        </div>
+      <div className="flex flex-col md:flex-row items-center bg-white p-4 md:p-8 m-4 gap-8 rounded-4xl shadow-lg min-h-[80vh] w-[95vw] md:w-[80vw] max-w-6xl">
 
-        {/* Imagem Mobile - Só aparece em telas menores que 700px */}
-        <div className="w-full mobile-image">
-            <img
-              src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg"
-              alt="Imagem mobile"
-              className="w-full h-[180px] object-cover"
-            />
-        </div>
+        <img src="https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg" alt="Background" className="w-full md:w-1/3 h-48 md:h-[75vh] object-cover rounded-4xl" />
 
-        {/* Lado direito - Formulário */}
-        <div className="flex-1 p-8 flex flex-col justify-center form-side" style={{ minWidth: 0, paddingLeft: '30px' }}>
-          {/* Logo */}
-          <div className="logo-mobile" style={{ marginLeft: '145px' }}> 
-            <img src={logo} alt="Logo Viagium" className="h-15" />
-          </div>
+        <form onSubmit={handleRegister} className="w-full md:w-2/3 flex flex-col gap-8 px-4 md:px-0 h-full justify-between items-center">
+          <img src={logo} alt="Logo Viagium" className="w-[100px] h-auto" />
 
-          {/* Formulário */}
-          <form onSubmit={handleRegister} className="w-full max-w-[500px] form-container" style={{ marginTop: '5px', marginLeft: '-50px' }}>
-            <div className="form-grid" style={{ marginTop: '5px' }}>
-              <div style={{ marginBottom: '12px' }}>
+          <div className="w-full flex flex-col gap-4">
+            {/* Nome e Sobrenome */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Input
                   type="text"
                   placeholder="NOME"
@@ -319,8 +176,9 @@ function Register() {
                   onChange={(e) => setNome(e.target.value)}
                   onBlur={handleNomeBlur}
                 />
-                {nomeError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{nomeError}</span>}
+                {nomeError && <span className="text-red-500 text-sm">{nomeError}</span>}
               </div>
+
               <div>
                 <Input
                   type="text"
@@ -330,9 +188,13 @@ function Register() {
                   onChange={(e) => setSobrenome(e.target.value)}
                   onBlur={handleSobrenomeBlur}
                 />
-                {sobrenomeError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{sobrenomeError}</span>}
+                {sobrenomeError && <span className="text-red-500 text-sm">{sobrenomeError}</span>}
               </div>
-              <div style={{ marginBottom: '12px' }}>
+            </div>
+
+            {/* Email e Confirmar Email */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Input
                   type="email"
                   placeholder="EMAIL"
@@ -341,8 +203,9 @@ function Register() {
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={handleEmailBlur}
                 />
-                {emailError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{emailError}</span>}
+                {emailError && <span className="text-red-500 text-sm">{emailError}</span>}
               </div>
+
               <div>
                 <Input
                   type="email"
@@ -352,9 +215,13 @@ function Register() {
                   onChange={(e) => setConfirmarEmail(e.target.value)}
                   onBlur={handleConfirmarEmailBlur}
                 />
-                {confirmarEmailError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{confirmarEmailError}</span>}
+                {confirmarEmailError && <span className="text-red-500 text-sm">{confirmarEmailError}</span>}
               </div>
-              <div style={{ marginBottom: '12px' }}>
+            </div>
+
+            {/* Senha e Confirmar Senha */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Input
                   type="password"
                   placeholder="SENHA"
@@ -363,8 +230,9 @@ function Register() {
                   onChange={(e) => setSenha(e.target.value)}
                   onBlur={handlePasswordBlur}
                 />
-                {senhaError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{senhaError}</span>}
+                {senhaError && <span className="text-red-500 text-sm">{senhaError}</span>}
               </div>
+
               <div>
                 <Input
                   type="password"
@@ -374,70 +242,52 @@ function Register() {
                   onChange={(e) => setConfirmarSenha(e.target.value)}
                   onBlur={handleConfirmarSenhaBlur}
                 />
-                {confirmarSenhaError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px', display: 'block' }}>{confirmarSenhaError}</span>}
+                {confirmarSenhaError && <span className="text-red-500 text-sm">{confirmarSenhaError}</span>}
               </div>
             </div>
+          </div>
 
-            {/* Checkbox de termos */}
-            <div className="mt-6 text-sm text-gray-700 terms-desktop" style={{  }}>
-              <label className="flex items-start gap-2">
-                <input 
-                  type="checkbox" 
-                  className="mt-1 flex-shrink-0"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                />
-                <span>
-                  Declaro ter{" "}
-                  <span className="font-bold text-[#003194]">mais de 16 anos de idade</span>{" "}
-                  e concordo com os{" "}
-                  <a href="#" className="text-[#003194] font-bold hover:underline">
-                    Termos e Condições
-                  </a>. Leia nossa{" "}
-                  <a href="#" className="text-[#003194] font-bold hover:underline">
-                    Política de Privacidade
-                  </a>{" "}
-                  e saiba sobre o tratamento dos seus dados pessoais.
-                </span>
-              </label>
-              {termsError && <span style={{ color: 'red', fontSize: '12px', display: 'block' }}>{termsError}</span>}
-            </div>
 
-            {/* Botão */}
-            <div className="mt-6 w-full max-w-[250px] mx-auto register-btn-desktop">
-              <Button
-                type="submit"
-                style={{
-                  fontSize: 16,
-                  height: 48,
-                  width: '100%',
-                  borderRadius: 10,
-                  boxShadow: '0 4px 8px 0 rgba(0,0,0,0.10)',
-                  marginTop: '10px',
-                  backgroundColor: '#003194',
-                  color: 'white',
-                  fontWeight: '600',
-                }}
-              >
-                REGISTRE-SE
-              </Button>
-            </div>
+          {/* Termos e Condições */}
+          <div className="mb-6">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 flex-shrink-0"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <span className="text-sm">
+                Declaro ter <strong>mais de 16 anos de idade</strong> e concordo com os{" "}
+                <a href="#" className="font-semibold hover:text-[#FFA62B]">
+                  Termos e Condições
+                </a>. Leia nossa{" "}
+                <a href="#" className="font-semibold hover:text-[#FFA62B]">
+                  Política de Privacidade
+                </a>{" "}
+                e saiba sobre o tratamento dos seus dados pessoais.
+              </span>
+            </label>
+            {termsError && <span className="text-red-500 text-sm block mt-2">{termsError}</span>}
+          </div>
 
-            {/* Link para login */}
-            <div className="text-center mt-6 login-link-desktop">
-              <p className="text-base text-[#003194]" style={{ fontWeight: "400" }}>
-                Já possui uma conta?{" "}
-                <a
-                  href="#"
-                  className="font-bold text-[#003194] hover:underline transition-all hover:text-[#FFA62B]"
-                  style={{ textDecoration: "none", fontWeight: "700" }}
-                >
-                  Faça login
-                </a>
-              </p>
-            </div>
-          </form>
-        </div>
+          {/* Botão de Submit */}
+          <div className="max-w-[300px] w-full">
+            <Button type="submit">
+              REGISTRE-SE
+            </Button>
+          </div>
+
+          {/* Link para Login */}
+          <div className="text-center">
+            <p className="text-sm">
+              Já possui uma conta?{" "}
+              <a href="#" className="font-semibold hover:text-[#FFA62B]">
+                Faça login
+              </a>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );

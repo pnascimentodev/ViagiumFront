@@ -13,7 +13,7 @@ export interface InputProps {
 export const Input: React.FC<InputProps> = ({
   type, placeholder, icon, value,
   onChange, onBlur, hasError }) => (
-  <div className="w-full mb-8"
+  <div className="w-full"
     style={{
       display: "flex",
       alignItems: "center",
