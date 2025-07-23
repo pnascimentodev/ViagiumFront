@@ -23,8 +23,8 @@ function Login({ userType, newUserOption }: LoginProps) {
     }
 
     function validatePassword(password: string): string | null {
-        if (password.length < 8) {
-            return "A senha deve ter pelo menos 8 caracteres.";
+        if (!password || password.trim() === "") {
+            return "A senha é obrigatória.";
         }
         return null;
     }
