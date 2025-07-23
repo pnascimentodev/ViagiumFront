@@ -5,7 +5,6 @@ import LoginAdmin from './pages/login/LoginAdmin'
 import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
 import Footer from './components/Footer'
-
 function App() {
   return (
     <Routes>
