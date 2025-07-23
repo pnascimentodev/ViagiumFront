@@ -284,7 +284,7 @@ function handleRegister(e: React.FormEvent) {
           <div className="text-center">
             <p className="text-sm">
               Já possui uma conta?{" "}
-              <a href="#" className="font-semibold hover:text-[#FFA62B]">
+              <a href="/client" className="font-semibold hover:text-[#FFA62B]">
                 Faça login
               </a>
             </p>

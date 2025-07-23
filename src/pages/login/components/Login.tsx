@@ -158,8 +158,17 @@ function Login({ userType, newUserOption }: LoginProps) {
                     {newUserOption && (
                         <div className="flex flex-col md:flex-row items-center gap-2">
                             <p className="text-center">Não tem conta Viagium? </p>
-
-                            <a href="#" className="text-base font-bold hover:underline, no-underline transition-all block hover:text-[#FFA62B]">Crie sua conta</a>
+                            <a
+                            href={
+                                userType === "client"
+                                ? "/register"
+                                : userType === "affiliate"
+                                ? "/affiliate/register"
+                                : "/register"
+                            }
+                            className="text-base font-bold hover:underline no-underline transition-all block hover:text-[#FFA62B]">
+                            Crie sua conta
+                            </a>
                         </div>
                     )}
                 </div>
