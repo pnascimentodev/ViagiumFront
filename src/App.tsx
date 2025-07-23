@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom'
 import LoginClient from './pages/login/LoginClient'
 import LoginAdmin from './pages/login/LoginAdmin'
 import Register from './pages/registration/Register'
-import LoginAffiliate from './pages/login/LoginAffiliate'
 function App() {
   return (
     <Routes>

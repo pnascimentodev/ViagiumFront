@@ -26,12 +26,12 @@ function Register() {
   }
 
   function validateName(name: string) {
-    return name.trim().length >= 2;
+    return name.trim().length >= 1;
   }
 
   function handleNomeBlur() {
     if (nome && !validateName(nome)) {
-      setNomeError("O nome deve ter pelo menos 2 caracteres.");
+      setNomeError("Insira seu nome.");
     } else if (nome && validateName(nome)) {
       setNomeError("");
     }
@@ -39,7 +39,7 @@ function Register() {
 
   function handleSobrenomeBlur() {
     if (sobrenome && !validateName(sobrenome)) {
-      setSobrenomeError("O sobrenome deve ter pelo menos 2 caracteres.");
+      setSobrenomeError("Insira seu sobrenome.");
     } else if (sobrenome && validateName(sobrenome)) {
       setSobrenomeError("");
     }
@@ -62,9 +62,9 @@ function Register() {
   }
 
   function handlePasswordBlur() {
-    if (senha && senha.length < 6) {
-      setSenhaError("A senha deve ter pelo menos 6 caracteres.");
-    } else if (senha && senha.length >= 6) {
+    if (senha && senha.length < 8) {
+      setSenhaError("A senha deve ter pelo menos 8 caracteres.");
+    } else if (senha && senha.length >= 8) {
       setSenhaError("");
     }
   }
@@ -77,69 +77,83 @@ function Register() {
     }
   }
 
-  function handleRegister(e: React.FormEvent) {
-    e.preventDefault();
+function handleRegister(e: React.FormEvent) {
+  e.preventDefault();
+  let valid = true;
 
-    // Reset errors
+  // Nome
+  if (!nome || !validateName(nome)) {
+    setNomeError("Insira seu nome.");
+    valid = false;
+  } else {
     setNomeError("");
-    setSobrenomeError("");
-    setEmailError("");
-    setConfirmarEmailError("");
-    setSenhaError("");
-    setConfirmarSenhaError("");
-    setTermsError("");
-
-    let hasError = false;
-
-    // Validate required fields
-    if (!nome) {
-      hasError = true;
-    } else if (!validateName(nome)) {
-      hasError = true;
-    }
-
-    if (!sobrenome) {
-      hasError = true;
-    } else if (!validateName(sobrenome)) {
-      hasError = true;
-    }
-
-    if (!email) {
-      hasError = true;
-    } else if (!validateEmail(email)) {
-      hasError = true;
-    }
-
-    if (!confirmarEmail) {
-      hasError = true;
-    } else if (confirmarEmail !== email) {
-      hasError = true;
-    }
-
-    if (!senha) {
-      hasError = true;
-    } else if (senha.length < 6) {
-      hasError = true;
-    }
-
-    if (!confirmarSenha) {
-      hasError = true;
-    } else if (confirmarSenha !== senha) {
-      hasError = true;
-    }
-
-    if (!termsAccepted) {
-      hasError = true;
-    }
-
-    if (hasError) {
-      alert("Por favor, corrija os erros antes de prosseguir.");
-      return;
-    }
-
-    // Aqui você pode seguir com o registro (ex: chamar API)
-    alert("Registro realizado com sucesso!");
   }
+
+  // Sobrenome
+  if (!sobrenome || !validateName(sobrenome)) {
+    setSobrenomeError("Insira seu sobrenome.");
+    valid = false;
+  } else {
+    setSobrenomeError("");
+  }
+
+  // Email
+  if (!email) {
+    setEmailError("Digite um e-mail.");
+    valid = false;
+  } else if (!validateEmail(email)) {
+    setEmailError("Digite um e-mail válido.");
+    valid = false;
+  } else {
+    setEmailError("");
+  }
+
+  // Confirmar Email
+  if (!confirmarEmail) {
+    setConfirmarEmailError("Confirme seu e-mail.");
+    valid = false;
+  } else if (confirmarEmail !== email) {
+    setConfirmarEmailError("Os e-mails não coincidem.");
+    valid = false;
+  } else {
+    setConfirmarEmailError("");
+  }
+
+  // Senha
+  if (!senha) {
+    setSenhaError("Digite uma senha.");
+    valid = false;
+  } else if (senha.length < 8) {
+    setSenhaError("A senha deve ter pelo menos 8 caracteres.");
+    valid = false;
+  } else {
+    setSenhaError("");
+  }
+
+  // Confirmar Senha
+  if (!confirmarSenha) {
+    setConfirmarSenhaError("Confirme sua senha.");
+    valid = false;
+  } else if (confirmarSenha !== senha) {
+    setConfirmarSenhaError("As senhas não coincidem.");
+    valid = false;
+  } else {
+    setConfirmarSenhaError("");
+  }
+
+  // Termos
+  if (!termsAccepted) {
+    setTermsError("Você deve aceitar os termos.");
+    valid = false;
+  } else {
+    setTermsError("");
+  }
+
+  if (!valid) return;
+
+  // Aqui você pode seguir com o registro (ex: chamar API)
+  alert("Registro realizado com sucesso!");
+}
 
   return (
     <div className="min-h-screen flex justify-center items-center
@@ -158,7 +172,7 @@ function Register() {
               <div>
                 <Input
                   type="text"
-                  placeholder="NOME"
+                  placeholder="Nome"
                   icon={<FaUser size={14} />}
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
@@ -170,7 +184,7 @@ function Register() {
               <div>
                 <Input
                   type="text"
-                  placeholder="SOBRENOME"
+                  placeholder="Sobrenome"
                   icon={<FaUser size={14} />}
                   value={sobrenome}
                   onChange={(e) => setSobrenome(e.target.value)}
@@ -185,7 +199,7 @@ function Register() {
               <div>
                 <Input
                   type="email"
-                  placeholder="EMAIL"
+                  placeholder="Email"
                   icon={<FaEnvelope size={14} />}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -197,7 +211,7 @@ function Register() {
               <div>
                 <Input
                   type="email"
-                  placeholder="CONFIRMAR EMAIL"
+                  placeholder="Confirmar email"
                   icon={<FaEnvelope size={14} />}
                   value={confirmarEmail}
                   onChange={(e) => setConfirmarEmail(e.target.value)}
@@ -212,7 +226,7 @@ function Register() {
               <div>
                 <Input
                   type="password"
-                  placeholder="SENHA"
+                  placeholder="Senha"
                   icon={<FaLock size={14} />}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
@@ -224,7 +238,7 @@ function Register() {
               <div>
                 <Input
                   type="password"
-                  placeholder="CONFIRMAR SENHA"
+                  placeholder="Confirmar"
                   icon={<FaLock size={14} />}
                   value={confirmarSenha}
                   onChange={(e) => setConfirmarSenha(e.target.value)}
@@ -270,7 +284,7 @@ function Register() {
           <div className="text-center">
             <p className="text-sm">
               Já possui uma conta?{" "}
-              <a href="#" className="font-semibold hover:text-[#FFA62B]">
+              <a href="/client" className="font-semibold hover:text-[#FFA62B]">
                 Faça login
               </a>
             </p>
