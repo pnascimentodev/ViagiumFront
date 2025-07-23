@@ -1,7 +1,6 @@
 import linkedin from "../assets/img/linkedin.svg"
 import instagram from "../assets/img/instagram.svg"
 import logo from "../assets/img/logo.svg";
-import facebook from "../assets/img/facebook.svg"
 import boleto from "../assets/img/boleto.svg"
 import cartao from "../assets/img/cartao.svg"
 import pix from "../assets/img/pix.svg"
@@ -36,54 +35,48 @@ function Footer(){
                                     Sobre nós
                                 </a>
                             </li>
+                            <li>
+                                <a href="/faq" className="text-[#FFFFFF] hover:text-[#FFA62B] transition-colors duration-200">
+                                    FAQ
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
-                    {/* Links Column 2 */}
+                    {/* Informações*/}
                     <div>
                         <h3 className="text-lg font-semibold mb-4 text-[#FFA62B]">Informações</h3>
-                        <ul className="space-y-2">
-                            <li>
-                                <a href="/contato" className="hover:text-[#FFA62B] transition-colors duration-200">
-                                    Contato
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/pagamento" className="hover:text-[#FFA62B] transition-colors duration-200">
-                                    Formas de pagamento
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/afiliados" className="hover:text-[#FFA62B] transition-colors duration-200">
-                                    Afiliados
-                                </a>
-                            </li>
-                        </ul>
+                        <div className="mb-2 !text-[#FFFFFF]">
+                            <ul className="space-y-2">
+                                <li className="!text-white">
+                                    Contato: (81) 3343-3535
+                                </li>
+                                <li className="!text-white">
+                                    CNPJ:
+                                </li>
+                                <li className="!text-white">
+                                    84.963.593/0001-81
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
-                    {/* Contact Info */}
+                    {/* Formas de pagamento*/}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 text-[#FFA62B]">Contato</h3>
-                        <p className="mb-2">Telefone: (81) 3343-3535</p>
-                        <p>CNPJ: 84.963.593/0001-81</p>
+                        <h3 className="text-lg font-semibold mb-4 text-[#FFA62B]">Formas de pagamento</h3>
+                        <div className="flex space-x-2 gap-3">
+                                <img src={boleto} alt="Boleto" className="w-6 h-6" />
+                                <img src={cartao} alt="Cartão" className="w-6 h-6" />
+                                <img src={pix} alt="Pix" className="w-6 h-6" />
+                        </div>
                     </div>
 
                     {/* Social Media */}
                     <div>
                         <h3 className="text-lg font-semibold mb-4 text-[#FFA62B]">Siga nossas redes</h3>
-                        <div className="flex space-x-4">
-                            <a href="#" className="hover:text-[#FFA62B] transition-colors duration-200">
-                                <img src={facebook} alt="Facebook" className="w-6 h-6" />
-                                <span className="sr-only">Facebook</span>
-                            </a>
-                            <a href="#" className="hover:text-[#FFA62B] transition-colors duration-200">
+                        <div className="flex space-x-4 gap-3">
                                 <img src={instagram} alt="Instagram" className="w-6 h-6" />
-                                <span className="sr-only">Instagram</span>
-                            </a>
-                            <a href="#" className="hover:text-[#FFA62B] transition-colors duration-200">
                                 <img src={linkedin} alt="Linkedin" className="w-6 h-6" />
-                                <span className="sr-only">Linkedin</span>
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -92,25 +85,21 @@ function Footer(){
                 <div className="mt-12 border-t border-blue-400 pt-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div className="mb-4 md:mb-0">
-                            <h3 className="text-lg font-semibold mb-2">Receba nossas ofertas</h3>
-                            <p className="text-sm text-gray-300">Cadastre seu email para receber promoções exclusivas</p>
+                            <h3 className="text-lg font-semibold mb-2 text-[#FFFFFF]">Ainda não é cliente?</h3>
+                            <p className="text-sm text-[#FFFFFF]">Cadastre-se para receber promoções exclusivas</p>
                         </div>
                         <div className="flex w-full md:w-auto">
-                            <input
-                                type="email"
-                                placeholder="Seu email"
-                                className="px-4 py-2 w-full md:w-64 text-gray-900 rounded-l focus:outline-none"
-                            />
-                            <button className="bg-[#FFA62B] hover:bg-[#e89826] px-4 py-2 rounded-r font-medium transition-colors duration-200">
-                                Assinar
+                            <button className="bg-[#FFFFFF] hover:scale-105 hover:text-[#FFA62B] px-4 py-2 rounded font-medium transition-colors duration-200">
+                                Cadastre-se
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Copyright */}
-                <div className="mt-12 text-center text-sm text-gray-300">
-                    <p>© 2025 Viagium, Inc. Todos os direitos reservados.</p>
+                <div className="flex justify-center gap-4 items-center mt-12 text-center text-sm ">
+                     <img src={logo} alt="Logo Viagium" className="w-6 h-6" />
+                    <p className="text-white">© 2025 Viagium, Inc. Todos os direitos reservados.</p>
                 </div>
             </div>
         </footer>
