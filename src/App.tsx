@@ -4,7 +4,7 @@ import LoginClient from './pages/login/LoginClient'
 import LoginAdmin from './pages/login/LoginAdmin'
 import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
-import AffiliatePage from './pages/affiliatepage/affiliatepage'
+import AffiliatePage from './pages/affiliatepage/AffiliatePage'
 
 function App() {
   return (
