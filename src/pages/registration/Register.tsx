@@ -218,7 +218,6 @@ function Register() {
         phone: phone.replace(/\D/g, ""),
         documentNumber: /^[0-9.\-]+$/.test(documentNumber) ? documentNumber.replace(/\D/g, "") : documentNumber,
         birthDate: birthDate,
-        role: 1
       });
       setBackendError("");
       setShowSuccess(true);
