@@ -31,6 +31,7 @@ function Register() {
   const [birthDateError, setBirthDateError] = useState("");
 
   const [backendError, setBackendError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
 
   function validateEmail(email: string) {
@@ -214,13 +215,17 @@ function Register() {
         lastName: sobrenome,
         email: email,
         password: senha,
-        phone: phone.replace(/\D/g, ""), // envia só números
-        documentNumber: /^[0-9.\-]+$/.test(documentNumber) ? documentNumber.replace(/\D/g, "") : documentNumber, // CPF só números, passaporte mantém
+        phone: phone.replace(/\D/g, ""),
+        documentNumber: /^[0-9.\-]+$/.test(documentNumber) ? documentNumber.replace(/\D/g, "") : documentNumber,
         birthDate: birthDate,
         role: 1
       });
       setBackendError("");
-      navigate('/client'); // Redireciona para /client após sucesso
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate('/client');
+      }, 2000); // Exibe animação por 2 segundos
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       let message = err.response?.data?.message || "Erro ao registrar.";
@@ -400,6 +405,16 @@ function Register() {
             {/* Mensagem de erro do backend */}
             {backendError && (
               <div className="text-red-500 text-center text-sm font-semibold mb-2">{backendError}</div>
+            )}
+
+            {/* Mensagem de sucesso com animação */}
+            {showSuccess && (
+              <div className="flex flex-col items-center justify-center mb-4 animate-bounce">
+                <svg className="w-12 h-12 text-green-500 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-green-600 font-bold text-lg">Usuário cadastrado com sucesso!</span>
+              </div>
             )}
 
             {/* Botão de Submit */}
