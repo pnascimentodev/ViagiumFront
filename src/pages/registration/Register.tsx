@@ -5,6 +5,7 @@ import {FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard, FaBirthdayCake} from "rea
 import { Input } from "../../components/Input.tsx";
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 function Register() {
   const [nome, setNome] = useState("");
@@ -28,6 +29,9 @@ function Register() {
   const [documentError, setDocumentError] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthDateError, setBirthDateError] = useState("");
+
+  const [backendError, setBackendError] = useState("");
+  const navigate = useNavigate();
 
   function validateEmail(email: string) {
     return /^[\w.-]+@(?:gmail|outlook|yahoo)\.com$/i.test(email);
@@ -210,14 +214,19 @@ function Register() {
         lastName: sobrenome,
         email: email,
         password: senha,
-        phone: phone,
-        documentNumber: documentNumber,
+        phone: phone.replace(/\D/g, ""), // envia só números
+        documentNumber: /^[0-9.\-]+$/.test(documentNumber) ? documentNumber.replace(/\D/g, "") : documentNumber, // CPF só números, passaporte mantém
         birthDate: birthDate,
+        role: 1
       });
-      alert("Registro realizado com sucesso!");
+      setBackendError("");
+      navigate('/client'); // Redireciona para /client após sucesso
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      alert(err.response?.data?.message || "Erro ao registrar.");
+      let message = err.response?.data?.message || "Erro ao registrar.";
+      // Remove prefixo "Erro ao executar criação de usuário: " se existir
+      message = message.replace(/^Erro ao executar criação de usuário:\s*/, "");
+      setBackendError(message);
     }
   }
 
@@ -388,6 +397,11 @@ function Register() {
               {termsError && <span className="text-red-500 text-sm block mt-2">{termsError}</span>}
             </div>
 
+            {/* Mensagem de erro do backend */}
+            {backendError && (
+              <div className="text-red-500 text-center text-sm font-semibold mb-2">{backendError}</div>
+            )}
+
             {/* Botão de Submit */}
             <div className="max-w-[300px] w-full">
               <Button type="submit">
@@ -411,3 +425,4 @@ function Register() {
 }
 
 export default Register;
+
