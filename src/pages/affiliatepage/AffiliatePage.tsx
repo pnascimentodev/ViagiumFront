@@ -401,7 +401,7 @@ function AffiliatePage() {
                   type="text"
                   id="RazaoSocial"
                   name="RazaoSocial"
-                  placeholder="Razão Social"
+                  placeholder="Ex: Hotelaria Brasil Ltda"
                   value={form.RazaoSocial}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -417,13 +417,48 @@ function AffiliatePage() {
                   type="text"
                   id="NomeFantasia"
                   name="NomeFantasia"
-                  placeholder="Nome Fantasia"
+                  placeholder="Ex: Grupo Hotelaria Brasil"
                   value={form.NomeFantasia}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   className={`w-full px-3 py-2 border ${errors.NomeFantasia ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
                 {errors.NomeFantasia && <div style={{ color: "red", fontWeight: 500 }}>{errors.NomeFantasia}</div>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label htmlFor="cnpj" className="block text-sm font-medium text-[#003194] mb-2">
+                  CNPJ
+                </label>
+                <input
+                  type="text"
+                  id="cnpj"
+                  name="cnpj"
+                  placeholder="00.000.000/0000-00"
+                  value={form.cnpj}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.cnpj ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                />
+                {errors.cnpj && <div style={{ color: "red", fontWeight: 500 }}>{errors.cnpj}</div>}
+              </div>
+              <div>
+                <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
+                  Inscrição Estadual
+                </label>
+                <input
+                  type="text"
+                  id="inscricaoEstadual"
+                  name="inscricaoEstadual"
+                  placeholder="Inscrição na Receita Estadual"
+                  value={form.inscricaoEstadual}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.inscricaoEstadual ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                />
+                {errors.inscricaoEstadual && <div style={{ color: "red", fontWeight: 500 }}>{errors.inscricaoEstadual}</div>}
               </div>
             </div>
 
@@ -536,7 +571,7 @@ function AffiliatePage() {
 
             {/* Dados da hospedagem */}
             <div className="pt-6 border-t border-gray-200">
-              <h3 className="text-xl font-semibold text-[#003194] mb-6">Dados da hospedagem</h3>
+              <h3 className="text-xl font-semibold text-[#003194] mb-6">Dados do Hotel</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label htmlFor="nomeHospedagem" className="block text-sm font-medium text-[#003194] mb-2">
@@ -572,8 +607,6 @@ function AffiliatePage() {
                     <option value="pousada">Pousada</option>
                     <option value="resort">Resort</option>
                     <option value="hostel">Hostel</option>
-                    <option value="apartamento">Apartamento</option>
-                    <option value="casa">Casa</option>
                   </select>
                 </div>
               </div>
