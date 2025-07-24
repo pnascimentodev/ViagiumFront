@@ -72,6 +72,7 @@ function Email() {
                             <Button
                                 className="h-12 w-full mb-15 rounded-[10px] shadow-lg bg-blue-800 text-white font-semibold mt-4"
                                 type="button"
+                                disabled={!email || !!emailError} 
                             >
                                 Avançar
                             </Button>

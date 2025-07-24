@@ -11,6 +11,7 @@ interface ForgotProps {
 function Password({actualPassword}: ForgotProps) {
         // Estado para senha atual
     const [currentPassword, setCurrentPassword] = useState("");
+    const [currentPasswordError, setCurrentPasswordError] = useState("");
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 
     // Estados para nova senha
@@ -23,43 +24,75 @@ function Password({actualPassword}: ForgotProps) {
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    function validatePassword(password: string) {
-        if (!password || password.trim() === "") {
+    function validateCurrentPassword(currentPassword: string) {
+        if (!currentPassword || currentPassword.trim() === "") {
             return "A senha é obrigatória.";
         }
-        if (password.length < 8) {
+         return "";
+    }
+
+    function handleCurrentPasswordBlur() {
+        const errorMessage = validateCurrentPassword(currentPassword);
+        setCurrentPasswordError(errorMessage);
+        if (errorMessage) {
+            setCurrentPasswordError(errorMessage);
+        } else {
+            setCurrentPasswordError("");
+        }
+    }
+
+    function validatePassword(newPassword: string) {
+        if (!newPassword || newPassword.trim() === "") {
+            return "A senha é obrigatória.";
+        }
+        if (newPassword.length < 8) {
             return "A Senha deve ser maior que 8 caracteres";
         }
-        if (!/[A-Z]/.test(password)) {
+        if (!/[A-Z]/.test(newPassword)) {
             return "A senha deve conter pelo menos uma letra maiúscula.";
         }
-        if (!/[a-z]/.test(password)) {
+        if (!/[a-z]/.test(newPassword)) {
             return "A senha deve conter pelo menos uma letra minúscula.";
         }
-        if (!/[0-9]/.test(password)) {
+        if (!/[0-9]/.test(newPassword)) {
             return "A senha deve conter pelo menos um número.";
         }
-        if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
+        if (!/[!@#$%^&*(),.?\":{}|<>]/.test(newPassword)) {
             return "A senha deve conter pelo menos um caractere especial.";
         }
         return "";
     }
 
-    function handlePasswordBlur(e: React.FocusEvent<HTMLInputElement>) {
-        const { name, value } = e.target;
+    function handlePasswordBlur() {
+        const errorMessage = validatePassword(newPassword);
+        setNewPasswordError(errorMessage);
+        if (errorMessage) {
+            setConfirmPasswordError(errorMessage);
+        } else if (confirmPassword !== newPassword) {
+            setConfirmPasswordError("As senhas não coincidem.");
+        } else {
+            setConfirmPasswordError("");
+        }
+    }
 
-        if (name === "new-password") {
-            const errorMessage = validatePassword(value);
-            setNewPasswordError(errorMessage);
-        } else if (name === "confirm-password") {
-            const errorMessage = validatePassword(value);
-            if (errorMessage) {
-                setConfirmPasswordError(errorMessage);
-            } else if (value !== newPassword) {
-                setConfirmPasswordError("As senhas não coincidem.");
-            } else {
-                setConfirmPasswordError("");
-            }
+    function validateConfirmPassword(confirmPassword: string) {
+        if (!confirmPassword || confirmPassword.trim() === "") {
+            return "A confirmação da senha é obrigatória.";
+        }
+        if (confirmPassword !== newPassword) {
+            return "As senhas não coincidem.";
+        }
+        return "";
+    }
+
+    function handleConfirmPasswordBlur() {
+        const errorMessage = validateConfirmPassword(confirmPassword);
+        if (errorMessage) {
+            setConfirmPasswordError(errorMessage);
+        } else if (confirmPassword !== newPassword) {
+            setConfirmPasswordError(errorMessage);
+        } else {
+            setConfirmPasswordError("");
         }
     }
 
@@ -77,10 +110,24 @@ function Password({actualPassword}: ForgotProps) {
         } else {
             setNewPasswordError("");
         }
+        const confirmPasswordValidation = validateConfirmPassword(confirmPassword);
+        if (confirmPasswordValidation) {
+            setConfirmPasswordError(confirmPasswordValidation);
+            valid = false;
+        } else {
+            setConfirmPasswordError("");
+        }
+        
+        const currentPasswordValidation = validateCurrentPassword(currentPassword);
+        if (currentPasswordValidation) {
+            setCurrentPasswordError(currentPasswordValidation);
+            valid = false;
+        } else {
+            setCurrentPasswordError("");
+        }
 
         if (!valid) return;
 
-        // Aqui você pode adicionar a lógica de envio
     }
 
     return (
@@ -113,7 +160,14 @@ function Password({actualPassword}: ForgotProps) {
                                     }
                                     value={currentPassword}
                                     onChange={e => setCurrentPassword(e.target.value)}
+                                    onBlur={handleCurrentPasswordBlur}
+                                    hasError={!!currentPasswordError}
                                 />
+                                {currentPasswordError && (
+                                    <div className="text-red-500 font-medium">
+                                        {currentPasswordError}
+                                </div>
+                            )}
                             </div>
                         )}
 
@@ -161,7 +215,7 @@ function Password({actualPassword}: ForgotProps) {
                                 }
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
-                                onBlur={handlePasswordBlur}
+                                onBlur={handleConfirmPasswordBlur}
                                 hasError={!!confirmPasswordError}
                             />
                             {confirmPasswordError && (
