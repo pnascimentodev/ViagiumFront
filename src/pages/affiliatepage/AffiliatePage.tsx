@@ -53,7 +53,7 @@ function AffiliatePage() {
     },
   });
   return (
-    <div className="bg-[#003194]">
+    <div className="bg-[#003194] flex flex-col gap-y-5">
 
       {/* Background image - Eiffel Tower */}
       <div className="bg-cover bg-center bg-no-repeat bg-[url('https://images.pexels.com/photos/532826/pexels-photo-532826.jpeg')]">
@@ -114,7 +114,7 @@ function AffiliatePage() {
       </div>
 
       {/* Card vantagens */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full p-5 mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full px-5 py-10 mx-auto">
         {/* Card 1 */}
         <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
           <div className="text-blue-500 mb-4">
@@ -178,7 +178,9 @@ function AffiliatePage() {
 
 
       {/* Carrossel */}
-      <div className="w-full flex flex-col items-center py-10 ">
+      <div className="w-full flex flex-col items-center py-20 bg-[#002673]">
+
+        <h2 className="text-5xl font-bold text-[#ffffff] mb-15">Nossos parceiros</h2>
 
         <div className="relative w-full max-w-6xl">
 
@@ -186,10 +188,10 @@ function AffiliatePage() {
 
             {hotels.map((hotel, idx) => (
               <div key={idx} className="keen-slider__slide flex items-center justify-center">
-                <div className="bg-gray-100 rounded-xl shadow-md flex items-center justify-center w-[85%] h-56 md:h-72 mx-auto transition-transform duration-300 relative overflow-hidden">
+                <div className="bg-gray-100 rounded-xl shadow-md flex items-center justify-center w-[85%] h-90 md:h-90 mx-auto transition-transform duration-300 relative overflow-hidden">
                   <img src={hotel.image} alt={hotel.name} className="object-cover w-full h-full rounded-xl" />
                   <div className="absolute inset-0 flex items-center justify-center ">
-                    <span className="text-white font-bold text-xl px-4 py-2 rounded-lg text-center" style={{ textShadow: "2px 2px 8px #000" }}>{hotel.name}</span>
+                    <span className="text-white font-bold text-3xl px-8 py-2 rounded-lg text-center" style={{ textShadow: "2px 2px 8px #000" }}>{hotel.name}</span>
                   </div>
                 </div>
               </div>
@@ -225,9 +227,8 @@ function AffiliatePage() {
         </div>
       </div>
 
-      {/* AQUI É ONDE VOCÊ DEVE INSERIR O FORMULÁRIO */}
       {/* Formulário de Afiliados */}
-      <div className="w-full max-w-4xl mx-auto p-6 mt-8 mb-8">
+      <div className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-[#003194] mb-8 text-left">Insira seus dados</h2>
           <form className="space-y-6">
