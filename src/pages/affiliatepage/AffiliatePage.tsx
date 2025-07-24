@@ -114,7 +114,7 @@ function AffiliatePage() {
       </div>
 
       {/* Card vantagens */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full p-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full p-5 mx-auto">
         {/* Card 1 */}
         <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
           <div className="text-blue-500 mb-4">
@@ -224,6 +224,326 @@ function AffiliatePage() {
           </button>
         </div>
       </div>
+
+      {/* AQUI É ONDE VOCÊ DEVE INSERIR O FORMULÁRIO */}
+      {/* Formulário de Afiliados */}
+      <div className="w-full max-w-4xl mx-auto p-6 mt-8 mb-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-[#003194] mb-8 text-left">Insira seus dados</h2>
+          <form className="space-y-6">
+            {/* Dados Pessoais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="nome" className="block text-sm font-medium text-[#003194] mb-2">
+                  Nome
+                </label>
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  placeholder="Nome"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="sobrenome" className="block text-sm font-medium text-[#003194] mb-2">
+                  Sobrenome
+                </label>
+                <input
+                  type="text"
+                  id="sobrenome"
+                  name="sobrenome"
+                  placeholder="Sobrenome"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label htmlFor="telefone1" className="block text-sm font-medium text-[#003194] mb-2">
+                  Telefone 1
+                </label>
+                <input
+                  type="tel"
+                  id="telefone1"
+                  name="telefone1"
+                  placeholder="(11) 99999-9999"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="telefone2" className="block text-sm font-medium text-[#003194] mb-2">
+                  Telefone 2 (opcional)
+                </label>
+                <input
+                  type="tel"
+                  id="telefone2"
+                  name="telefone2"
+                  placeholder="(11) 99999-9999"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-[#003194] mb-2">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="seu@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmarEmail" className="block text-sm font-medium text-[#003194] mb-2">
+                  Confirmar e-mail
+                </label>
+                <input
+                  type="email"
+                  id="confirmarEmail"
+                  name="confirmarEmail"
+                  placeholder="seu@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label htmlFor="senha" className="block text-sm font-medium text-[#003194] mb-2">
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  id="senha"
+                  name="senha"
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmarSenha" className="block text-sm font-medium text-[#003194] mb-2">
+                  Confirmar senha
+                </label>
+                <input
+                  type="password"
+                  id="confirmarSenha"
+                  name="confirmarSenha"
+                  placeholder="Repita a senha"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Dados da hospedagem */}
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="text-xl font-semibold text-[#003194] mb-6">Dados da hospedagem</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label htmlFor="nomeHospedagem" className="block text-sm font-medium text-[#003194] mb-2">
+                    Nome da hospedagem
+                  </label>
+                  <input
+                    type="text"
+                    id="nomeHospedagem"
+                    name="nomeHospedagem"
+                    placeholder="Insira o nome da hospedagem"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tipo" className="block text-sm font-medium text-[#003194] mb-2">
+                    Tipo
+                  </label>
+                  <select
+                    id="tipo"
+                    name="tipo"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  >
+                    <option value="">Selecione o tipo de hospedagem</option>
+                    <option value="hotel">Hotel</option>
+                    <option value="pousada">Pousada</option>
+                    <option value="resort">Resort</option>
+                    <option value="hostel">Hostel</option>
+                    <option value="apartamento">Apartamento</option>
+                    <option value="casa">Casa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label htmlFor="cep" className="block text-sm font-medium text-[#003194] mb-2">
+                    CEP
+                  </label>
+                  <input
+                    type="text"
+                    id="cep"
+                    name="cep"
+                    placeholder="00000-000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="rua" className="block text-sm font-medium text-[#003194] mb-2">
+                    Rua
+                  </label>
+                  <input
+                    type="text"
+                    id="rua"
+                    name="rua"
+                    placeholder="Rua"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label htmlFor="bairro" className="block text-sm font-medium text-[#003194] mb-2">
+                    Bairro
+                  </label>
+                  <input
+                    type="text"
+                    id="bairro"
+                    name="bairro"
+                    placeholder="Bairro"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="estado" className="block text-sm font-medium text-[#003194] mb-2">
+                    Estado
+                  </label>
+                  <input
+                    type="text"
+                    id="estado"
+                    name="estado"
+                    placeholder="Estado"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="pais" className="block text-sm font-medium text-[#003194] mb-2">
+                    País
+                  </label>
+                  <input
+                    type="text"
+                    id="pais"
+                    name="pais"
+                    placeholder="País"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="nomeEmpresa" className="block text-sm font-medium text-[#003194] mb-2">
+                  Nome da empresa
+                </label>
+                <input
+                  type="text"
+                  id="nomeEmpresa"
+                  name="nomeEmpresa"
+                  placeholder="Ex: Hotel Fazenda S.A ou João Pedro"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label htmlFor="cnpj" className="block text-sm font-medium text-[#003194] mb-2">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    id="cnpj"
+                    name="cnpj"
+                    placeholder="00.000.000/0000-00"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
+                    Inscrição Estadual
+                  </label>
+                  <input
+                    type="text"
+                    id="inscricaoEstadual"
+                    name="inscricaoEstadual"
+                    placeholder="Inscrição na Receita Estadual"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cadastur */}
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="text-xl font-semibold text-[#003194] mb-6">Cadastur</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label htmlFor="numeroCadastur" className="block text-sm font-medium text-[#003194] mb-2">
+                    Insira o número
+                  </label>
+                  <input
+                    type="text"
+                    id="numeroCadastur"
+                    name="numeroCadastur"
+                    placeholder="Ex: 1234"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="dataExpiracao" className="block text-sm font-medium text-[#003194] mb-2">
+                    Data de Expiração
+                  </label>
+                  <input
+                    type="date"
+                    id="dataExpiracao"
+                    name="dataExpiracao"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Termos e Condições */}
+            <div className="pt-6 border-t border-gray-200">
+              <div className="flex items-start space-x-3 mb-6">
+                <input
+                  type="checkbox"
+                  id="termos"
+                  name="termos"
+                  className="mt-1 h-4 w-4 text-[#003194] focus:ring-[#003194] border-gray-300 rounded"
+                />
+                <label htmlFor="termos" className="text-sm text-gray-700 leading-relaxed">
+                  Autorizo a Despegar e suas entidades relacionadas a utilizar os meus dados e/ou os de titular para
+                  obter informações financeiras comerciais, de crédito e realizar consultas sobre bases de dados
+                  necessárias aos serviços solicitados, conforme Política de Privacidade da Despegar e Política de
+                  Privacidade da Viajemos.
+                </label>
+              </div>
+            </div>
+
+            {/* Botão de Submit */}
+            <div className="pt-6">
+              <button
+                type="submit"
+                className="w-full bg-[#003194] text-white py-3 px-6 rounded-md font-semibold text-lg hover:bg-[#002a7a] transition-colors duration-200"
+              >
+                REGISTRE-SE
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
   )
 }
