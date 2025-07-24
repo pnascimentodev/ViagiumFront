@@ -1,9 +1,12 @@
-import { Button } from "../../components/Button.tsx"
-import logo from "../../assets/img/logo.svg"
-import { FaUser, FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa"
+import { Button } from "../../components/Button.tsx";
+import logo from "../../assets/img/logo.svg";
+import { FaUser, FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "keen-slider/keen-slider.min.css";
 import { useKeenSlider } from "keen-slider/react";
 import { useState } from "react";
+import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../utils/validations.ts";
+import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../utils/masks.ts";
+import { validateCPF, validatePassaporte } from "../../utils/validations.ts";
 
 function AffiliatePage() {
   // Carrossel de imagens
@@ -52,7 +55,163 @@ function AffiliatePage() {
       setCurrentSlide(slider.track.details.rel);
     },
   });
+  // Form state
+  const [form, setForm] = useState({
+    RazaoSocial: "",
+    NomeFantasia: "",
+    telefone1: "",
+    telefone2: "",
+    email: "",
+    confirmarEmail: "",
+    senha: "",
+    confirmarSenha: "",
+    cpfPassaporte: "",
+    nomeHospedagem: "",
+    tipo: "",
+    cep: "",
+    rua: "",
+    bairro: "",
+    estado: "",
+    pais: "",
+    nomeEmpresa: "",
+    cnpj: "",
+    inscricaoEstadual: "",
+    numeroCadastur: "",
+    dataExpiracao: "",
+    termos: false,
+  });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const target = e.target as HTMLInputElement;
+    const { name, value, type, checked } = target;
+    let newValue = value;
+    switch (name) {
+      case "telefone1":
+      case "telefone2":
+        newValue = maskPhone(value);
+        break;
+      case "cep":
+        newValue = maskCEP(value);
+        break;
+      case "cnpj":
+        newValue = maskCNPJ(value);
+        break;
+      case "inscricaoEstadual":
+        newValue = maskInscricaoEstadual(value);
+        break;
+      case "numeroCadastur":
+        newValue = maskCadasturNumber(value);
+        break;
+      case "cpfPassaporte": {
+        const onlyNumbers = value.replace(/\D/g, "");
+        // CPF: só números, até 11 dígitos
+        if (/^\d{1,11}$/.test(onlyNumbers) && onlyNumbers.length > 0) {
+          newValue = maskCPF(onlyNumbers);
+        } else if (/^[A-Za-z0-9]{6,12}$/.test(value)) {
+          // Passaporte: letras e números juntos, 6 a 12 caracteres
+          newValue = maskPassaporte(value);
+        } else {
+          newValue = value;
+        }
+        break;
+      }
+      default:
+        // outros campos sem máscara
+        break;
+    }
+    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : newValue }));
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
+  }
+
+  function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
+    const { name, value } = e.target;
+    let error = "";
+    switch (name) {
+      case "cpfPassaporte": {
+        const onlyNumbers = value.replace(/\D/g, "");
+        if (onlyNumbers.length === 11) {
+          if (!validateCPF(value)) error = "CPF inválido.";
+        } else {
+          if (!validatePassaporte(value)) error = "Passaporte inválido (mín. 6 caracteres).";
+        }
+        break;
+      }
+      case "email":
+        if (!validateEmail(value)) error = "Digite um e-mail válido.";
+        break;
+      case "confirmarEmail":
+        error = validateEmailConfirmation(form.email, value) || "";
+        break;
+      case "senha":
+        error = validatePassword(value) || "";
+        break;
+      case "confirmarSenha":
+        error = validatePasswordConfirmation(form.senha, value) || "";
+        break;
+      case "telefone1":
+        if (!validatePhone(value)) error = "Telefone inválido.";
+        break;
+      case "cep":
+        if (!validateCEP(value)) error = "CEP inválido.";
+        break;
+      case "cnpj":
+        if (!validateCNPJ(value)) error = "CNPJ inválido.";
+        break;
+      case "numeroCadastur":
+        if (!validateCadasturNumber(value)) error = "Apenas números.";
+        break;
+      case "dataExpiracao":
+        if (value && !validateFutureDate(value)) error = "Data inválida.";
+        break;
+      default:
+        if (!validateRequired(value)) error = "Campo obrigatório.";
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const newErrors: { [key: string]: string } = {};
+    // Validação de todos os campos
+    if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
+    if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
+    if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
+    if (form.telefone2 && !validatePhone(form.telefone2)) newErrors.telefone2 = "Telefone inválido.";
+    if (!validateEmail(form.email)) newErrors.email = "Digite um e-mail válido.";
+    const emailConf = validateEmailConfirmation(form.email, form.confirmarEmail);
+    if (emailConf) newErrors.confirmarEmail = emailConf;
+    const senhaVal = validatePassword(form.senha);
+    if (senhaVal) newErrors.senha = senhaVal;
+    const senhaConf = validatePasswordConfirmation(form.senha, form.confirmarSenha);
+    if (senhaConf) newErrors.confirmarSenha = senhaConf;
+    if (!validateRequired(form.nomeHospedagem)) newErrors.nomeHospedagem = "Campo obrigatório.";
+    if (!validateRequired(form.tipo)) newErrors.tipo = "Campo obrigatório.";
+    if (!validateCEP(form.cep)) newErrors.cep = "CEP inválido.";
+    if (!validateRequired(form.rua)) newErrors.rua = "Campo obrigatório.";
+    if (!validateRequired(form.bairro)) newErrors.bairro = "Campo obrigatório.";
+    if (!validateRequired(form.estado)) newErrors.estado = "Campo obrigatório.";
+    if (!validateRequired(form.pais)) newErrors.pais = "Campo obrigatório.";
+    if (!validateRequired(form.nomeEmpresa)) newErrors.nomeEmpresa = "Campo obrigatório.";
+    if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
+    if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
+    if (!validateCadasturNumber(form.numeroCadastur)) newErrors.numeroCadastur = "Apenas números.";
+    if (!validateFutureDate(form.dataExpiracao)) newErrors.dataExpiracao = "Data inválida.";
+    if (!validateTerms(form.termos)) newErrors.termos = "Você deve aceitar os termos.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    alert("Cadastro realizado com sucesso!");
+    // Aqui você pode enviar os dados para a API
+  }
+
   return (
+
+    // ...restante do componente...
+    // Abaixo, ajuste os campos do formulário para usar value, onChange, onBlur e exibir erros
     <div className="bg-[#003194] flex flex-col gap-y-5">
 
       {/* Background image - Eiffel Tower */}
@@ -231,32 +390,40 @@ function AffiliatePage() {
       <div className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-[#003194] mb-8 text-left">Insira seus dados</h2>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Dados Pessoais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="nome" className="block text-sm font-medium text-[#003194] mb-2">
-                  Nome
+                <label htmlFor="RazaoSocial" className="block text-sm font-medium text-[#003194] mb-2">
+                  Razão Social
                 </label>
                 <input
                   type="text"
-                  id="nome"
-                  name="nome"
-                  placeholder="Nome"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  id="RazaoSocial"
+                  name="RazaoSocial"
+                  placeholder="Razão Social"
+                  value={form.RazaoSocial}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.RazaoSocial ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.RazaoSocial && <div style={{ color: "red", fontWeight: 500 }}>{errors.RazaoSocial}</div>}
               </div>
               <div>
-                <label htmlFor="sobrenome" className="block text-sm font-medium text-[#003194] mb-2">
-                  Sobrenome
+                <label htmlFor="NomeFantasia" className="block text-sm font-medium text-[#003194] mb-2">
+                  Nome Fantasia
                 </label>
                 <input
                   type="text"
-                  id="sobrenome"
-                  name="sobrenome"
-                  placeholder="Sobrenome"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  id="NomeFantasia"
+                  name="NomeFantasia"
+                  placeholder="Nome Fantasia"
+                  value={form.NomeFantasia}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.NomeFantasia ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.NomeFantasia && <div style={{ color: "red", fontWeight: 500 }}>{errors.NomeFantasia}</div>}
               </div>
             </div>
 
@@ -270,8 +437,12 @@ function AffiliatePage() {
                   id="telefone1"
                   name="telefone1"
                   placeholder="(11) 99999-9999"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.telefone1}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.telefone1 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.telefone1 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone1}</div>}
               </div>
               <div>
                 <label htmlFor="telefone2" className="block text-sm font-medium text-[#003194] mb-2">
@@ -282,8 +453,12 @@ function AffiliatePage() {
                   id="telefone2"
                   name="telefone2"
                   placeholder="(11) 99999-9999"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.telefone2}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.telefone2 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.telefone2 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone2}</div>}
               </div>
             </div>
 
@@ -297,8 +472,12 @@ function AffiliatePage() {
                   id="email"
                   name="email"
                   placeholder="seu@email.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.email && <div style={{ color: "red", fontWeight: 500 }}>{errors.email}</div>}
               </div>
               <div>
                 <label htmlFor="confirmarEmail" className="block text-sm font-medium text-[#003194] mb-2">
@@ -309,12 +488,16 @@ function AffiliatePage() {
                   id="confirmarEmail"
                   name="confirmarEmail"
                   placeholder="seu@email.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.confirmarEmail}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.confirmarEmail ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.confirmarEmail && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarEmail}</div>}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-6">
               <div>
                 <label htmlFor="senha" className="block text-sm font-medium text-[#003194] mb-2">
                   Senha
@@ -324,8 +507,12 @@ function AffiliatePage() {
                   id="senha"
                   name="senha"
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.senha}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.senha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.senha && <div style={{ color: "red", fontWeight: 500 }}>{errors.senha}</div>}
               </div>
               <div>
                 <label htmlFor="confirmarSenha" className="block text-sm font-medium text-[#003194] mb-2">
@@ -336,9 +523,15 @@ function AffiliatePage() {
                   id="confirmarSenha"
                   name="confirmarSenha"
                   placeholder="Repita a senha"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.confirmarSenha}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.confirmarSenha && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarSenha}</div>}
               </div>
+
+              {/* Campo CPF/Passaporte removido */}
             </div>
 
             {/* Dados da hospedagem */}
@@ -354,8 +547,12 @@ function AffiliatePage() {
                     id="nomeHospedagem"
                     name="nomeHospedagem"
                     placeholder="Insira o nome da hospedagem"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.nomeHospedagem}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.nomeHospedagem ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.nomeHospedagem && <div style={{ color: "red", fontWeight: 500 }}>{errors.nomeHospedagem}</div>}
                 </div>
                 <div>
                   <label htmlFor="tipo" className="block text-sm font-medium text-[#003194] mb-2">
@@ -364,8 +561,12 @@ function AffiliatePage() {
                   <select
                     id="tipo"
                     name="tipo"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.tipo}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.tipo ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   >
+                    {errors.tipo && <div style={{ color: "red", fontWeight: 500 }}>{errors.tipo}</div>}
                     <option value="">Selecione o tipo de hospedagem</option>
                     <option value="hotel">Hotel</option>
                     <option value="pousada">Pousada</option>
@@ -387,8 +588,12 @@ function AffiliatePage() {
                     id="cep"
                     name="cep"
                     placeholder="00000-000"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.cep}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.cep ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.cep && <div style={{ color: "red", fontWeight: 500 }}>{errors.cep}</div>}
                 </div>
                 <div>
                   <label htmlFor="rua" className="block text-sm font-medium text-[#003194] mb-2">
@@ -399,8 +604,12 @@ function AffiliatePage() {
                     id="rua"
                     name="rua"
                     placeholder="Rua"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.rua}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.rua ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.rua && <div style={{ color: "red", fontWeight: 500 }}>{errors.rua}</div>}
                 </div>
               </div>
 
@@ -414,8 +623,12 @@ function AffiliatePage() {
                     id="bairro"
                     name="bairro"
                     placeholder="Bairro"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.bairro}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.bairro ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.bairro && <div style={{ color: "red", fontWeight: 500 }}>{errors.bairro}</div>}
                 </div>
                 <div>
                   <label htmlFor="estado" className="block text-sm font-medium text-[#003194] mb-2">
@@ -426,8 +639,12 @@ function AffiliatePage() {
                     id="estado"
                     name="estado"
                     placeholder="Estado"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.estado}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.estado ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.estado && <div style={{ color: "red", fontWeight: 500 }}>{errors.estado}</div>}
                 </div>
                 <div>
                   <label htmlFor="pais" className="block text-sm font-medium text-[#003194] mb-2">
@@ -438,8 +655,12 @@ function AffiliatePage() {
                     id="pais"
                     name="pais"
                     placeholder="País"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.pais}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.pais ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.pais && <div style={{ color: "red", fontWeight: 500 }}>{errors.pais}</div>}
                 </div>
               </div>
 
@@ -452,8 +673,12 @@ function AffiliatePage() {
                   id="nomeEmpresa"
                   name="nomeEmpresa"
                   placeholder="Ex: Hotel Fazenda S.A ou João Pedro"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                  value={form.nomeEmpresa}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`w-full px-3 py-2 border ${errors.nomeEmpresa ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
+                {errors.nomeEmpresa && <div style={{ color: "red", fontWeight: 500 }}>{errors.nomeEmpresa}</div>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -466,8 +691,12 @@ function AffiliatePage() {
                     id="cnpj"
                     name="cnpj"
                     placeholder="00.000.000/0000-00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.cnpj}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.cnpj ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.cnpj && <div style={{ color: "red", fontWeight: 500 }}>{errors.cnpj}</div>}
                 </div>
                 <div>
                   <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
@@ -478,8 +707,12 @@ function AffiliatePage() {
                     id="inscricaoEstadual"
                     name="inscricaoEstadual"
                     placeholder="Inscrição na Receita Estadual"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.inscricaoEstadual}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.inscricaoEstadual ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.inscricaoEstadual && <div style={{ color: "red", fontWeight: 500 }}>{errors.inscricaoEstadual}</div>}
                 </div>
               </div>
             </div>
@@ -497,8 +730,12 @@ function AffiliatePage() {
                     id="numeroCadastur"
                     name="numeroCadastur"
                     placeholder="Ex: 1234"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.numeroCadastur}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.numeroCadastur ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.numeroCadastur && <div style={{ color: "red", fontWeight: 500 }}>{errors.numeroCadastur}</div>}
                 </div>
                 <div>
                   <label htmlFor="dataExpiracao" className="block text-sm font-medium text-[#003194] mb-2">
@@ -508,35 +745,41 @@ function AffiliatePage() {
                     type="date"
                     id="dataExpiracao"
                     name="dataExpiracao"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent"
+                    value={form.dataExpiracao}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={`w-full px-3 py-2 border ${errors.dataExpiracao ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                   />
+                  {errors.dataExpiracao && <div style={{ color: "red", fontWeight: 500 }}>{errors.dataExpiracao}</div>}
                 </div>
               </div>
             </div>
 
             {/* Termos e Condições */}
             <div className="pt-6 border-t border-gray-200">
-              <div className="flex items-start space-x-3 mb-6">
+              <div className="flex items-start space-x-3 mb-6 gap-2">
                 <input
                   type="checkbox"
                   id="termos"
                   name="termos"
+                  checked={form.termos}
+                  onChange={handleChange}
                   className="mt-1 h-4 w-4 text-[#003194] focus:ring-[#003194] border-gray-300 rounded"
                 />
-                <label htmlFor="termos" className="text-sm text-gray-700 leading-relaxed">
-                  Autorizo a Despegar e suas entidades relacionadas a utilizar os meus dados e/ou os de titular para
-                  obter informações financeiras comerciais, de crédito e realizar consultas sobre bases de dados
-                  necessárias aos serviços solicitados, conforme Política de Privacidade da Despegar e Política de
-                  Privacidade da Viajemos.
+
+                <label htmlFor="termos" className="text-lg text-[#003194] leading-relaxed">
+                  Autorizo a Viagium e suas entidades relacionadas a utilizar os meus dados e/ou os de titular para obter informações financeiras comerciais, de crédito e realizar consultas sobre bases de dados necessárias aos serviços solicitados, conforme <a href="#" className="font-bold no-underline hover:text-orange-500" target="_blank">Política de Privacidade da Viagium</a>.
                 </label>
               </div>
+
+              {errors.termos && <div style={{ color: "red", fontWeight: 500 }}>{errors.termos}</div>}
             </div>
 
             {/* Botão de Submit */}
-            <div className="pt-6">
+            <div className="pt-6 flex justify-center">
               <button
                 type="submit"
-                className="w-full bg-[#003194] text-white py-3 px-6 rounded-md font-semibold text-lg hover:bg-[#002a7a] transition-colors duration-200"
+                className="w-full max-w-md bg-[#003194] text-white py-3 px-6 rounded-md font-semibold text-lg hover:bg-[#002a7a] transition-colors duration-200"
               >
                 REGISTRE-SE
               </button>
