@@ -148,7 +148,7 @@ function Login({ userType, newUserOption }: LoginProps) {
 
                     {/* Links */}
                     <a
-                        href="/forgotpassword"
+                        href="/email"
                         className="font-bold text-base hover:underline,no-underline transition-all block hover:text-[#FFA62B]"
                     >
                         Esqueceu sua senha?

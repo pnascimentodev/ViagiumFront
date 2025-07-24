@@ -6,7 +6,8 @@ import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
 import Footer from './components/Footer'
 import ForgotPassword from './pages/password/ForgotPassword'
-import ResectPassword from './pages/password/ResetPassword'
+import ResetPassword from './pages/password/ResetPassword'
+import Email from './pages/password/Email'
 
 function App() {
   return (
@@ -16,8 +17,9 @@ function App() {
       <Route path="/affiliate" element={<LoginAffiliate />} />
       <Route path="/register" element={<Register/>} />
       <Route path="footer" element={<Footer/>}/>
-      <Route path="/resetpassword" element={<ResectPassword />} />
-      <Route path="/forgotpassword" element={<ForgotPassword />} /> 
+      <Route path="/resetpassword" element={<ResetPassword />} />
+      <Route path="/forgotpassword" element={<ForgotPassword />} />
+      <Route path="/email" element={<Email />} />
     </Routes>
   )
 }

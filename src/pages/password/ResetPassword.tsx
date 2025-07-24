@@ -1,9 +1,9 @@
-import ForgotPassword from './components/Password';
+import Password from './components/Password';
 
-function ResectPassword() {
+function ResetPassword() {
   return (
-    <ForgotPassword actualPassword={true} />
+    <Password actualPassword={true} />
   )
 }
 
-export default ResectPassword;
+export default ResetPassword;
