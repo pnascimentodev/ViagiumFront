@@ -5,6 +5,9 @@ import LoginAdmin from './pages/login/LoginAdmin'
 import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
 import Footer from './components/Footer'
+import ForgotPassword from './pages/password/ForgotPassword'
+import ResectPassword from './pages/password/ResetPassword'
+
 function App() {
   return (
     <Routes>
@@ -13,6 +16,8 @@ function App() {
       <Route path="/affiliate" element={<LoginAffiliate />} />
       <Route path="/register" element={<Register/>} />
       <Route path="footer" element={<Footer/>}/>
+      <Route path="/resetpassword" element={<ResectPassword />} />
+      <Route path="/forgotpassword" element={<ForgotPassword />} /> 
     </Routes>
   )
 }
