@@ -4,7 +4,6 @@ import logo from "../assets/img/logo.svg";
 import boleto from "../assets/img/boleto.svg"
 import cartao from "../assets/img/cartao.svg"
 import pix from "../assets/img/pix.svg"
-import { Button } from "./Button"
 
 
 function Footer(){
