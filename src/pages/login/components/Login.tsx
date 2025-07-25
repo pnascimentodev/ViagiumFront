@@ -1,7 +1,7 @@
 
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { FaEnvelope, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { Input } from "../../../components/Input.tsx";
 import { useState } from "react";
 
@@ -10,11 +10,13 @@ interface LoginProps {
     newUserOption: boolean;
 }
 
-function Login({ userType, newUserOption }: LoginProps) {
+async function Login({ userType, newUserOption }: LoginProps) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [password, setPassword] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     function validateEmail(email: string) {
         if (!email || email.trim() === "") {
@@ -105,7 +107,14 @@ function Login({ userType, newUserOption }: LoginProps) {
                         <Input
                             type="password"
                             placeholder="Senha"
-                            icon={<FaLock size={16} />}
+                                icon={
+                                    <span
+                                        onClick={() => setShowNewPassword((prev) => !prev)}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        {showNewPassword ? <FaRegEye size={16} /> : <FaRegEyeSlash size={16} />}
+                                    </span>
+                                }
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             onBlur={handlePasswordBlur}
