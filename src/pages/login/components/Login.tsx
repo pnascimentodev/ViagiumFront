@@ -147,8 +147,16 @@ function Login({ userType, newUserOption }: LoginProps) {
                 <div className="flex flex-col items-center justify-center gap-2" >
 
                     {/* Links */}
-                    <a
-                        href="/email"
+                            <a
+                            href={
+                                userType === "client"
+                                ? "/emailclient"
+                                : userType === "affiliate"
+                                ? "/emailaffiliate"
+                                : userType === "admin"
+                                ? "/forgotpassword" // defina a rota correta para admin
+                                : "#"
+                            }
                         className="font-bold text-base hover:underline,no-underline transition-all block hover:text-[#FFA62B]"
                     >
                         Esqueceu sua senha?
