@@ -1,9 +1,11 @@
 
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
-import { FaEnvelope, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { FaEnvelope } from "react-icons/fa";
+import { FaRegEyeSlash, FaRegEye } from "react-icons/fa"
 import { Input } from "../../../components/Input.tsx";
 import { useState } from "react";
+import axios from "axios";
 
 interface LoginProps {
     userType: "client" | "admin" | "affiliate";
@@ -15,8 +17,7 @@ async function Login({ userType, newUserOption }: LoginProps) {
     const [emailError, setEmailError] = useState("");
     const [password, setPassword] = useState("");
     const [passwordError, setPasswordError] = useState("");
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     function validateEmail(email: string) {
         if (!email || email.trim() === "") {
@@ -68,8 +69,29 @@ async function Login({ userType, newUserOption }: LoginProps) {
 
         if (!valid) return;
 
-        // Aqui você pode seguir com o login (ex: chamar API)
-        alert("Login realizado com sucesso!");
+        // chamando o endpoint pra login e autenticação
+        let endpoint = "";
+        if (userType === "affiliate") endpoint = "https://localhost:7259/api/Affiliate/login";
+        if (userType === "client") endpoint = "";
+        if (userType === "admin") endpoint = "";
+
+
+        axios.post(endpoint, { email, password })
+        .then(response => {
+            console.log("Login bem-sucedido:", response.data);
+            // redirecionar ou atualizar estado conforme necessário
+        })
+        .catch(error => {
+            console.error("Erro no login:", error);
+            if (error.response) {
+            // Erro retornado pela API
+            alert(`Erro: ${error.response.data.message || "Falha no login."}`);
+            } else {
+            // Erro de rede ou outro
+            alert("Erro de rede ou servidor indisponível.");
+            }
+        });
+
     }
 
     return (
@@ -105,16 +127,16 @@ async function Login({ userType, newUserOption }: LoginProps) {
 
                     <div className="flex flex-col justify-center gap-1">
                         <Input
-                            type="password"
-                            placeholder="Senha"
-                                icon={
-                                    <span
-                                        onClick={() => setShowNewPassword((prev) => !prev)}
-                                        style={{ cursor: "pointer" }}
-                                    >
-                                        {showNewPassword ? <FaRegEye size={16} /> : <FaRegEyeSlash size={16} />}
-                                    </span>
-                                }
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Digite sua senha atual"
+                                    icon={
+                                        <span
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            style={{ cursor: "pointer" }}
+                                        >
+                                            {showPassword ? <FaRegEye size={16} /> : <FaRegEyeSlash size={16} />}
+                                        </span>
+                                    }
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             onBlur={handlePasswordBlur}
