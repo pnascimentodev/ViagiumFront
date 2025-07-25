@@ -72,8 +72,8 @@ async function Login({ userType, newUserOption }: LoginProps) {
         // chamando o endpoint pra login e autenticação
         let endpoint = "";
         if (userType === "affiliate") endpoint = "https://localhost:7259/api/Affiliate/login";
-        if (userType === "client") endpoint = "";
-        if (userType === "admin") endpoint = "";
+        if (userType === "client") endpoint = "https://localhost:7259/api/User/by-email";
+        if (userType === "admin") endpoint = "https://localhost:7259/api/User/by-email";
 
 
         axios.post(endpoint, { email, password })
