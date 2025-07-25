@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import logo from "../../assets/img/logo.svg";
+import logo from "../../../assets/img/logo.svg";
 import { FaEnvelope } from "react-icons/fa";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button.tsx";
+import axios from "axios";
 
-function Email() {
+interface EmailProps {
+  userType: "client" | "admin" | "affiliate";
+}
+
+function Email({ userType }: EmailProps) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
 
@@ -35,6 +40,22 @@ function Email() {
 
         if (!valid) return;
         // lógica de envio
+
+        let endpoint = "";
+        if (userType === "client") endpoint = "/api/User/by-email";
+        if (userType === "admin") endpoint = "/api/User/by-email";
+        if (userType === "affiliate") endpoint = "/api/affiliate/by-email";
+
+        axios.get(`https://localhost:7259${endpoint}`, { params: { email } })
+        .then(response => {
+        // Trate o sucesso (ex: navegue, mostre mensagem, etc)
+        console.log(response.data);
+    })
+        .catch(error => {
+        // Trate o erro (ex: e-mail não encontrado)
+        setEmailError("E-mail não encontrado.");
+    });
+
     }
 
     return (
