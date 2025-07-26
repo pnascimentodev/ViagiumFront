@@ -6,18 +6,19 @@ import Register from './pages/registration/Register'
 import LoginAffiliate from './pages/login/LoginAffiliate'
 import AffiliatePage from './pages/affiliatepage/AffiliatePage'
 import Footer from './components/Footer'
-import PaginaTeste from './pages/affiliate/AddHotel'
-        
+import AffiliateDashboard from './pages/affiliatepage/AffiliateDashboardTeste'
+
 function App() {
   return (
     <Routes>
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />
-      <Route path="/register" element={<Register/>} />
+      <Route path="/register" element={<Register />} />
       <Route path="/affiliatepage" element={<AffiliatePage />} />
-      <Route path="footer" element={<Footer/>}/>
-      <Route path="/addhotel" element={<PaginaTeste />} />
+      <Route path="footer" element={<Footer />} />
+      {/*  Rota para teste com o botao e ativaçao do modal hotel */}
+      <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
     </Routes>
   )
 }
