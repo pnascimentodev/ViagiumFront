@@ -2,7 +2,7 @@ import { Button } from "../../components/Button.tsx";
 import logo from "../../assets/img/logo.svg";
 import { FaUser, FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "keen-slider/keen-slider.min.css";
-import { useKeenSlider } from "keen-slider/react";
+import {useKeenSlider} from "keen-slider/react";
 import { useState } from "react";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../utils/validations.ts";
 import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../utils/masks.ts";
