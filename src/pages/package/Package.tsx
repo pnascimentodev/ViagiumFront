@@ -12,6 +12,7 @@ import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
 import hmexico1Img from '../../assets/img/hmexico1.jpg';
 import hmexico2Img from '../../assets/img/hmexico2.jpg';
+import React from 'react';
 
 
 function Package() {
@@ -22,7 +23,12 @@ function Package() {
   const hotelSpainImages = [hotelspain1Img, hotelspain2Img];
   const hotelCancunImages = [hmexico1Img, hmexico2Img];
   const [hotelImageIndex, setHotelImageIndex] = useState(0);
+  const [roomTypeIndex, setRoomTypeIndex] = useState(0);
 
+  // Sempre que trocar de hotel, reseta o tipo de quarto para o primeiro
+  React.useEffect(() => {
+    setRoomTypeIndex(0);
+  }, [hotelImageIndex, currentImageIndex]);
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -53,7 +59,10 @@ function Package() {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
       passagem: [5524, 6000], 
-      hospedagem: [1567, 1800],
+      hospedagem: [
+      [1300, 1400, 1500], 
+      [1200, 1250, 1350]
+      ],
       encargos: [1200, 1300],
       duracoes: [
       "01/06/2025 - 05/06/2025",
@@ -72,7 +81,7 @@ function Package() {
       ],
       roomTypes: [
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"],
-        ["Standard - até 2 hóspedes", "Suite - até 4 hóspedes"]
+        ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
       ],
       roomIncludes: [
         [
@@ -91,7 +100,10 @@ function Package() {
       title: "Pacote Espanha dos Sonhos – 7 dias inesquecíveis!",
       description: "Descubra o charme inigualável de Madrid com este pacote completo que reúne romance, cultura, gastronomia e história em um só destino. Ideal para casais, aventureiros solo ou amantes da arte e da arquitetura, esta viagem oferece uma imersão única na capital espanhola.",
       passagem: [5000, 5200], 
-      hospedagem: [1100, 1200],
+      hospedagem: [
+        [1100, 1200], 
+        [1150, 1250, 3000],   
+      ],
       encargos: [900, 950],
       duracoes: [
       "20/07/2025 - 27/07/2025",
@@ -105,7 +117,7 @@ function Package() {
     ],
       hotelRatings: [4.8, 4.6],
       prices: [7890, 8900],
-    hotelAddresses: [
+      hotelAddresses: [
       "Calle de Alcalá, 66, 28009 Madrid, Espanha",
       "Plaza de España, 18, 28008 Madrid, Espanha"
     ],
@@ -129,8 +141,11 @@ function Package() {
     {
       title: "Pacote Cancún – 5 dias de paraíso!",
       description: "Aproveite as praias e trilhas de Cancún com todo o conforto e aventura.",
-      passagem: [4800, 5100], 
-      hospedagem: [1300, 1400],
+      passagem: [4800, 5100],
+      hospedagem: [
+        [1300, 1400, 1500],
+        [1200, 1250]
+      ],
       encargos: [1000, 1050],
       duracoes: [
       "05/10/2025 - 10/10/2025",
@@ -168,7 +183,7 @@ function Package() {
 
   const currentPackage = packageDetails[currentImageIndex];
   const passagem = currentPackage.passagem[hotelImageIndex];
-  const hospedagem = currentPackage.hospedagem[hotelImageIndex];
+  const hospedagem = currentPackage.hospedagem[hotelImageIndex][roomTypeIndex];
   const encargos = currentPackage.encargos[hotelImageIndex];
   const valorTotal = passagem + hospedagem + encargos;
 
@@ -341,20 +356,24 @@ function Package() {
               </div>
                   {/* Quarto */}
                   <h3 className="text-lg font-semibold mb-2">Quarto</h3>
-                  <div className="space-y-3 w-full">
-                    <select className="w-full border rounded px-2 py-1">
-                      {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
-                        <option key={idx}>{tipo}</option>
+                <div className="space-y-3 w-full">
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={roomTypeIndex}
+                    onChange={e => setRoomTypeIndex(Number(e.target.value))}
+                  >
+                    {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
+                      <option key={idx} value={idx}>{tipo}</option>
+                    ))}
+                  </select>
+                  <div className="justify-center mt-2">
+                    <ul className="space-y-1">
+                      {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
+                        <li key={idx} className="text-gray-600 text-xs">{item}</li>
                       ))}
-                    </select>
-                    <div className="justify-center mt-2">
-                      <ul className="space-y-1">
-                        {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
-                          <li key={idx} className="text-gray-600 text-xs">{item}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    </ul>
                   </div>
+                </div>
             </div>
           </div>
         </div>
