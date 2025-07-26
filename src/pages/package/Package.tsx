@@ -3,18 +3,26 @@ import italyImg from '../../assets/img/italy.jpg';
 import spainImg from '../../assets/img/spain.jpg';
 import veneza1Img from '../../assets/img/veneza1.jpg';
 import veneza2Img from '../../assets/img/veneza2.jpg';
-import fernandodenoronhaImg from '../../assets/img/fernandodenoronha.jpg';
+import hotelspain1Img from '../../assets/img/hotelspain1.jpg';
+import hotelspain2Img from '../../assets/img/hotelspain2.jpg';
+import cancunImg from '../../assets/img/cancun.jpg';
 import { Button } from '../../components/Button';
 import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
+import hmexico1Img from '../../assets/img/hmexico1.jpg';
+import hmexico2Img from '../../assets/img/hmexico2.jpg';
+
 
 function Package() {
-  const images = [italyImg, spainImg, fernandodenoronhaImg];
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = [italyImg, spainImg, cancunImg];
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-  const hotelImages = [veneza1Img, veneza2Img];
+  const hotelItalyImages = [veneza1Img, veneza2Img];
+  const hotelSpainImages = [hotelspain1Img, hotelspain2Img];
+  const hotelCancunImages = [hmexico1Img, hmexico2Img];
   const [hotelImageIndex, setHotelImageIndex] = useState(0);
+
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -31,34 +39,138 @@ function Package() {
   // Carrossel do hotel
   const prevHotelImage = () => {
     setHotelImageIndex((prev) =>
-      prev === 0 ? hotelImages.length - 1 : prev - 1
+      prev === 0 ? currentPackage.hotelImages.length - 1 : prev - 1
     );
   };
   const nextHotelImage = () => {
     setHotelImageIndex((prev) =>
-      prev === hotelImages.length - 1 ? 0 : prev + 1
+      prev === currentPackage.hotelImages.length - 1 ? 0 : prev + 1
     );
   };
 
   const packageDetails = [
     {
+      title: "Pacote Veneza Mágica – 5 dias de encanto!",
+      description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
+      passagem: [5524, 6000], 
+      hospedagem: [1567, 1800],
+      encargos: [1200, 1300],
+      duracoes: [
+      "01/06/2025 - 05/06/2025",
+      "10/07/2025 - 14/07/2025"
+    ],
+      hotelImages: hotelItalyImages,
+      hotelNames: [
+        "Hotel Danieli",
+        "Hotel Gritti Palace"
+      ],
+      hotelRatings: [4.8, 4.6],
+      prices: [5600, 8700],
+      hotelAddresses: [
+        "Riva degli Schiavoni, 4196, 30122 Venezia VE, Itália",
+        "Campo Santa Maria del Giglio, 2467, 30124 Venezia VE, Itália"
+      ],
+      roomTypes: [
+        ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"],
+        ["Standard - até 2 hóspedes", "Suite - até 4 hóspedes"]
+      ],
+      roomIncludes: [
+        [
+          "Café da manhã incluso",
+          "Vista para o canal",
+          "Wi-Fi grátis"
+        ],
+        [
+          "Café da manhã incluso",
+          "Piscina",
+          "Frigobar"
+        ]
+      ],
+    },
+    {
       title: "Pacote Espanha dos Sonhos – 7 dias inesquecíveis!",
       description: "Descubra o charme inigualável de Madrid com este pacote completo que reúne romance, cultura, gastronomia e história em um só destino. Ideal para casais, aventureiros solo ou amantes da arte e da arquitetura, esta viagem oferece uma imersão única na capital espanhola.",
-      price: 4999
+      passagem: [5000, 5200], 
+      hospedagem: [1100, 1200],
+      encargos: [900, 950],
+      duracoes: [
+      "20/07/2025 - 27/07/2025",
+      "15/08/2025 - 22/08/2025",
+      "10/09/2025 - 17/09/2025"
+    ],
+      hotelImages: hotelSpainImages,
+      hotelNames: [
+      "Hotel Danieli",
+      "Hotel Gritti Palace"
+    ],
+      hotelRatings: [4.8, 4.6],
+      prices: [7890, 8900],
+    hotelAddresses: [
+      "Calle de Alcalá, 66, 28009 Madrid, Espanha",
+      "Plaza de España, 18, 28008 Madrid, Espanha"
+    ],
+    roomTypes: [
+      ["Standard", "Deluxe", "Suite"],
+      ["Standard", "Suite"]
+    ],
+    roomIncludes: [
+      [
+        "Café da manhã incluso",
+        "Vista para a cidade",
+        "Wi-Fi grátis"
+      ],
+      [
+        "Café da manhã incluso",
+        "Academia",
+        "Frigobar"
+      ]
+    ],
     },
     {
-      title: "Pacote Itália Encantada – 10 dias de história e sabores!",
-      description: "Explore Roma, Florença e Veneza em uma viagem inesquecível pela Itália, com passeios guiados e experiências gastronômicas.",
-      price: 6999
-    },
-    {
-      title: "Pacote Noronha – 5 dias de paraíso!",
-      description: "Aproveite as praias e trilhas de Fernando de Noronha com todo o conforto e aventura.",
-      price: 3999
+      title: "Pacote Cancún – 5 dias de paraíso!",
+      description: "Aproveite as praias e trilhas de Cancún com todo o conforto e aventura.",
+      passagem: [4800, 5100], 
+      hospedagem: [1300, 1400],
+      encargos: [1000, 1050],
+      duracoes: [
+      "05/10/2025 - 10/10/2025",
+      "15/11/2025 - 20/11/2025"
+    ],
+      hotelImages: hotelCancunImages,
+      hotelNames: [
+      "Hotel NH Collection Madrid",
+      "Hotel Barceló Torre de Madrid"
+    ],
+      hotelRatings: [4.5, 4.3],
+      prices: [1100, 980],
+      hotelAddresses: [
+        "Boulevard Kukulcan Km 8.5, Zona Hotelera, 77500 Cancún, México",
+        "Boulevard Kukulcan Km 16.5, Zona Hotelera, 77500 Cancún, México"
+      ],
+      roomTypes: [
+        ["Standard", "Deluxe", "Suite"],
+        ["Standard", "Suite"]
+      ],
+      roomIncludes: [
+        [
+          "Café da manhã incluso",
+          "Vista para o mar",
+          "Piscina"
+        ],
+        [
+          "Café da manhã incluso",
+          "Frigobar",
+          "Wi-Fi grátis"
+        ]
+      ],
     }
   ];
 
   const currentPackage = packageDetails[currentImageIndex];
+  const passagem = currentPackage.passagem[hotelImageIndex];
+  const hospedagem = currentPackage.hospedagem[hotelImageIndex];
+  const encargos = currentPackage.encargos[hotelImageIndex];
+  const valorTotal = passagem + hospedagem + encargos;
 
   return (
     <div>
@@ -112,9 +224,9 @@ function Package() {
                   <div className="flex items-center space-x-3 mb-2">
                     <FaRegCalendarAlt className=" text-xl" />
                     <select className="w-full border rounded px-2 py-1">
-                      <option>20/07/2025 - 27/07/2025</option>
-                      <option>15/08/2025 - 22/08/2025</option>
-                      <option>10/09/2025 - 17/09/2025</option>
+                      {currentPackage.duracoes.map((duracao, idx) => (
+                        <option key={idx}>{duracao}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="flex items-center space-x-3 mb-2">
@@ -139,21 +251,21 @@ function Package() {
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between text-sm">
-                    <span>Viagem por pessoa:</span>
-                    <span className="font-semibold">R$ 5.524,00</span>
+                    <span>Passagens:</span>
+                    <span className="font-semibold">{`R$ ${passagem.toLocaleString('pt-BR')},00`}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Transporte:</span>
-                    <span className="font-semibold">R$ 1.567,00</span>
+                    <span>Hospedagem:</span>
+                    <span className="font-semibold">{`R$ ${hospedagem.toLocaleString('pt-BR')},00`}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Acomodação:</span>
-                    <span className="font-semibold">R$ 1.567,00</span>
+                    <span>Impostos e encargos:</span>
+                    <span className="font-semibold">{`R$ ${encargos.toLocaleString('pt-BR')},00`}</span>
                   </div>
                   <hr className="my-2" />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Valor total</span>
-                    <span>R$ 9.826,00</span>
+                    <span>{`R$ ${valorTotal.toLocaleString('pt-BR')},00`}</span>
                   </div>
                 </div>
               </div>
@@ -165,27 +277,31 @@ function Package() {
             <div className="transition duration-300 hover:scale-105 bg-[#FFFFFF] rounded-lg shadow-md p-4">
               <h3 className="text-lg font-semibold mb-4">Hotel</h3>
               <div className="space-y-4">
-                <select className="w-full border rounded px-2 py-1">
-                  <option>Hotel Posta</option>
-                  <option>Palazzo Artemide</option>
-                  <option>Villa Fisher</option>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={hotelImageIndex}
+                  onChange={e => setHotelImageIndex(Number(e.target.value))}
+                >
+                  {currentPackage.hotelNames.map((hotel, index) => (
+                    <option key={index} value={index}>{hotel}</option>
+                  ))}
                 </select>
                 <div className="rounded-xl p-2">
                   <div className="flex flex-col items-center">
-                    <h4 className="font-semibold">Hotel De L'Aqueduc</h4>
+                    <h4 className="font-semibold">{currentPackage.hotelNames[hotelImageIndex]}</h4>
                     <div className="flex items-center space-x-1 mb-1">
                       <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
                         <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                       </svg>
-                      <span className="text-sm font-medium">4.1</span>
+                      <span className="text-sm font-medium">{currentPackage.hotelRatings[hotelImageIndex]}</span>
                     </div>        
                     {/* Imagem */}
-                        <div className="relative rounded-lg overflow-hidden mb-6">
-                          <img
-                            src={hotelImages[hotelImageIndex]}
-                            alt="Imagem do hotel"
-                            className="w-full h-64 object-cover"
-                          />
+                    <div className="relative rounded-lg overflow-hidden mb-6">
+                      <img
+                        src={currentPackage.hotelImages[hotelImageIndex]}
+                        alt="Imagem do hotel"
+                        className="w-full h-64 object-cover"
+                      />
                           <button
                             onClick={nextHotelImage}
                             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
@@ -199,7 +315,7 @@ function Package() {
                             <FaChevronLeft className="w-4 h-4" />
                           </button>
                           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                            {hotelImages.map((_, index) => (
+                            {hotelItalyImages.map((_, index) => (
                               <div
                                 key={index}
                                 className={`w-2 h-2 rounded-full ${index === hotelImageIndex ? "bg-white" : "bg-white/50"}`}
@@ -209,7 +325,7 @@ function Package() {
                         </div>
                     {/* Endereço */}
                     <p className="text-sm text-gray-600 text-center mb-2">
-                      10 Rue Philippe de Girard, 75010 Paris, França
+                      {currentPackage.hotelAddresses[hotelImageIndex]}
                     </p>
                     {/* Informações do hotel */}
                     <a
@@ -227,15 +343,15 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                   <div className="space-y-3 w-full">
                     <select className="w-full border rounded px-2 py-1">
-                      <option>Standard - até 2 hóspedes</option>
-                      <option>Deluxe - até 3 hóspedes</option>
-                      <option>Suite - até 4 hóspedes</option>
+                      {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
+                        <option key={idx}>{tipo}</option>
+                      ))}
                     </select>
                     <div className="justify-center mt-2">
                       <ul className="space-y-1">
-                        <li className="text-gray-600 text-xs">Café da manhã incluso</li>
-                        <li className="text-gray-600 text-xs">Vista para o mar</li>
-                        <li className="text-gray-600 text-xs">Frigobar</li>
+                        {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
+                          <li key={idx} className="text-gray-600 text-xs">{item}</li>
+                        ))}
                       </ul>
                     </div>
                   </div>
