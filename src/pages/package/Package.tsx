@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import italyImg from '../../assets/img/italy.jpg';
 import spainImg from '../../assets/img/spain.jpg';
+import veneza1Img from '../../assets/img/veneza1.jpg';
+import veneza2Img from '../../assets/img/veneza2.jpg';
 import fernandodenoronhaImg from '../../assets/img/fernandodenoronha.jpg';
 import { Button } from '../../components/Button';
 import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
+import Footer from '../../components/Footer';
 
 function Package() {
   const images = [italyImg, spainImg, fernandodenoronhaImg];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const hotelImages = [veneza1Img, veneza2Img];
+  const [hotelImageIndex, setHotelImageIndex] = useState(0);
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -19,6 +25,18 @@ function Package() {
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
       prev === images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  // Carrossel do hotel
+  const prevHotelImage = () => {
+    setHotelImageIndex((prev) =>
+      prev === 0 ? hotelImages.length - 1 : prev - 1
+    );
+  };
+  const nextHotelImage = () => {
+    setHotelImageIndex((prev) =>
+      prev === hotelImages.length - 1 ? 0 : prev + 1
     );
   };
 
@@ -43,6 +61,7 @@ function Package() {
   const currentPackage = packageDetails[currentImageIndex];
 
   return (
+    <div>
     <div className="min-h-screen bg-gradient-to-r h-full from-[#003194] to-[#FFA62B] flex justify-center items-center">
       <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
         <h1 className="text-2xl md:text-3xl font-bold mb-4">
@@ -161,13 +180,33 @@ function Package() {
                       <span className="text-sm font-medium">4.1</span>
                     </div>        
                     {/* Imagem */}
-                    <div className="w-32 h-24 rounded-lg overflow-hidden mb-2">
-                      <img
-                        src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/29/9a/d1/89/terrazza-vista-mare-per.jpg?w=1400&h=-1&s=1"
-                        alt="Hotel"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                        <div className="relative rounded-lg overflow-hidden mb-6">
+                          <img
+                            src={hotelImages[hotelImageIndex]}
+                            alt="Imagem do hotel"
+                            className="w-full h-64 object-cover"
+                          />
+                          <button
+                            onClick={nextHotelImage}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                          >
+                            <FaChevronRight className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={prevHotelImage}
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                          >
+                            <FaChevronLeft className="w-4 h-4" />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                            {hotelImages.map((_, index) => (
+                              <div
+                                key={index}
+                                className={`w-2 h-2 rounded-full ${index === hotelImageIndex ? "bg-white" : "bg-white/50"}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
                     {/* Endereço */}
                     <p className="text-sm text-gray-600 text-center mb-2">
                       10 Rue Philippe de Girard, 75010 Paris, França
@@ -212,6 +251,8 @@ function Package() {
             </div>
       </div>
     </div>
+    <Footer />
+  </div>
   );
 }
 
