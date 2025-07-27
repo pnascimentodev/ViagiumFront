@@ -8,8 +8,8 @@ import pix from "../assets/img/pix.svg"
 
 function Footer(){
     return(
-        <footer className="bg-[#003194E6] text-white">
-            <div className="container mx-auto px-4 py-12">
+        <footer className="bg-[#003194E6] text-white flex flex-col items-center justify-center">
+            <div className="w-full max-w-6xl p-6 mb-8">
                 <div className="mb-8">
                     <h2 className="text-2xl text-[#FFFFFF] md:text-3xl font-bold mb-4">Descubra o mundo com quem entende de viagem</h2>
                 </div>
