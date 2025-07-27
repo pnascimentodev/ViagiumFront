@@ -41,7 +41,8 @@ import {
   MdElectricMeter,
 } from "react-icons/md"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import axios from "axios"
 
 // Interface para os adicionais vindos da API
 interface Amenity {
@@ -85,7 +86,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 }
 
 // Função para converter slug em label legível
-const slugToLabel = (slug: string): string => {
+function slugToLabel(slug: string): string {
   const labelMap: Record<string, string> = {
     "banheira": "Banheira",
     "varanda": "Varanda",
@@ -126,7 +127,7 @@ const slugToLabel = (slug: string): string => {
 
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
-  const [availableRooms, setAvailableRooms] = useState("15")
+  const [availableRooms, setAvailableRooms] = useState("10") // Valor inicial para o campo de número de quartos disponíveis
   const [activeTab, setActiveTab] = useState("smart")
 
   // Estados para geração automática
@@ -139,60 +140,73 @@ function RoomType() {
   // Estados para adição manual
   const [currentRoomNumber, setCurrentRoomNumber] = useState("")
 
-  // Estados para diferenciais
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
-  const [amenities, setAmenities] = useState<Amenity[]>([])
-  const [loadingAmenities, setLoadingAmenities] = useState(true)
-  const [errorAmenities, setErrorAmenities] = useState<string | null>(null)
-  const [currentAmenitiesPage, setCurrentAmenitiesPage] = useState(0)
+  // Estados para diferenciais do quarto
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]) // Lista de diferenciais selecionados
+  const [amenities, setAmenities] = useState<Amenity[]>([]) // Lista de diferenciais disponíveis
+  const [loadingAmenities, setLoadingAmenities] = useState(true) // Estado para indicar se os diferenciais estão sendo carregados
+  const [errorAmenities, setErrorAmenities] = useState<string | null>(null) // Estado para erros ao carregar diferenciais
+  const [currentAmenitiesPage, setCurrentAmenitiesPage] = useState(0) // Página atual dos diferenciais (é um tipo de array, o 0 é a primeira página, a que vai ser mostrada inicialmente)
+
+  // Estados para upload de imagem
+  const [selectedImage, setSelectedImage] = useState<File | null>(null) // Estado para o arquivo selecionado
+  const [uploadingImage, setUploadingImage] = useState(false) // Estado para indicar se está enviando a imagem
+  const [uploadError, setUploadError] = useState<string | null>(null) // Estado para erros de upload
+  
+  // Referência para o input de arquivo (oculto)
+  const fileInputRef = useRef<HTMLInputElement>(null) 
 
   // Constantes para paginação dos adicionais
   const ITEMS_PER_PAGE = 12 // 3 colunas x 4 itens
-  const totalAmenitiesPages = Math.ceil(amenities.length / ITEMS_PER_PAGE)
-  const startIndex = currentAmenitiesPage * ITEMS_PER_PAGE
-  const endIndex = startIndex + ITEMS_PER_PAGE
-  const currentPageAmenities = amenities.slice(startIndex, endIndex)
+  const totalAmenitiesPages = Math.ceil(amenities.length / ITEMS_PER_PAGE) // Total de páginas de diferenciais
+  const startIndex = currentAmenitiesPage * ITEMS_PER_PAGE // Índice inicial da página atual
+  const endIndex = startIndex + ITEMS_PER_PAGE // Índice final da página atual
+  const currentPageAmenities = amenities.slice(startIndex, endIndex) // Diferenciais da página atual
 
-  const goToNextAmenitiesPage = () => {
-    if (currentAmenitiesPage < totalAmenitiesPages - 1) {
-      setCurrentAmenitiesPage(currentAmenitiesPage + 1)
+  // Função para ir para a próxima página de diferenciais
+  function goToNextAmenitiesPage() {
+    if (currentAmenitiesPage < totalAmenitiesPages - 1) { // Verifica se não é a última página
+      setCurrentAmenitiesPage(currentAmenitiesPage + 1) // Avança para a próxima página
     }
   }
 
-  const goToPrevAmenitiesPage = () => {
-    if (currentAmenitiesPage > 0) {
-      setCurrentAmenitiesPage(currentAmenitiesPage - 1)
+  // Função para ir para a página anterior de diferenciais
+  function goToPrevAmenitiesPage() {
+    if (currentAmenitiesPage > 0) { // Verifica se não é a primeira página
+      setCurrentAmenitiesPage(currentAmenitiesPage - 1) // Volta para a página anterior
     }
   }
 
   // Buscar amenities da API
   useEffect(() => {
-    const fetchAmenities = async () => {
+    const fetchAmenities = async () => { // Função para buscar os diferenciais da API
       try {
-        setLoadingAmenities(true)
-        const response = await fetch('https://localhost:7259/api/Amenity')
+        setLoadingAmenities(true) // Indica que os diferenciais estão sendo carregados
+        const response = await fetch('https://localhost:7259/api/Amenity') // Requisição para a API
         
-        if (!response.ok) {
-          throw new Error(`Erro na API: ${response.status}`)
+        if (!response.ok) { // Verifica se a resposta foi bem sucedida
+          throw new Error(`Erro na API: ${response.status}`) // Lança erro se a resposta não for
         }
         
-        const data: Amenity[] = await response.json()
-        setAmenities(data)
-        setErrorAmenities(null)
+        // Converte a resposta em JSON e atualiza o estado
+        const data: Amenity[] = await response.json() // Converte a resposta em JSON
+        setAmenities(data) // Atualiza o estado com os diferenciais recebidos
+        setErrorAmenities(null) // Limpa qualquer erro anterior
+
       } catch (error) {
-        console.error('Erro ao buscar amenities:', error)
-        setErrorAmenities('Erro ao carregar os diferenciais. Tente novamente.')
+        console.error('Erro ao buscar amenities:', error) // Log do erro no console
+        setErrorAmenities('Erro ao carregar os diferenciais. Tente novamente.') // Define mensagem de erro
         setAmenities([]) // Fallback para array vazio
+
       } finally {
-        setLoadingAmenities(false)
+        setLoadingAmenities(false) // Indica que o carregamento foi concluído
       }
     }
 
-    fetchAmenities()
+    fetchAmenities() // Chama a função para buscar os diferenciais
   }, [])
 
-  // Geração automática por intervalo
-  const generateRangeNumbers = () => {
+  // Função para Geração automática de números de quartos por intervalo (Intervalor) 
+  function generateRangeNumbers() {
     if (!startNumber || !endNumber) return
 
     const start = Number.parseInt(startNumber)
@@ -210,8 +224,8 @@ function RoomType() {
     setEndNumber("")
   }
 
-  // Geração por andar
-  const generateFloorNumbers = () => {
+  // Função para Geração por andar de números de quartos (Por andar)
+  function generateFloorNumbers() {
     if (!floorPrefix || !roomsPerFloor || !startingRoom) return
 
     const floors = floorPrefix.split(",").map((f) => f.trim())
@@ -233,8 +247,8 @@ function RoomType() {
     setStartingRoom("")
   }
 
-  // Geração automática inteligente
-  const generateSmartNumbers = () => {
+  // Função para Geração automática inteligente de números de quartos (Automatico)
+  function generateSmartNumbers() {
     const count = Number.parseInt(availableRooms)
     if (!count) return
 
@@ -249,36 +263,135 @@ function RoomType() {
     setRoomNumbers(newNumbers)
   }
 
-  const addRoomNumber = () => {
+  // Função para adicionar um número de quarto manualmente a lista de números de quartos
+  function addRoomNumber() {
     if (currentRoomNumber.trim() && !roomNumbers.includes(currentRoomNumber.trim())) {
       setRoomNumbers([...roomNumbers, currentRoomNumber.trim()])
       setCurrentRoomNumber("")
     }
   }
 
-  const removeRoomNumber = (numberToRemove: string) => {
+  // Função para remover um número de quarto específico
+  function removeRoomNumber(numberToRemove: string) {
     setRoomNumbers(roomNumbers.filter((num) => num !== numberToRemove))
   }
 
-  const clearAllRooms = () => {
+  // Função para limpar todos os números de quartos (na aba automático)
+  function clearAllRooms() {
     setRoomNumbers([])
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  // Função para lidar com o pressionamento da tecla Enter no campo de número de quarto (na aba manual)
+  function handleKeyPress(e: React.KeyboardEvent) {
     if (e.key === "Enter") {
       e.preventDefault()
       addRoomNumber()
     }
   }
 
-  const toggleAmenity = (amenitySlug: string) => {
+  // Função para alternar a seleção de um diferencial (basicamente um interruptor (toggle) para selecionar e desselecionar diferenciais do quarto.)
+  function toggleAmenity(amenitySlug: string) {
+    // Se o amenitySlug JÁ ESTÁ na lista de selecionados:
     setSelectedAmenities((prev) =>
-      prev.includes(amenitySlug) ? prev.filter((slug) => slug !== amenitySlug) : [...prev, amenitySlug],
+      prev.includes(amenitySlug) 
+    ? prev.filter((slug) => slug !== amenitySlug) // REMOVE da lista 
+    : [...prev, amenitySlug], // ADICIONA na lista
     )
   }
 
-  const removeAmenity = (amenityToRemove: string) => {
+  // Função para remover um diferencial selecionado
+  function removeAmenity(amenityToRemove: string) {
     setSelectedAmenities(selectedAmenities.filter((amenity) => amenity !== amenityToRemove))
+  }
+
+  // Função para abrir o seletor de arquivos
+  function handleImageButtonClick() {
+    fileInputRef.current?.click()
+  }
+
+  // Função para validar o arquivo selecionado
+  function validateImageFile(file: File): string | null {
+    const maxSize = 5 * 1024 * 1024 // 5MB em bytes
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg']
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'Formato não suportado. Use apenas PNG ou JPG.'
+    }
+
+    if (file.size > maxSize) {
+      return 'Arquivo muito grande. Máximo 5MB.'
+    }
+
+    return null
+  }
+
+  // Função para processar arquivo selecionado
+  function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    setUploadError(null)
+
+    if (!file) return
+
+    // Validar arquivo
+    const validationError = validateImageFile(file)
+    if (validationError) {
+      setUploadError(validationError)
+      return
+    }
+
+    // Armazenar arquivo selecionado
+    setSelectedImage(file)
+  }
+
+  // Função para fazer upload da imagem para a API (VERIFICAR)
+  async function uploadImageToAPI(file: File): Promise<string | null> {
+    try {
+      setUploadingImage(true)
+      setUploadError(null)
+
+      // Criar FormData para envio multipart/form-data
+      const formData = new FormData()
+      formData.append('image', file) // 'image' é o nome do campo esperado pela API
+
+      // Fazer requisição para API
+      const response = await axios.post('https://localhost:7259/api/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000, // 30 segundos timeout
+      })
+
+      // Retornar URL da imagem ou ID conforme sua API retorna
+      return response.data.imageUrl || response.data.url || response.data.id
+
+    } catch (error: any) {
+      console.error('Erro no upload:', error)
+      
+      if (error.code === 'ECONNABORTED') {
+        setUploadError('Timeout no upload. Tente novamente.')
+      } else if (error.response?.status === 413) {
+        setUploadError('Arquivo muito grande para o servidor.')
+      } else if (error.response?.status >= 400 && error.response?.status < 500) {
+        setUploadError('Erro na requisição. Verifique o arquivo.')
+      } else {
+        setUploadError('Erro no servidor. Tente novamente.')
+      }
+      
+      return null
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  // Função para remover imagem selecionada
+  function removeSelectedImage() {
+    setSelectedImage(null)
+    setUploadError(null)
+    
+    // Limpar input file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   return (
@@ -312,7 +425,7 @@ function RoomType() {
                 <textarea
                   id="description"
                   placeholder="Descreva as características e comodidades do quarto..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px] resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[230px] resize-none"
                 />
               </div>
             </div>
@@ -362,12 +475,81 @@ function RoomType() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Imagem do Quarto</label>
+                
+                {/* Input de arquivo oculto */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+
+                {/* Área de upload/preview */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <FaUpload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-1">
-                    Selecionar Imagem
-                  </button>
-                  <p className="text-xs text-gray-500">PNG, JPG até 5MB</p>
+                  {selectedImage ? (
+                    // Arquivo selecionado - mostra apenas o nome
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <FaUpload className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {selectedImage.name}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {(selectedImage.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          type="button"
+                          onClick={handleImageButtonClick}
+                          disabled={uploadingImage}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                        >
+                          Trocar Arquivo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeSelectedImage}
+                          disabled={uploadingImage}
+                          className="px-3 py-1 text-sm border border-red-300 rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:opacity-50"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Estado inicial - sem arquivo
+                    <>
+                      <FaUpload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                      <button
+                        type="button"
+                        onClick={handleImageButtonClick}
+                        disabled={uploadingImage}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-1 disabled:opacity-50"
+                      >
+                        {uploadingImage ? 'Enviando...' : 'Selecionar Imagem'}
+                      </button>
+                      <p className="text-xs text-gray-500">PNG, JPG até 5MB</p>
+                    </>
+                  )}
+
+                  {/* Indicador de upload */}
+                  {uploadingImage && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span className="text-sm text-blue-600">Enviando imagem...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mensagem de erro */}
+                  {uploadError && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-600">{uploadError}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
