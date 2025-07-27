@@ -8,7 +8,7 @@ import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassa
 import { validateCPF, validatePassaporte } from "../../utils/validations.ts";
 import { fetchAddressByCEP } from "../../utils/cepApi";
 import type { AddressData } from "../../utils/cepApi";
-import Navbar from "../../components/Navbar.tsx";
+import AffiliatePageNavbar from "../../components/navbars/AffiliatePageNavbar.tsx";
 import Footer from "../../components/Footer.tsx";
 
 function AffiliatePage() {
@@ -243,7 +243,6 @@ function AffiliatePage() {
     axios.post("https://localhost:7259/api/affiliate/create", data)
       .then(() => {
         alert("Cadastro realizado com sucesso!");
-        // Aqui você pode limpar o formulário se quiser
       })
       .catch((error) => {
         const msg = error.response?.data?.message || error.message || "Erro ao cadastrar afiliado.";
@@ -260,7 +259,7 @@ function AffiliatePage() {
 
         <div className="flex flex-col bg-gradient-to-b from-[#00319400] to-[#003194FF]">
 
-          <Navbar />
+          <AffiliatePageNavbar />
 
           {/* Hero Section */}
           <div className="flex flex-col justify-center items-center text-center max-w-3xl mx-auto h-[50vh] p-5 gap-4">

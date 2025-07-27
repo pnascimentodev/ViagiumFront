@@ -4,7 +4,7 @@ import { FaUser, FaBars, FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 
-function Navbar() {
+function AffiliatePageNavbar() {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const navLinks = (
@@ -93,4 +93,4 @@ function Navbar() {
     );
 }
 
-export default Navbar;
+export default AffiliatePageNavbar;
