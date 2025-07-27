@@ -1,6 +1,7 @@
 import { FaPlus, FaUser, FaStar, FaEllipsisV, FaEdit, FaPowerOff, FaBed, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useState, useEffect } from 'react'
+import ModalHotel from "./components/ModalHotel"
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -36,6 +37,17 @@ const chartConfig = {
 function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
+
+  // Modal Hotel Handle Abrir e fechar
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   const hotels = [
     { name: "Grand Plaza Hotel", available: 118, total: 355, occupied: 237, percentage: 33 },
@@ -170,7 +182,7 @@ function AffiliateDashboard() {
           {/* Logo e título */}
           <div className="flex items-center gap-3">
             <div className="flex items-center flex-shrink-0">
-              <img 
+              <img
                 src="/../src/assets/img/logo.svg"
                 alt="Viagium Logo"
                 className="h-12"
@@ -182,10 +194,15 @@ function AffiliateDashboard() {
 
           {/* Botões e perfil */}
           <div className="flex items-center gap-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+            <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
               <FaPlus className="w-4 h-4" />
               Add Hotel
             </button>
+            {/* Chamada do Modal de cadastro Hotel */}
+            <ModalHotel
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+            />
 
             <div className="flex items-center gap-2 text-gray-600">
               <span className="text-sm">Bem vindo</span>
@@ -210,9 +227,9 @@ function AffiliateDashboard() {
                     data={hotels}
                     margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                     <XAxis type="number" />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
+                    <YAxis
+                      type="category"
+                      dataKey="name"
                       width={120}
                       tick={{ fontSize: 12 }}
                     />
@@ -230,10 +247,10 @@ function AffiliateDashboard() {
                       fill="#4ade80"
                       name="Disponíveis"
                     />
-                    <Bar 
-                      dataKey="occupied" 
-                      stackId="a" 
-                      fill="#f87171" 
+                    <Bar
+                      dataKey="occupied"
+                      stackId="a"
+                      fill="#f87171"
                       name="Ocupados"
                     />
                   </BarChart>
@@ -267,11 +284,11 @@ function AffiliateDashboard() {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="earnings" 
-                      stroke={chartConfig.earnings.color} 
-                      strokeWidth={2} 
+                    <Line
+                      type="monotone"
+                      dataKey="earnings"
+                      stroke={chartConfig.earnings.color}
+                      strokeWidth={2}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -291,21 +308,19 @@ function AffiliateDashboard() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setStatusFilter('Ativo')}
-                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                      statusFilter === 'Ativo'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'Ativo'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     Ativos
                   </button>
                   <button
                     onClick={() => setStatusFilter('Inativo')}
-                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                      statusFilter === 'Inativo'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'Inativo'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     Inativos
                   </button>
@@ -329,10 +344,10 @@ function AffiliateDashboard() {
                             <p className="text-sm text-blue-800">{hotel.rooms}</p>
                             <p className="text-sm text-blue-800">{hotel.location}</p>
                           </div>
-                          
+
                           {/* Dropdown Menu */}
                           <div className="relative" onClick={(e) => e.stopPropagation()}>
-                            <button 
+                            <button
                               onClick={(e) => handleDropdownClick(filteredIndex, e)}
                               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -344,23 +359,23 @@ function AffiliateDashboard() {
                                 <div className="py-1">
                                   {statusFilter === 'Ativo' ? (
                                     <>
-                                      <button 
+                                      <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
                                         onClick={() => handleEditHotel(hotel)}
                                       >
                                         <FaEdit className="text-blue-600" />
                                         <span>Editar hotel</span>
                                       </button>
-                                      
-                                      <button 
+
+                                      <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
                                         onClick={() => handleManageRooms(hotel)}
                                       >
                                         <FaBed className="text-orange-600" />
                                         <span>Gerenciar tipos de quarto</span>
                                       </button>
-                                      
-                                      <button 
+
+                                      <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600"
                                         onClick={() => handleDeactivateHotel(hotel)}
                                       >
@@ -369,7 +384,7 @@ function AffiliateDashboard() {
                                       </button>
                                     </>
                                   ) : (
-                                    <button 
+                                    <button
                                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-green-600"
                                       onClick={() => handleActivateHotel(hotel)}
                                     >
@@ -387,12 +402,11 @@ function AffiliateDashboard() {
                             <FaStar className="w-3 h-3 text-yellow-400 fill-current" />
                             <span className="text-sm font-medium">{hotel.rating}</span>
                           </div>
-                          <span 
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              hotel.status === "Ativo" 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${hotel.status === "Ativo"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                              }`}
                           >
                             {hotel.status}
                           </span>
@@ -418,17 +432,17 @@ function AffiliateDashboard() {
                           {reservation.status}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mb-1">
                         <FaMapMarkerAlt className="w-3 h-3 text-blue-800" />
                         <p className="text-sm text-blue-800">{reservation.hotel}</p>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mb-1">
                         <FaUser className="w-3 h-3 text-blue-800" />
                         <p className="text-sm text-blue-800">{reservation.guest}</p>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <FaCalendarAlt className="w-3 h-3 text-blue-800" />
                         <p className="text-sm text-blue-800">{reservation.dates}</p>
