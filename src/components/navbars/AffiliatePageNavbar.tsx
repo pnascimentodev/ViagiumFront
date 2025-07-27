@@ -10,19 +10,19 @@ function AffiliatePageNavbar() {
     const navLinks = (
         <>
             <a
-                href="#vantagens"
+                href="/affiliatepage#vantagens"
                 className="hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium text-lg"
             >
                 Vantagens
             </a>
             <a
-                href="#nossos-parceiros"
+                href="/affiliatepage#nossos-parceiros"
                 className="hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium text-lg"
             >
                 Nossos Parceiros
             </a>
             <a
-                href="#cadastro-se"
+                href="/affiliatepage#cadastre-se"
                 className="hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium text-lg"
             >
                 Cadastre-se

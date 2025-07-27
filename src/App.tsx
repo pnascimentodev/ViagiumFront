@@ -12,10 +12,12 @@ import EmailClient from './pages/password/EmailClient'
 import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
+import HomePage from './pages/home/HomePage'
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomePage />} />
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />

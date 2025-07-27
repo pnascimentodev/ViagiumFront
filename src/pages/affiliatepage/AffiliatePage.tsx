@@ -1,6 +1,6 @@
-import { FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn } from "react-icons/fa";
+import HotelCarousel from "../../components/HotelCarousel";
 import "keen-slider/keen-slider.min.css";
-import { useKeenSlider } from "keen-slider/react";
 import { useState } from "react";
 import axios from "axios";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateTerms } from "../../utils/validations.ts";
@@ -12,52 +12,8 @@ import AffiliatePageNavbar from "../../components/navbars/AffiliatePageNavbar.ts
 import Footer from "../../components/Footer.tsx";
 
 function AffiliatePage() {
-  // Carrossel de imagens
-  const hotels = [
-    {
-      name: "Hotel Paris Tower",
-      image: "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg",
-    },
-    {
-      name: "Hotel Vista Mar",
-      image: "https://images.pexels.com/photos/21014/pexels-photo.jpg",
-    },
-    {
-      name: "Hotel Jardim Europa",
-      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-    },
-    {
-      name: "Hotel Central Palace",
-      image: "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg",
-    },
-    {
-      name: "Hotel Lago Azul",
-      image: "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg",
-    },
-  ];
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [sliderRef, instanceRef] = useKeenSlider({
-    initial: 0,
-    loop: true,
-    slides: {
-      perView: 1.2,
-      spacing: 6,
-    },
-    breakpoints: {
-      '(min-width: 640px)': {
-        slides: { perView: 1.5, spacing: 8 },
-      },
-      '(min-width: 768px)': {
-        slides: { perView: 2.2, spacing: 10 },
-      },
-      '(min-width: 1024px)': {
-        slides: { perView: 3.2, spacing: 12 },
-      },
-    },
-    slideChanged(slider) {
-      setCurrentSlide(slider.track.details.rel);
-    },
-  });
+
+
   // Form state
   const [form, setForm] = useState({
     companyName: "",
@@ -337,56 +293,14 @@ function AffiliatePage() {
 
       {/* Carrossel */}
       <div id="nossos-parceiros" className="w-full flex flex-col items-center px-5 py-20 bg-[#002673]">
-
         <h2 className="text-5xl font-bold text-[#ffffff] mb-15">Nossos parceiros</h2>
-
-        <div className="relative w-full max-w-6xl">
-
-          <div ref={sliderRef} className="keen-slider rounded-lg overflow-visible">
-
-            {hotels.map((hotel, idx) => (
-              <div key={idx} className="keen-slider__slide flex items-center justify-center">
-                <div className="bg-gray-100 rounded-xl shadow-md flex items-center justify-center w-[85%] h-90 md:h-90 mx-auto transition-transform duration-300 relative overflow-hidden">
-                  <img src={hotel.image} alt={hotel.name} className="object-cover w-full h-full rounded-xl" />
-                  <div className="absolute inset-0 flex items-center justify-center ">
-                    <span className="text-white font-bold text-3xl px-8 py-2 rounded-lg text-center" style={{ textShadow: "2px 2px 8px #000" }}>{hotel.name}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Paginação (dots) sobre o carrossel */}
-            <div className="absolute left-0 right-0 bottom-4 flex justify-center gap-2 z-20 pointer-events-none">
-              {hotels.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => instanceRef.current?.moveToIdx(idx)}
-                  className={`w-3 h-3 rounded-full transition border border-blue-700 ${currentSlide === idx ? 'bg-blue-700' : 'bg-white'} pointer-events-auto`}
-                  aria-label={`Ir para o slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-          {/* Botões de navegação */}
-          <button
-            onClick={() => instanceRef.current?.prev()}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-blue-700 rounded-full p-2 shadow-md z-10 transition"
-            aria-label="Anterior"
-          >
-            <FaChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => instanceRef.current?.next()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-blue-700 rounded-full p-2 shadow-md z-10 transition"
-            aria-label="Próximo"
-          >
-            <FaChevronRight className="w-5 h-5" />
-          </button>
+        <div className="max-w-6xl w-full px-5 py-10 mx-auto">
+          <HotelCarousel />
         </div>
       </div>
 
       {/* Formulário de Afiliados */}
-      <div id="cadastro-se" className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
+      <div id="cadastre-se" className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <h3 className="text-2xl font-bold text-[#003194] mb-8 text-left">Cadastro do afiliado</h3>
           <form className="space-y-6" onSubmit={handleSubmit}>
