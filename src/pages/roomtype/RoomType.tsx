@@ -1,5 +1,4 @@
-import type React from "react"
-import { useState } from "react"
+// import type React from "react"
 import {
   FaPlus,
   FaTimes,
@@ -8,17 +7,122 @@ import {
   FaMagic,
   FaHashtag,
   FaBuilding,
-  FaWifi,
-  FaSnowflake,
-  FaCar,
-  FaWater,
-  FaBath,
-  FaUtensils,
-  FaTv,
-  FaCoffee,
-  FaDumbbell,
-  FaTshirt,
 } from "react-icons/fa"
+
+import {
+  MdBathtub,
+  MdBalcony,
+  MdWaves,
+  MdBed,
+  MdWeekend,
+  MdDesk,
+  MdLock,
+  MdBlender,
+  MdCheckroom,
+  MdAccessible,
+  MdHearing,
+  MdPower,
+  MdKitchen,
+  MdMicrowave,
+  MdFlatware,
+  MdSmartDisplay,
+  MdCurtains,
+  MdThermostat,
+  MdVoiceChat,
+  MdLight,
+  MdShower,
+  MdCoffee,
+  MdAir,
+  MdCreditCard,
+  MdDining,
+  MdPool,
+  MdChildFriendly,
+  MdRectangle,
+  MdElectricMeter,
+} from "react-icons/md"
+
+import { useState, useEffect } from "react"
+
+// Interface para os adicionais vindos da API
+interface Amenity {
+  amenityId: number
+  slug: string
+  iconName: string
+}
+
+// Mapeamento dos ícones do Material Design
+const iconMap: Record<string, React.ComponentType<any>> = {
+  MdBathtub,
+  MdBalcony,
+  MdWaves,
+  MdBed,
+  MdWeekend,
+  MdDesk,
+  MdElectricKettle: MdElectricMeter, // Fallback para chaleira elétrica
+  MdLock,
+  MdMirror: MdRectangle, // Fallback para espelho
+  MdBlender,
+  MdCheckroom,
+  MdAccessible,
+  MdHearing,
+  MdPower,
+  MdKitchen,
+  MdMicrowave,
+  MdFlatware,
+  MdFridge: MdKitchen, // Fallback para geladeira
+  MdSmartDisplay,
+  MdCurtains,
+  MdThermostat,
+  MdVoiceChat,
+  MdLight,
+  MdShower,
+  MdCoffee,
+  MdAir,
+  MdCreditCard,
+  MdDining,
+  MdPool,
+  MdChildFriendly,
+}
+
+// Função para converter slug em label legível
+const slugToLabel = (slug: string): string => {
+  const labelMap: Record<string, string> = {
+    "banheira": "Banheira",
+    "varanda": "Varanda",
+    "vista-mar": "Vista para o Mar",
+    "cama-king-size": "Cama King Size",
+    "cama-queen-size": "Cama Queen Size",
+    "sofa-cama": "Sofá Cama", 
+    "mesa-trabalho": "Mesa de Trabalho",
+    "chaleira-eletrica": "Chaleira Elétrica",
+    "cofre": "Cofre",
+    "espelho-corpo-inteiro": "Espelho de Corpo Inteiro",
+    "secador-cabelo": "Secador de Cabelo",
+    "roupao-chinelos": "Roupão e Chinelos",
+    "acessivel-pcd": "Acessível PCD",
+    "isolamento-acustico": "Isolamento Acústico",
+    "tomada-perto-cama": "Tomada Perto da Cama",
+    "cozinha-acoplada": "Cozinha Acoplada",
+    "micro-ondas": "Micro-ondas",
+    "utensilios-cozinha": "Utensílios de Cozinha",
+    "geladeira": "Geladeira",
+    "area-estar": "Área de Estar",
+    "smart-tv": "Smart TV",
+    "cortinas-blackout": "Cortinas Blackout",
+    "controle-temperatura": "Controle de Temperatura",
+    "assistente-virtual": "Assistente Virtual",
+    "iluminacao-ambiente": "Iluminação Ambiente",
+    "chuveiro-aquecido": "Chuveiro Aquecido",
+    "maquina-cafe": "Máquina de Café",
+    "sem-carpete": "Sem Carpete",
+    "entrada-cartao": "Entrada por Cartão",
+    "espaco-refeicoes": "Espaço para Refeições",
+    "piscina-privativa": "Piscina Privativa",
+    "berco-disponivel": "Berço Disponível",
+  }
+  
+  return labelMap[slug] || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
 
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
@@ -37,21 +141,55 @@ function RoomType() {
 
   // Estados para diferenciais
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
-  // const [customAmenity, setCustomAmenity] = useState("")
+  const [amenities, setAmenities] = useState<Amenity[]>([])
+  const [loadingAmenities, setLoadingAmenities] = useState(true)
+  const [errorAmenities, setErrorAmenities] = useState<string | null>(null)
+  const [currentAmenitiesPage, setCurrentAmenitiesPage] = useState(0)
 
-  // Lista de diferenciais pré-definidos
-  const predefinedAmenities = [
-    { id: "ar-condicionado", label: "Ar Condicionado", icon: FaSnowflake },
-    { id: "frigobar", label: "Frigobar", icon: FaCoffee },
-    { id: "wifi", label: "Wi-Fi Gratuito", icon: FaWifi },
-    { id: "piscina-privativa", label: "Piscina Privativa", icon: FaWater },
-    { id: "banheira", label: "Banheira", icon: FaBath },
-    { id: "tv-smart", label: "TV Smart", icon: FaTv },
-    { id: "servico-quarto", label: "Serviço de Quarto 24h", icon: FaUtensils },
-    { id: "estacionamento", label: "Estacionamento Privativo", icon: FaCar },
-    { id: "academia", label: "Academia", icon: FaDumbbell },
-    { id: "lavanderia", label: "Serviço de Lavanderia", icon: FaTshirt },
-  ]
+  // Constantes para paginação dos adicionais
+  const ITEMS_PER_PAGE = 12 // 3 colunas x 4 itens
+  const totalAmenitiesPages = Math.ceil(amenities.length / ITEMS_PER_PAGE)
+  const startIndex = currentAmenitiesPage * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const currentPageAmenities = amenities.slice(startIndex, endIndex)
+
+  const goToNextAmenitiesPage = () => {
+    if (currentAmenitiesPage < totalAmenitiesPages - 1) {
+      setCurrentAmenitiesPage(currentAmenitiesPage + 1)
+    }
+  }
+
+  const goToPrevAmenitiesPage = () => {
+    if (currentAmenitiesPage > 0) {
+      setCurrentAmenitiesPage(currentAmenitiesPage - 1)
+    }
+  }
+
+  // Buscar amenities da API
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        setLoadingAmenities(true)
+        const response = await fetch('https://localhost:7259/api/Amenity')
+        
+        if (!response.ok) {
+          throw new Error(`Erro na API: ${response.status}`)
+        }
+        
+        const data: Amenity[] = await response.json()
+        setAmenities(data)
+        setErrorAmenities(null)
+      } catch (error) {
+        console.error('Erro ao buscar amenities:', error)
+        setErrorAmenities('Erro ao carregar os diferenciais. Tente novamente.')
+        setAmenities([]) // Fallback para array vazio
+      } finally {
+        setLoadingAmenities(false)
+      }
+    }
+
+    fetchAmenities()
+  }, [])
 
   // Geração automática por intervalo
   const generateRangeNumbers = () => {
@@ -133,18 +271,11 @@ function RoomType() {
     }
   }
 
-  const toggleAmenity = (amenityId: string) => {
+  const toggleAmenity = (amenitySlug: string) => {
     setSelectedAmenities((prev) =>
-      prev.includes(amenityId) ? prev.filter((id) => id !== amenityId) : [...prev, amenityId],
+      prev.includes(amenitySlug) ? prev.filter((slug) => slug !== amenitySlug) : [...prev, amenitySlug],
     )
   }
-
-  // const addCustomAmenity = () => {
-  //   if (customAmenity.trim() && !selectedAmenities.includes(customAmenity.trim())) {
-  //     setSelectedAmenities([...selectedAmenities, customAmenity.trim()])
-  //     setCustomAmenity("")
-  //   }
-  // }
 
   const removeAmenity = (amenityToRemove: string) => {
     setSelectedAmenities(selectedAmenities.filter((amenity) => amenity !== amenityToRemove))
@@ -252,57 +383,110 @@ function RoomType() {
 
             <div className="bg-white">
               <div className="space-y-4 flex flex-col gap-4">
-                <h4 className="font-medium text-sm text-gray-600">Selecione os diferenciais disponíveis:</h4>
+                <h4 className="font-medium text-sm text-gray-600">
+                  {loadingAmenities ? "Carregando diferenciais..." : "Selecione os diferenciais disponíveis:"}
+                </h4>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {predefinedAmenities.map((amenity) => {
-                    const IconComponent = amenity.icon
-                    const isSelected = selectedAmenities.includes(amenity.id) 
+                {errorAmenities && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{errorAmenities}</p>
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="text-sm text-red-700 underline mt-1"
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                )}
 
-                    return (
-                      <div
-                        key={amenity.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                        onClick={() => toggleAmenity(amenity.id)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleAmenity(amenity.id)}
-                          className="pointer-events-none w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <IconComponent className={`w-4 h-4 ${isSelected ? "text-blue-600" : "text-gray-500"}`} />
-                        <span className={`text-sm font-medium ${isSelected ? "text-blue-700" : "text-gray-700"}`}>
-                          {amenity.label}
-                        </span>
+                {loadingAmenities ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {[...Array(6)].map((_, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 animate-pulse">
+                        <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                        <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                        <div className="h-4 bg-gray-300 rounded flex-1"></div>
                       </div>
-                    )
-                  })}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      {currentPageAmenities.map((amenity) => {
+                        const IconComponent = iconMap[amenity.iconName] || MdBed // Fallback icon
+                        const isSelected = selectedAmenities.includes(amenity.slug)
+                        const label = slugToLabel(amenity.slug)
+
+                        return (
+                          <div
+                            key={amenity.amenityId}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-50 text-blue-700"
+                                : "border-gray-200 hover:border-gray-300"
+                            }`}
+                            onClick={() => toggleAmenity(amenity.slug)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleAmenity(amenity.slug)}
+                              className="pointer-events-none w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <IconComponent className={`w-4 h-4 ${isSelected ? "text-blue-600" : "text-gray-500"}`} />
+                            <span className={`text-sm font-medium ${isSelected ? "text-blue-700" : "text-gray-700"}`}>
+                              {label}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    
+                    {totalAmenitiesPages > 1 && (
+                      <div className="flex items-center justify-between pt-4">
+                        <button
+                          onClick={goToPrevAmenitiesPage}
+                          disabled={currentAmenitiesPage === 0}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Anterior
+                        </button>
+                        
+                        <span className="text-sm text-gray-600">
+                          Página {currentAmenitiesPage + 1} de {totalAmenitiesPages}
+                        </span>
+                        
+                        <button
+                          onClick={goToNextAmenitiesPage}
+                          disabled={currentAmenitiesPage >= totalAmenitiesPages - 1}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Próxima
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {selectedAmenities.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm text-gray-600">Diferenciais selecionados:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedAmenities.map((amenityId, index) => {
-                        const predefined = predefinedAmenities.find((a) => a.id === amenityId)
-                        const label = predefined ? predefined.label : amenityId
-                        const IconComponent = predefined?.icon
+                      {selectedAmenities.map((amenitySlug, index) => {
+                        const amenity = amenities.find((a) => a.slug === amenitySlug)
+                        const label = amenity ? slugToLabel(amenity.slug) : amenitySlug
+                        const IconComponent = amenity ? (iconMap[amenity.iconName] || MdBed) : MdBed
 
                         return (
                           <span
                             key={index}
                             className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium hover:bg-blue-200"
                           >
-                            {IconComponent && <IconComponent className="w-3 h-3" />}
+                            <IconComponent className="w-3 h-3" />
                             {label}
                             <button
                               className="ml-1 w-4 h-4 flex items-center justify-center hover:bg-blue-300 hover:text-blue-900 rounded"
-                              onClick={() => removeAmenity(amenityId)}
+                              onClick={() => removeAmenity(amenitySlug)}
                             >
                               <FaTimes className="w-3 h-3" />
                             </button>
