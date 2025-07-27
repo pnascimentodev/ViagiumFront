@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logo from "../assets/img/logo.svg";
+import logo from "../../assets/img/logo.svg";
 import { FaUser, FaBars, FaTimes } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
