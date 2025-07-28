@@ -34,6 +34,21 @@ const chartConfig = {
   },
 }
 
+// Dados base dos hotéis (ALTERAÇÃO AQUI)
+const hotelsData = [
+  { name: "Grand Plaza Hotel", available: 118, total: 355 },
+  { name: "Blue Ocean Resort", available: 85, total: 250 },
+  { name: "Mountain View", available: 45, total: 150 },
+  { name: "City Center Hotel", available: 92, total: 200 },
+]
+
+// Cálculo automático dos quartos ocupados (ALTERAÇÃO AQUI)
+const hotels = hotelsData.map(hotel => ({
+  ...hotel,
+  occupied: hotel.total - hotel.available,
+  percentage: Math.round((hotel.available / hotel.total) * 100)
+}))
+
 function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
@@ -48,13 +63,6 @@ function AffiliateDashboard() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
-
-  const hotels = [
-    { name: "Grand Plaza Hotel", available: 118, total: 355, occupied: 237, percentage: 33 },
-    { name: "Blue Ocean Resort", available: 85, total: 250, occupied: 165, percentage: 34 },
-    { name: "Mountain View", available: 45, total: 150, occupied: 105, percentage: 30 },
-    { name: "City Center Hotel", available: 92, total: 200, occupied: 108, percentage: 46 },
-  ]
 
   const yourHotels = [
     {
@@ -234,10 +242,7 @@ function AffiliateDashboard() {
                       tick={{ fontSize: 12 }}
                     />
                     <Tooltip
-                      formatter={(value, name) => [
-                        `${value} quartos`,
-                        name === 'available' ? 'Disponíveis' : 'Ocupados'
-                      ]}
+                      formatter={(value, name) => [`${value} quartos`, name]}
                       contentStyle={{ fontSize: 12 }}
                     />
                     <Legend />
