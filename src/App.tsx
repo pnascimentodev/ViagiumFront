@@ -17,6 +17,7 @@ import Package from './pages/package/Package'
 import ResetClient from './pages/password/ResetClient'
 import ResetAffiliate from './pages/password/ResetAffiliate'
 import ProfileEditor from "./pages/profile/profile-editor.tsx";
+import Review from './pages/review/Review.tsx'
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
+      <Route path="/review" element={<Review />} />
     </Routes>
   )
 }
