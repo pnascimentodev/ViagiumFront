@@ -13,6 +13,7 @@ import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
 import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
+import Package from './pages/package/Package'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
+      <Route path="/package" element={<Package />} />
     </Routes>
   )
 }

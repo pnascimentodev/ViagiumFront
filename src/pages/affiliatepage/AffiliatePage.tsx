@@ -1,12 +1,15 @@
-import { Button } from "../../components/Button.tsx";
-import logo from "../../assets/img/logo.svg";
-import { FaUser, FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "keen-slider/keen-slider.min.css";
 import { useKeenSlider } from "keen-slider/react";
 import { useState } from "react";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../utils/masks.ts";
+import axios from "axios";
+import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateTerms } from "../../utils/validations.ts";
+import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../utils/validations.ts";
+import { fetchAddressByCEP } from "../../utils/cepApi";
+import type { AddressData } from "../../utils/cepApi";
+import AffiliatePageNavbar from "../../components/navbars/AffiliatePageNavbar.tsx";
+import Footer from "../../components/Footer.tsx";
 
 function AffiliatePage() {
   // Carrossel de imagens
@@ -57,51 +60,44 @@ function AffiliatePage() {
   });
   // Form state
   const [form, setForm] = useState({
-    RazaoSocial: "",
-    NomeFantasia: "",
-    telefone1: "",
-    telefone2: "",
+    companyName: "",
+    tradeName: "",
+    phone1: "",
+    phone2: "",
     email: "",
-    confirmarEmail: "",
-    senha: "",
-    confirmarSenha: "",
-    cpfPassaporte: "",
-    nomeHospedagem: "",
-    tipo: "",
-    cep: "",
-    rua: "",
-    bairro: "",
-    estado: "",
-    pais: "",
-    nomeEmpresa: "",
+    confirmEmail: "",
+    password: "",
+    confirmPassword: "",
+    zipCode: "",
+    street: "",
+    addressNumber: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    country: "",
     cnpj: "",
-    inscricaoEstadual: "",
-    numeroCadastur: "",
-    dataExpiracao: "",
-    termos: false,
+    stateRegistration: "",
+    terms: false,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const target = e.target as HTMLInputElement;
     const { name, value, type, checked } = target;
     let newValue = value;
     switch (name) {
-      case "telefone1":
-      case "telefone2":
+      case "phone1":
+      case "phone2":
         newValue = maskPhone(value);
         break;
-      case "cep":
+      case "zipCode":
         newValue = maskCEP(value);
         break;
       case "cnpj":
         newValue = maskCNPJ(value);
         break;
-      case "inscricaoEstadual":
+      case "stateRegistration":
         newValue = maskInscricaoEstadual(value);
-        break;
-      case "numeroCadastur":
-        newValue = maskCadasturNumber(value);
         break;
       case "cpfPassaporte": {
         const onlyNumbers = value.replace(/\D/g, "");
@@ -120,12 +116,39 @@ function AffiliatePage() {
         // outros campos sem máscara
         break;
     }
-    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : newValue }));
+
+    setForm(prev => {
+      const updated = { ...prev, [name]: type === "checkbox" ? checked : newValue };
+      return updated;
+    });
     setErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[name];
       return newErrors;
     });
+
+    // Busca automática de endereço ao digitar CEP completo
+    if (name === "zipCode") {
+      const cleanCep = newValue.replace(/\D/g, "");
+      if (cleanCep.length === 8) {
+        try {
+          const address: AddressData = await fetchAddressByCEP(cleanCep);
+          setForm(prev => ({
+            ...prev,
+            zipCode: maskCEP(address.cep),
+            street: address.address || "",
+            neighborhood: address.district || "",
+            city: address.city || "",
+            state: address.state || "",
+            // country pode ser "Brasil" por padrão
+            country: prev.country || "Brasil"
+          }));
+        } catch {
+          // Opcional: exibir erro de CEP não encontrado
+          setErrors(prev => ({ ...prev, zipCode: "CEP não encontrado." }));
+        }
+      }
+    }
   }
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -144,29 +167,25 @@ function AffiliatePage() {
       case "email":
         if (!validateEmail(value)) error = "Digite um e-mail válido.";
         break;
-      case "confirmarEmail":
+      case "confirmEmail":
         error = validateEmailConfirmation(form.email, value) || "";
         break;
-      case "senha":
+      case "password":
         error = validatePassword(value) || "";
         break;
-      case "confirmarSenha":
-        error = validatePasswordConfirmation(form.senha, value) || "";
+      case "confirmPassword":
+        error = validatePasswordConfirmation(form.password, value) || "";
         break;
-      case "telefone1":
+      case "phone1":
         if (!validatePhone(value)) error = "Telefone inválido.";
         break;
-      case "cep":
+      case "phone2":
+        break;
+      case "zipCode":
         if (!validateCEP(value)) error = "CEP inválido.";
         break;
       case "cnpj":
         if (!validateCNPJ(value)) error = "CNPJ inválido.";
-        break;
-      case "numeroCadastur":
-        if (!validateCadasturNumber(value)) error = "Apenas números.";
-        break;
-      case "dataExpiracao":
-        if (value && !validateFutureDate(value)) error = "Data inválida.";
         break;
       default:
         if (!validateRequired(value)) error = "Campo obrigatório.";
@@ -178,104 +197,84 @@ function AffiliatePage() {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
     // Validação de todos os campos
-    if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
-    if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
-    if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
-    if (form.telefone2 && !validatePhone(form.telefone2)) newErrors.telefone2 = "Telefone inválido.";
+    if (!validateRequired(form.companyName)) newErrors.companyName = "Campo obrigatório.";
+    if (!validateRequired(form.tradeName)) newErrors.tradeName = "Campo obrigatório.";
+    if (!validatePhone(form.phone1)) newErrors.phone1 = "Telefone inválido.";
+    if (form.phone2 && !validatePhone(form.phone2)) newErrors.phone2 = "Telefone inválido.";
     if (!validateEmail(form.email)) newErrors.email = "Digite um e-mail válido.";
-    const emailConf = validateEmailConfirmation(form.email, form.confirmarEmail);
-    if (emailConf) newErrors.confirmarEmail = emailConf;
-    const senhaVal = validatePassword(form.senha);
-    if (senhaVal) newErrors.senha = senhaVal;
-    const senhaConf = validatePasswordConfirmation(form.senha, form.confirmarSenha);
-    if (senhaConf) newErrors.confirmarSenha = senhaConf;
-    if (!validateRequired(form.nomeHospedagem)) newErrors.nomeHospedagem = "Campo obrigatório.";
-    if (!validateRequired(form.tipo)) newErrors.tipo = "Campo obrigatório.";
-    if (!validateCEP(form.cep)) newErrors.cep = "CEP inválido.";
-    if (!validateRequired(form.rua)) newErrors.rua = "Campo obrigatório.";
-    if (!validateRequired(form.bairro)) newErrors.bairro = "Campo obrigatório.";
-    if (!validateRequired(form.estado)) newErrors.estado = "Campo obrigatório.";
-    if (!validateRequired(form.pais)) newErrors.pais = "Campo obrigatório.";
-    if (!validateRequired(form.nomeEmpresa)) newErrors.nomeEmpresa = "Campo obrigatório.";
+    const emailConf = validateEmailConfirmation(form.email, form.confirmEmail);
+    if (emailConf) newErrors.confirmEmail = emailConf;
+    const passwordVal = validatePassword(form.password);
+    if (passwordVal) newErrors.password = passwordVal;
+    const passwordConf = validatePasswordConfirmation(form.password, form.confirmPassword);
+    if (passwordConf) newErrors.confirmPassword = passwordConf;
+    if (!validateCEP(form.zipCode)) newErrors.zipCode = "CEP inválido.";
+    if (!validateRequired(form.street)) newErrors.street = "Campo obrigatório.";
+    if (!validateRequired(form.addressNumber)) newErrors.addressNumber = "Campo obrigatório.";
+    if (!validateRequired(form.neighborhood)) newErrors.neighborhood = "Campo obrigatório.";
+    if (!validateRequired(form.city)) newErrors.city = "Campo obrigatório.";
+    if (!validateRequired(form.state)) newErrors.state = "Campo obrigatório.";
+    if (!validateRequired(form.country)) newErrors.country = "Campo obrigatório.";
     if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
-    if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
-    if (!validateCadasturNumber(form.numeroCadastur)) newErrors.numeroCadastur = "Apenas números.";
-    if (!validateFutureDate(form.dataExpiracao)) newErrors.dataExpiracao = "Data inválida.";
-    if (!validateTerms(form.termos)) newErrors.termos = "Você deve aceitar os termos.";
+    if (!validateRequired(form.stateRegistration)) newErrors.stateRegistration = "Campo obrigatório.";
+    if (!validateTerms(form.terms)) newErrors.terms = "Você deve aceitar os termos.";
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-    alert("Cadastro realizado com sucesso!");
-    // Aqui você pode enviar os dados para a API
+
+    const data = {
+      name: form.tradeName,
+      cnpj: form.cnpj,
+      companyName: form.companyName,
+      email: form.email,
+      phone: form.phone1,
+      stateRegistration: form.stateRegistration,
+      hashPassword: form.password,
+      address: {
+        streetName: form.street,
+        addressNumber: Number(form.addressNumber),
+        neighborhood: form.neighborhood,
+        city: form.city,
+        state: form.state,
+        zipCode: form.zipCode,
+        country: form.country
+      }
+    };
+
+    axios.post("https://localhost:7259/api/affiliate/create", data)
+      .then(() => {
+        alert("Cadastro realizado com sucesso!");
+      })
+      .catch((error) => {
+        const msg = error.response?.data?.message || error.message || "Erro ao cadastrar afiliado.";
+        alert(msg);
+      });
   }
 
   return (
 
-    // ...restante do componente...
-    // Abaixo, ajuste os campos do formulário para usar value, onChange, onBlur e exibir erros
     <div className="bg-[#003194] flex flex-col gap-y-5">
 
-      {/* Background image - Eiffel Tower */}
+      {/* Background image */}
       <div className="bg-cover bg-center bg-no-repeat bg-[url('https://images.pexels.com/photos/532826/pexels-photo-532826.jpeg')]">
 
         <div className="flex flex-col bg-gradient-to-b from-[#00319400] to-[#003194FF]">
 
-          <header className="w-full px-8 py-4">
-            <div className="flex items-center justify-between">
-              {/* Logo */}
-              <div className="flex items-center flex-shrink-0">
-                <img
-                  src={logo || "/placeholder.svg"}
-                  alt="Logo"
-                  className="h-22 w-auto"
-                />
-              </div>
-
-              {/* Navigation Links */}
-              <div className="hidden md:flex items-center ml-10">
-                <div className="flex items-center text-white">
-                  <a href="#"
-                    className="mr-8 hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium underline">
-                    Vantagens
-                  </a>
-                  <a href="#"
-                    className="mr-8 hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium underline">
-                    Nossos Parceiros
-                  </a>
-                  <a href="#"
-                    className="mr-8 hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium underline">
-                    Cadastre-se
-                  </a>
-                  <a href="#"
-                    className="hover:text-orange-300 transition-colors duration-200 whitespace-nowrap font-medium underline">
-                    Sobre Nós
-                  </a>
-                </div>
-              </div>
-
-              {/* Login Button */}
-              <div className="flex-shrink-0 ml-auto mr-14">
-                <Button className="!flex !items-center !text-white !bg-transparent !border-none !hover:bg-white/10 !transition-colors !duration-200 !font-medium !px-4 !py-2">
-                  <FaUser className="w-4 h-4 mr-2 text-white fill-white stroke-white" />
-                  Login
-                </Button>
-              </div>
-            </div>
-          </header>
+          <AffiliatePageNavbar />
 
           {/* Hero Section */}
-          <div className="flex flex-col justify-center items-center text-center max-w-3xl mx-auto h-[50vh] p-5">
-            <p className="text-md text-white md:text-2xl mb-2 ">
+          <div className="flex flex-col justify-center items-center text-center max-w-3xl mx-auto h-[50vh] p-5 gap-4">
+            <p className="text-xl md:text-2xl text-white  mb-2 ">
               Temos alta demanda de hospedagens. O que falta para <br />você anunciar a sua?
             </p>
-            <h1 className="text-2xl text-white md:text-4xl font-bold tracking-wide">TORNE-SE UM AFILIADO</h1>
+            <h1 className="text-4xl md:text-5xl text-white  font-bold tracking-wider">TORNE-SE UM AFILIADO</h1>
           </div>
         </div>
       </div>
 
       {/* Card vantagens */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full px-5 py-10 mx-auto">
+      <div id="vantagens" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl w-full px-5 py-10 mx-auto">
         {/* Card 1 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaCalendarAlt className="h-12 w-12" />
           </div>
@@ -286,7 +285,7 @@ function AffiliatePage() {
         </div>
 
         {/* Card 2 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaChartLine className="h-12 w-12" />
           </div>
@@ -297,7 +296,7 @@ function AffiliatePage() {
         </div>
 
         {/* Card 3 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaPercentage className="h-12 w-12" />
           </div>
@@ -306,7 +305,7 @@ function AffiliatePage() {
         </div>
 
         {/* Card 4 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaUsers className="h-12 w-12" />
           </div>
@@ -315,7 +314,7 @@ function AffiliatePage() {
         </div>
 
         {/* Card 5 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaShieldAlt className="h-12 w-12" />
           </div>
@@ -324,7 +323,7 @@ function AffiliatePage() {
         </div>
 
         {/* Card 6 */}
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center text-center shadow-lg hover:scale-105 transition-transform">
           <div className="text-blue-500 mb-4">
             <FaBullhorn className="h-12 w-12" />
           </div>
@@ -337,7 +336,7 @@ function AffiliatePage() {
 
 
       {/* Carrossel */}
-      <div className="w-full flex flex-col items-center py-20 bg-[#002673]">
+      <div id="nossos-parceiros" className="w-full flex flex-col items-center px-5 py-20 bg-[#002673]">
 
         <h2 className="text-5xl font-bold text-[#ffffff] mb-15">Nossos parceiros</h2>
 
@@ -387,43 +386,45 @@ function AffiliatePage() {
       </div>
 
       {/* Formulário de Afiliados */}
-      <div className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-[#003194] mb-8 text-left">Insira seus dados</h2>
+      <div id="cadastro-se" className="w-full max-w-6xl mx-auto p-6 mt-8 mb-8">
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h3 className="text-2xl font-bold text-[#003194] mb-8 text-left">Cadastro do afiliado</h3>
           <form className="space-y-6" onSubmit={handleSubmit}>
+
+            <h2 className="text-xl text-[#003194] mb-8 text-left">Dados da empresa</h2>
             {/* Dados Pessoais */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="RazaoSocial" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="companyName" className="block text-sm font-medium text-[#003194] mb-2">
                   Razão Social
                 </label>
                 <input
                   type="text"
-                  id="RazaoSocial"
-                  name="RazaoSocial"
+                  id="companyName"
+                  name="companyName"
                   placeholder="Ex: Hotelaria Brasil Ltda"
-                  value={form.RazaoSocial}
+                  value={form.companyName}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.RazaoSocial ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.companyName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.RazaoSocial && <div style={{ color: "red", fontWeight: 500 }}>{errors.RazaoSocial}</div>}
+                {errors.companyName && <div style={{ color: "red", fontWeight: 500 }}>{errors.companyName}</div>}
               </div>
               <div>
-                <label htmlFor="NomeFantasia" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="tradeName" className="block text-sm font-medium text-[#003194] mb-2">
                   Nome Fantasia
                 </label>
                 <input
                   type="text"
-                  id="NomeFantasia"
-                  name="NomeFantasia"
+                  id="tradeName"
+                  name="tradeName"
                   placeholder="Ex: Grupo Hotelaria Brasil"
-                  value={form.NomeFantasia}
+                  value={form.tradeName}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.NomeFantasia ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.tradeName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.NomeFantasia && <div style={{ color: "red", fontWeight: 500 }}>{errors.NomeFantasia}</div>}
+                {errors.tradeName && <div style={{ color: "red", fontWeight: 500 }}>{errors.tradeName}</div>}
               </div>
             </div>
 
@@ -445,62 +446,62 @@ function AffiliatePage() {
                 {errors.cnpj && <div style={{ color: "red", fontWeight: 500 }}>{errors.cnpj}</div>}
               </div>
               <div>
-                <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="stateRegistration" className="block text-sm font-medium text-[#003194] mb-2">
                   Inscrição Estadual
                 </label>
                 <input
                   type="text"
-                  id="inscricaoEstadual"
-                  name="inscricaoEstadual"
+                  id="stateRegistration"
+                  name="stateRegistration"
                   placeholder="Inscrição na Receita Estadual"
-                  value={form.inscricaoEstadual}
+                  value={form.stateRegistration}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.inscricaoEstadual ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.stateRegistration ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.inscricaoEstadual && <div style={{ color: "red", fontWeight: 500 }}>{errors.inscricaoEstadual}</div>}
+                {errors.stateRegistration && <div style={{ color: "red", fontWeight: 500 }}>{errors.stateRegistration}</div>}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <label htmlFor="telefone1" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="phone1" className="block text-sm font-medium text-[#003194] mb-2">
                   Telefone 1
                 </label>
                 <input
                   type="tel"
-                  id="telefone1"
-                  name="telefone1"
+                  id="phone1"
+                  name="phone1"
                   placeholder="(11) 99999-9999"
-                  value={form.telefone1}
+                  value={form.phone1}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.telefone1 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.phone1 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.telefone1 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone1}</div>}
+                {errors.phone1 && <div style={{ color: "red", fontWeight: 500 }}>{errors.phone1}</div>}
               </div>
               <div>
-                <label htmlFor="telefone2" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="phone2" className="block text-sm font-medium text-[#003194] mb-2">
                   Telefone 2 (opcional)
                 </label>
                 <input
                   type="tel"
-                  id="telefone2"
-                  name="telefone2"
+                  id="phone2"
+                  name="phone2"
                   placeholder="(11) 99999-9999"
-                  value={form.telefone2}
+                  value={form.phone2}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.telefone2 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.phone2 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.telefone2 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone2}</div>}
+                {errors.phone2 && <div style={{ color: "red", fontWeight: 500 }}>{errors.phone2}</div>}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[#003194] mb-2">
-                  E-mail
+                  E-mail de acesso
                 </label>
                 <input
                   type="email"
@@ -515,275 +516,191 @@ function AffiliatePage() {
                 {errors.email && <div style={{ color: "red", fontWeight: 500 }}>{errors.email}</div>}
               </div>
               <div>
-                <label htmlFor="confirmarEmail" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="confirmEmail" className="block text-sm font-medium text-[#003194] mb-2">
                   Confirmar e-mail
                 </label>
                 <input
                   type="email"
-                  id="confirmarEmail"
-                  name="confirmarEmail"
+                  id="confirmEmail"
+                  name="confirmEmail"
                   placeholder="seu@email.com"
-                  value={form.confirmarEmail}
+                  value={form.confirmEmail}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.confirmarEmail ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.confirmEmail ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.confirmarEmail && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarEmail}</div>}
+                {errors.confirmEmail && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmEmail}</div>}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-6">
               <div>
-                <label htmlFor="senha" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-[#003194] mb-2">
                   Senha
                 </label>
                 <input
                   type="password"
-                  id="senha"
-                  name="senha"
+                  id="password"
+                  name="password"
                   placeholder="Mínimo 6 caracteres"
-                  value={form.senha}
+                  value={form.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.senha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.senha && <div style={{ color: "red", fontWeight: 500 }}>{errors.senha}</div>}
+                {errors.password && <div style={{ color: "red", fontWeight: 500 }}>{errors.password}</div>}
               </div>
               <div>
-                <label htmlFor="confirmarSenha" className="block text-sm font-medium text-[#003194] mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#003194] mb-2">
                   Confirmar senha
                 </label>
                 <input
                   type="password"
-                  id="confirmarSenha"
-                  name="confirmarSenha"
+                  id="confirmPassword"
+                  name="confirmPassword"
                   placeholder="Repita a senha"
-                  value={form.confirmarSenha}
+                  value={form.confirmPassword}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.confirmarSenha && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarSenha}</div>}
+                {errors.confirmPassword && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmPassword}</div>}
               </div>
-
-              {/* Campo CPF/Passaporte removido */}
             </div>
 
             {/* Dados da hospedagem */}
-            <div className="pt-6 border-t border-gray-200">
-              <h3 className="text-xl font-semibold text-[#003194] mb-6">Dados do Hotel</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="nomeHospedagem" className="block text-sm font-medium text-[#003194] mb-2">
-                    Nome da hospedagem
-                  </label>
-                  <input
-                    type="text"
-                    id="nomeHospedagem"
-                    name="nomeHospedagem"
-                    placeholder="Insira o nome da hospedagem"
-                    value={form.nomeHospedagem}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.nomeHospedagem ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.nomeHospedagem && <div style={{ color: "red", fontWeight: 500 }}>{errors.nomeHospedagem}</div>}
-                </div>
-                <div>
-                  <label htmlFor="tipo" className="block text-sm font-medium text-[#003194] mb-2">
-                    Tipo
-                  </label>
-                  <select
-                    id="tipo"
-                    name="tipo"
-                    value={form.tipo}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.tipo ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  >
-                    {errors.tipo && <div style={{ color: "red", fontWeight: 500 }}>{errors.tipo}</div>}
-                    <option value="">Selecione o tipo de hospedagem</option>
-                    <option value="hotel">Hotel</option>
-                    <option value="pousada">Pousada</option>
-                    <option value="resort">Resort</option>
-                    <option value="hostel">Hostel</option>
-                  </select>
-                </div>
-              </div>
+            <div className="pt-6 border-t border-gray-200 mb-8">
+              <h3 className="text-xl text-[#003194] mb-6">Endereço</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="cep" className="block text-sm font-medium text-[#003194] mb-2">
-                    CEP
-                  </label>
-                  <input
-                    type="text"
-                    id="cep"
-                    name="cep"
-                    placeholder="00000-000"
-                    value={form.cep}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.cep ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.cep && <div style={{ color: "red", fontWeight: 500 }}>{errors.cep}</div>}
-                </div>
-                <div>
-                  <label htmlFor="rua" className="block text-sm font-medium text-[#003194] mb-2">
-                    Rua
-                  </label>
-                  <input
-                    type="text"
-                    id="rua"
-                    name="rua"
-                    placeholder="Rua"
-                    value={form.rua}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.rua ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.rua && <div style={{ color: "red", fontWeight: 500 }}>{errors.rua}</div>}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label htmlFor="bairro" className="block text-sm font-medium text-[#003194] mb-2">
-                    Bairro
-                  </label>
-                  <input
-                    type="text"
-                    id="bairro"
-                    name="bairro"
-                    placeholder="Bairro"
-                    value={form.bairro}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.bairro ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.bairro && <div style={{ color: "red", fontWeight: 500 }}>{errors.bairro}</div>}
-                </div>
-                <div>
-                  <label htmlFor="estado" className="block text-sm font-medium text-[#003194] mb-2">
-                    Estado
-                  </label>
-                  <input
-                    type="text"
-                    id="estado"
-                    name="estado"
-                    placeholder="Estado"
-                    value={form.estado}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.estado ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.estado && <div style={{ color: "red", fontWeight: 500 }}>{errors.estado}</div>}
-                </div>
-                <div>
-                  <label htmlFor="pais" className="block text-sm font-medium text-[#003194] mb-2">
-                    País
-                  </label>
-                  <input
-                    type="text"
-                    id="pais"
-                    name="pais"
-                    placeholder="País"
-                    value={form.pais}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.pais ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.pais && <div style={{ color: "red", fontWeight: 500 }}>{errors.pais}</div>}
-                </div>
-              </div>
-
+              {/* CEP em div separada */}
               <div className="mb-4">
-                <label htmlFor="nomeEmpresa" className="block text-sm font-medium text-[#003194] mb-2">
-                  Nome da empresa
+                <label htmlFor="zipCode" className="block text-sm font-medium text-[#003194] mb-2">
+                  CEP
                 </label>
                 <input
                   type="text"
-                  id="nomeEmpresa"
-                  name="nomeEmpresa"
-                  placeholder="Ex: Hotel Fazenda S.A ou João Pedro"
-                  value={form.nomeEmpresa}
+                  id="zipCode"
+                  name="zipCode"
+                  placeholder="00000-000"
+                  value={form.zipCode}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`w-full px-3 py-2 border ${errors.nomeEmpresa ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                  className={`w-full px-3 py-2 border ${errors.zipCode ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                 />
-                {errors.nomeEmpresa && <div style={{ color: "red", fontWeight: 500 }}>{errors.nomeEmpresa}</div>}
+                {errors.zipCode && <div style={{ color: "red", fontWeight: 500 }}>{errors.zipCode}</div>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="cnpj" className="block text-sm font-medium text-[#003194] mb-2">
-                    CNPJ
-                  </label>
-                  <input
-                    type="text"
-                    id="cnpj"
-                    name="cnpj"
-                    placeholder="00.000.000/0000-00"
-                    value={form.cnpj}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.cnpj ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.cnpj && <div style={{ color: "red", fontWeight: 500 }}>{errors.cnpj}</div>}
-                </div>
-                <div>
-                  <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
-                    Inscrição Estadual
-                  </label>
-                  <input
-                    type="text"
-                    id="inscricaoEstadual"
-                    name="inscricaoEstadual"
-                    placeholder="Inscrição na Receita Estadual"
-                    value={form.inscricaoEstadual}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.inscricaoEstadual ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.inscricaoEstadual && <div style={{ color: "red", fontWeight: 500 }}>{errors.inscricaoEstadual}</div>}
+              {/* Rua e Número na mesma div */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="street" className="block text-sm font-medium text-[#003194] mb-2">
+                      Rua
+                    </label>
+                    <input
+                      type="text"
+                      id="street"
+                      name="street"
+                      placeholder="Rua"
+                      value={form.street}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.street ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.street && <div style={{ color: "red", fontWeight: 500 }}>{errors.street}</div>}
+                  </div>
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="addressNumber" className="block text-sm font-medium text-[#003194] mb-2">
+                      Número
+                    </label>
+                    <input
+                      type="text"
+                      id="addressNumber"
+                      name="addressNumber"
+                      placeholder="Número"
+                      value={form.addressNumber}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.addressNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.addressNumber && <div style={{ color: "red", fontWeight: 500 }}>{errors.addressNumber}</div>}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Cadastur */}
-            <div className="pt-6 border-t border-gray-200">
-              <h3 className="text-xl font-semibold text-[#003194] mb-6">Cadastur</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="numeroCadastur" className="block text-sm font-medium text-[#003194] mb-2">
-                    Insira o número
-                  </label>
-                  <input
-                    type="text"
-                    id="numeroCadastur"
-                    name="numeroCadastur"
-                    placeholder="Ex: 1234"
-                    value={form.numeroCadastur}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.numeroCadastur ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.numeroCadastur && <div style={{ color: "red", fontWeight: 500 }}>{errors.numeroCadastur}</div>}
+              {/* Bairro e Cidade na mesma div */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="neighborhood" className="block text-sm font-medium text-[#003194] mb-2">
+                      Bairro
+                    </label>
+                    <input
+                      type="text"
+                      id="neighborhood"
+                      name="neighborhood"
+                      placeholder="Bairro"
+                      value={form.neighborhood}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.neighborhood ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.neighborhood && <div style={{ color: "red", fontWeight: 500 }}>{errors.neighborhood}</div>}
+                  </div>
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="city" className="block text-sm font-medium text-[#003194] mb-2">
+                      Cidade
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      placeholder="Cidade"
+                      value={form.city}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.city ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.city && <div style={{ color: "red", fontWeight: 500 }}>{errors.city}</div>}
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="dataExpiracao" className="block text-sm font-medium text-[#003194] mb-2">
-                    Data de Expiração
-                  </label>
-                  <input
-                    type="date"
-                    id="dataExpiracao"
-                    name="dataExpiracao"
-                    value={form.dataExpiracao}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-3 py-2 border ${errors.dataExpiracao ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                  />
-                  {errors.dataExpiracao && <div style={{ color: "red", fontWeight: 500 }}>{errors.dataExpiracao}</div>}
+              </div>
+
+              {/* Estado e País na mesma div */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="state" className="block text-sm font-medium text-[#003194] mb-2">
+                      Estado
+                    </label>
+                    <input
+                      type="text"
+                      id="state"
+                      name="state"
+                      placeholder="Estado"
+                      value={form.state}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.state ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.state && <div style={{ color: "red", fontWeight: 500 }}>{errors.state}</div>}
+                  </div>
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="country" className="block text-sm font-medium text-[#003194] mb-2">
+                      País
+                    </label>
+                    <input
+                      type="text"
+                      id="country"
+                      name="country"
+                      placeholder="País"
+                      value={form.country}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-3 py-2 border ${errors.country ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                    />
+                    {errors.country && <div style={{ color: "red", fontWeight: 500 }}>{errors.country}</div>}
+                  </div>
                 </div>
               </div>
             </div>
@@ -793,19 +710,19 @@ function AffiliatePage() {
               <div className="flex items-start space-x-3 mb-6 gap-2">
                 <input
                   type="checkbox"
-                  id="termos"
-                  name="termos"
-                  checked={form.termos}
+                  id="terms"
+                  name="terms"
+                  checked={form.terms}
                   onChange={handleChange}
                   className="mt-1 h-4 w-4 text-[#003194] focus:ring-[#003194] border-gray-300 rounded"
                 />
 
-                <label htmlFor="termos" className="text-lg text-[#003194] leading-relaxed">
+                <label htmlFor="terms" className="text-lg text-[#003194] leading-relaxed">
                   Autorizo a Viagium e suas entidades relacionadas a utilizar os meus dados e/ou os de titular para obter informações financeiras comerciais, de crédito e realizar consultas sobre bases de dados necessárias aos serviços solicitados, conforme <a href="#" className="font-bold no-underline hover:text-orange-500" target="_blank">Política de Privacidade da Viagium</a>.
                 </label>
               </div>
 
-              {errors.termos && <div style={{ color: "red", fontWeight: 500 }}>{errors.termos}</div>}
+              {errors.terms && <div style={{ color: "red", fontWeight: 500 }}>{errors.terms}</div>}
             </div>
 
             {/* Botão de Submit */}
@@ -820,6 +737,8 @@ function AffiliatePage() {
           </form>
         </div>
       </div>
+
+      <Footer />
 
     </div>
   )
