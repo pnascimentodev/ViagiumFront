@@ -14,6 +14,7 @@ import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
 import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
 import Package from './pages/package/Package'
+import ProfileEditor from "./pages/profile/profile-editor.tsx";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
+        <Route path="/profile" element={<ProfileEditor />} />
     </Routes>
   )
 }
