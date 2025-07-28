@@ -4,9 +4,7 @@ import {
   FaTimes,
   FaUpload,
   FaUsers,
-  FaMagic,
   FaHashtag,
-  FaBuilding,
 } from "react-icons/fa"
 
 import {
@@ -43,6 +41,7 @@ import {
 
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
+import { validateRequired } from "../../utils/validations"
 
 // Interface para os adicionais vindos da API
 interface Amenity {
@@ -127,15 +126,15 @@ function slugToLabel(slug: string): string {
 
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
-  const [availableRooms, setAvailableRooms] = useState("10") // Valor inicial para o campo de número de quartos disponíveis
+  const [availableRooms, setAvailableRooms] = useState("") 
   const [activeTab, setActiveTab] = useState("smart")
 
   // Estados para geração automática
   const [startNumber, setStartNumber] = useState("")
   const [endNumber, setEndNumber] = useState("")
-  const [floorPrefix, setFloorPrefix] = useState("")
-  const [roomsPerFloor, setRoomsPerFloor] = useState("")
-  const [startingRoom, setStartingRoom] = useState("")
+  // const [floorPrefix, setFloorPrefix] = useState("")
+  // const [roomsPerFloor, setRoomsPerFloor] = useState("")
+  // const [startingRoom, setStartingRoom] = useState("")
 
   // Estados para adição manual
   const [currentRoomNumber, setCurrentRoomNumber] = useState("")
@@ -156,7 +155,7 @@ function RoomType() {
   const fileInputRef = useRef<HTMLInputElement>(null) 
 
   // Constantes para paginação dos adicionais
-  const ITEMS_PER_PAGE = 12 // 3 colunas x 4 itens
+  const ITEMS_PER_PAGE = 9 // 3 colunas x 4 itens
   const totalAmenitiesPages = Math.ceil(amenities.length / ITEMS_PER_PAGE) // Total de páginas de diferenciais
   const startIndex = currentAmenitiesPage * ITEMS_PER_PAGE // Índice inicial da página atual
   const endIndex = startIndex + ITEMS_PER_PAGE // Índice final da página atual
@@ -222,45 +221,6 @@ function RoomType() {
     setRoomNumbers(newNumbers)
     setStartNumber("")
     setEndNumber("")
-  }
-
-  // Função para Geração por andar de números de quartos (Por andar)
-  function generateFloorNumbers() {
-    if (!floorPrefix || !roomsPerFloor || !startingRoom) return
-
-    const floors = floorPrefix.split(",").map((f) => f.trim())
-    const roomsCount = Number.parseInt(roomsPerFloor)
-    const startRoom = Number.parseInt(startingRoom)
-
-    const newNumbers: string[] = []
-
-    floors.forEach((floor) => {
-      for (let i = 0; i < roomsCount; i++) {
-        const roomNum = (startRoom + i).toString().padStart(2, "0")
-        newNumbers.push(`${floor}${roomNum}`)
-      }
-    })
-
-    setRoomNumbers(newNumbers)
-    setFloorPrefix("")
-    setRoomsPerFloor("")
-    setStartingRoom("")
-  }
-
-  // Função para Geração automática inteligente de números de quartos (Automatico)
-  function generateSmartNumbers() {
-    const count = Number.parseInt(availableRooms)
-    if (!count) return
-
-    const newNumbers: string[] = []
-
-    // Gera números sequenciais começando em 101
-    for (let i = 1; i <= count; i++) {
-      const roomNumber = (100 + i).toString()
-      newNumbers.push(roomNumber)
-    }
-
-    setRoomNumbers(newNumbers)
   }
 
   // Função para adicionar um número de quarto manualmente a lista de números de quartos
@@ -344,44 +304,44 @@ function RoomType() {
   }
 
   // Função para fazer upload da imagem para a API (VERIFICAR)
-  async function uploadImageToAPI(file: File): Promise<string | null> {
-    try {
-      setUploadingImage(true)
-      setUploadError(null)
+  // async function uploadImageToAPI(file: File): Promise<string | null> {
+  //   try {
+  //     setUploadingImage(true)
+  //     setUploadError(null)
 
-      // Criar FormData para envio multipart/form-data
-      const formData = new FormData()
-      formData.append('image', file) // 'image' é o nome do campo esperado pela API
+  //     // Criar FormData para envio multipart/form-data
+  //     const formData = new FormData()
+  //     formData.append('image', file) // 'image' é o nome do campo esperado pela API
 
-      // Fazer requisição para API
-      const response = await axios.post('https://localhost:7259/api/upload/image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 30000, // 30 segundos timeout
-      })
+  //     // Fazer requisição para API
+  //     const response = await axios.post('https://localhost:7259/api/upload/image', formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data',
+  //       },
+  //       timeout: 30000, // 30 segundos timeout
+  //     })
 
-      // Retornar URL da imagem ou ID conforme sua API retorna
-      return response.data.imageUrl || response.data.url || response.data.id
+  //     // Retornar URL da imagem ou ID conforme sua API retorna
+  //     return response.data.imageUrl || response.data.url || response.data.id
 
-    } catch (error: any) {
-      console.error('Erro no upload:', error)
+  //   } catch (error: any) {
+  //     console.error('Erro no upload:', error)
       
-      if (error.code === 'ECONNABORTED') {
-        setUploadError('Timeout no upload. Tente novamente.')
-      } else if (error.response?.status === 413) {
-        setUploadError('Arquivo muito grande para o servidor.')
-      } else if (error.response?.status >= 400 && error.response?.status < 500) {
-        setUploadError('Erro na requisição. Verifique o arquivo.')
-      } else {
-        setUploadError('Erro no servidor. Tente novamente.')
-      }
+  //     if (error.code === 'ECONNABORTED') {
+  //       setUploadError('Timeout no upload. Tente novamente.')
+  //     } else if (error.response?.status === 413) {
+  //       setUploadError('Arquivo muito grande para o servidor.')
+  //     } else if (error.response?.status >= 400 && error.response?.status < 500) {
+  //       setUploadError('Erro na requisição. Verifique o arquivo.')
+  //     } else {
+  //       setUploadError('Erro no servidor. Tente novamente.')
+  //     }
       
-      return null
-    } finally {
-      setUploadingImage(false)
-    }
-  }
+  //     return null
+  //   } finally {
+  //     setUploadingImage(false)
+  //   }
+  // }
 
   // Função para remover imagem selecionada
   function removeSelectedImage() {
@@ -394,6 +354,208 @@ function RoomType() {
     }
   }
 
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    pricePerNight: '',
+    maxOccupancy: '',
+    numberOfRoomsAvailable: '',
+    imageUrl: '',
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // Função para formatar o preço enquanto digita
+function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
+  let value = e.target.value
+  
+  // Remove caracteres não numéricos exceto . e ,
+  value = value.replace(/[^\d.,]/g, '')
+  
+  // Substitui vírgula por ponto para padronização interna
+  value = value.replace(',', '.')
+  
+  // Limita a 2 casas decimais
+  const parts = value.split('.')
+  if (parts[1] && parts[1].length > 2) {
+    value = `${parts[0]}.${parts[1].slice(0, 2)}`
+  }
+  
+  setForm(prev => ({ ...prev, pricePerNight: value }))
+}
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  const { name, value } = e.target
+  setForm(prev => ({ ...prev, [name]: value }))
+}
+
+function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  const { name, value } = e.target
+  
+  // Validar apenas o campo que perdeu o foco
+  const newErrors = { ...errors }
+  
+  // Validação individual por campo
+  if (name === 'name' && !validateRequired(value)) {
+    newErrors.name = 'Campo obrigatório.'
+  } else if (name === 'name') {
+    delete newErrors.name // Remove erro se válido
+  }
+  
+  if (name === 'description' && !validateRequired(value)) {
+    newErrors.description = 'Campo obrigatório.'
+  } else if (name === 'description') {
+    delete newErrors.description
+  }
+  
+  if (name === 'pricePerNight') {
+    if (!validateRequired(value)) {
+      newErrors.pricePerNight = 'Campo obrigatório.'
+    } else if (isNaN(Number(value)) || Number(value) <= 0) {
+      newErrors.pricePerNight = 'Preço deve ser um número válido maior que zero.'
+    } else {
+      delete newErrors.pricePerNight
+    }
+  }
+
+  // Validação para numberOfRoomsAvailable
+  if (name === 'numberOfRoomsAvailable') {
+    if (!validateRequired(value)) {
+      newErrors.numberOfRoomsAvailable = 'Campo obrigatório.'
+    } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
+      newErrors.numberOfRoomsAvailable = 'Deve ser um número inteiro maior que zero.'
+    } else {
+      delete newErrors.numberOfRoomsAvailable
+    }
+  }
+
+  // Validação para Preço por noite
+  if (name === 'pricePerNight') {
+  if (!validateRequired(value)) {
+    newErrors.pricePerNight = 'Campo obrigatório.'
+  } else {
+    // Substitui vírgula por ponto para validação
+    const numericValue = value.replace(',', '.')
+    
+    if (isNaN(Number(numericValue)) || Number(numericValue) <= 0) {
+      newErrors.pricePerNight = 'Preço deve ser um número válido maior que zero.'
+    } else if (Number(numericValue) > 9999.99) {
+      newErrors.pricePerNight = 'Preço muito alto. Máximo R$ 9.999,99.'
+    } else {
+      delete newErrors.pricePerNight
+    }
+  }
+}
+
+ // Validação para maxOccupancy
+  if (name === 'maxOccupancy') {
+    if (!validateRequired(value)) {
+      newErrors.maxOccupancy = 'Campo obrigatório.'
+    } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
+      newErrors.maxOccupancy = 'Deve ser um número inteiro maior que zero.'
+    } else {
+      delete newErrors.maxOccupancy
+    }
+  }
+  
+  
+  setErrors(newErrors)
+};
+
+async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    console.log("enviando...");
+    // Validar campos obrigatórios
+    const newErrors: { [key: string]: string } = {};
+    if(!validateRequired(form.name)) newErrors.name = 'Campo obrigatório.';
+    if(!validateRequired(form.description)) newErrors.description = 'Campo obrigatório.';
+    if(!validateRequired(form.pricePerNight)) newErrors.pricePerNight = 'Campo obrigatório.';
+    if(!validateRequired(form.maxOccupancy)) newErrors.maxOccupancy = 'Campo obrigatório.';
+    if(!validateRequired(form.numberOfRoomsAvailable)) newErrors.numberOfRoomsAvailable = 'Campo obrigatório.';
+    // if(!validateRequired(form.imageUrl)) newErrors.imageUrl = 'Campo obrigatório.'; - chat gpt pediu pra apagar
+
+    if (!selectedImage) {
+      newErrors.imageUrl = 'Selecione uma imagem para o tipo de quarto.';
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors(newErrors);
+
+    console.log("chegou aqui linha 480...");
+    // Se houver erros, não enviar o formulário
+    // if (Object.keys(newErrors).length > 0) return;
+
+    if (Object.keys(newErrors).length > 0) {
+      console.log("⚠️ Erros de validação encontrados:", newErrors);
+      return;
+    }
+
+    console.log("chegou aqui linha 484...");
+     // Upload da imagem
+  // let imageUrl = form.imageUrl;
+  // if (selectedImage) {
+  //   const uploadedUrl = await uploadImageToAPI(selectedImage);
+  //   if (!uploadedUrl) {
+  //     setUploadError("Erro ao enviar imagem.");
+  //     return;
+  //   }
+  //   imageUrl = uploadedUrl;
+  // } else {
+  //   newErrors.imageUrl = 'Selecione uma imagem para o tipo de quarto.';
+  //   setErrors(newErrors);
+  //   return;
+  // }
+
+  console.log("chegou aqui linha 500...");
+
+    const priceValue = form.pricePerNight.replace(',', '.') // Substitui vírgula por ponto para conversão correta
+
+    // Enviar dados do formulário para a API
+    // const data = {
+    //   name: form.name,
+    //   description: form.description,
+    //   pricePerNight: parseFloat(priceValue), // ← Converter para number
+    //   maxOccupancy: form.maxOccupancy,
+    //   numberOfRoomsAvailable: form.numberOfRoomsAvailable,
+    //   imageUrl: form.imageUrl,
+    //   hotelId: "1"
+    // }
+
+    // console.log("Dados enviados ao backend:", data);
+
+
+    // axios.post('https://localhost:7259/api/roomtype', data)
+    // .then(() => {
+    //   alert("Cadastro realizado com sucesso!");
+    // })
+    // .catch(error => {
+    //   const msg = error.response?.data?.message || error.message || 'Erro ao cadastrar tipo de quarto.';
+    //   alert(msg);
+    // });
+
+    const data = new FormData();
+data.append('Name', form.name);
+data.append('Description', form.description);
+data.append('PricePerNight', priceValue); // como string
+data.append('MaxOccupancy', form.maxOccupancy.toString());
+data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
+data.append('HotelId', "1"); // id mockado para teste
+
+// O nome do campo tem que ser exatamente igual ao nome da propriedade no DTO: "Image"
+data.append('Image', selectedImage);
+
+axios.post('https://localhost:7259/api/roomtype', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+.then(() => alert('Cadastro realizado com sucesso!'))
+.catch(error => {
+  const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
+  alert(msg);
+});
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
   style={{
@@ -404,7 +566,9 @@ function RoomType() {
           <h1 className="text-2xl font-bold text-gray-900">Cadastrar Tipo de Quarto</h1>
           <p className="text-gray-600 mt-2">Registre um novo tipo de quarto no sistema de pacotes de viagem</p>
         </div> 
-        <div className="flex flex-col gap-5 p-6 space-y-6">
+        
+        <form className="flex flex-col gap-5 p-6 space-y-6" onSubmit={handleSubmit}>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4 flex flex-col gap-4">
               <div className="space-y-2">
@@ -412,21 +576,35 @@ function RoomType() {
                   Nome do Tipo de Quarto *
                 </label>
                 <input
-                  id="roomType"
+                  type="text"
+                  id="name"
+                  name="name"
                   placeholder="Ex: Quarto Standard Duplo"
+                  value={form.name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+
                   className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                {errors.name && <div style={{ color: 'red', fontWeight: 500 }}>{errors.name}</div>}
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="description" className="text-sm font-medium text-gray-700">
                   Descrição *
                 </label>
-                <textarea
+                <input
+                  type="text"
                   id="description"
+                  name="description"
                   placeholder="Descreva as características e comodidades do quarto..."
+                  value={form.description}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[230px] resize-none"
                 />
+                {errors.description && <div style={{ color: 'red', fontWeight: 500 }}>{errors.description}</div>}
               </div>
             </div>
 
@@ -437,10 +615,17 @@ function RoomType() {
                     Preço por Noite (R$) *
                   </label>
                   <input
+                    type="text"
                     id="price"
+                    name="pricePerNight"
                     placeholder="R$ 0,00"
+                    value={form.pricePerNight}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+
                     className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+                  {errors.pricePerNight && <div style={{ color: 'red', fontWeight: 500 }}>{errors.pricePerNight}</div>}
                 </div>
 
                 <div className="space-y-2">
@@ -448,15 +633,18 @@ function RoomType() {
                     <FaUsers className="w-4 h-4 inline mr-1" />
                     Ocupação Máxima *
                   </label>
-                  <select className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Selecione</option>
-                    <option value="1">1 pessoa</option>
-                    <option value="2">2 pessoas</option>
-                    <option value="3">3 pessoas</option>
-                    <option value="4">4 pessoas</option>
-                    <option value="5">5 pessoas</option>
-                    <option value="6">6 pessoas</option>
-                  </select>
+                  <input
+                    type="number"
+                    id="maxOccupancy"
+                    name="maxOccupancy"
+                    placeholder="Número de pessoas"
+                    value={form.maxOccupancy}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {errors.maxOccupancy && <div style={{ color: 'red', fontWeight: 500 }}>{errors.maxOccupancy}</div>}
                 </div>
               </div>
 
@@ -465,12 +653,17 @@ function RoomType() {
                   Número de Quartos Disponíveis *
                 </label>
                 <input
-                  id="availableRooms"
-                  value={availableRooms}
-                  onChange={(e) => setAvailableRooms(e.target.value)}
+                  type="number"
+                  id="numberOfRoomsAvailable"
+                  name="numberOfRoomsAvailable"
                   placeholder="15"
+                  value={form.numberOfRoomsAvailable}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+                {errors.numberOfRoomsAvailable && <div style={{ color: 'red', fontWeight: 500 }}>{errors.numberOfRoomsAvailable}</div>}
               </div>
 
               <div className="space-y-2">
@@ -486,7 +679,7 @@ function RoomType() {
                 />
 
                 {/* Área de upload/preview */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors h-[150px] flex flex-col items-center justify-center">
                   {selectedImage ? (
                     // Arquivo selecionado - mostra apenas o nome
                     <div className="space-y-3">
@@ -593,7 +786,7 @@ function RoomType() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {currentPageAmenities.map((amenity) => {
                         const IconComponent = iconMap[amenity.iconName] || MdBed // Fallback icon
                         const isSelected = selectedAmenities.includes(amenity.slug)
@@ -705,17 +898,7 @@ function RoomType() {
 
             <div className="w-full">
               <div className="flex border-b border-gray-200">
-                <button
-                  onClick={() => setActiveTab("smart")}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === "smart"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <FaMagic className="w-4 h-4" />
-                  Automático
-                </button>
+               
                 <button
                   onClick={() => setActiveTab("range")}
                   className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
@@ -725,19 +908,9 @@ function RoomType() {
                   }`}
                 >
                   <FaHashtag className="w-4 h-4" />
-                  Intervalo
+                  Vários Quartos de Uma Vez
                 </button>
-                <button
-                  onClick={() => setActiveTab("floor")}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === "floor"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <FaBuilding className="w-4 h-4" />
-                  Por Andar
-                </button>
+                
                 <button
                   onClick={() => setActiveTab("manual")}
                   className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
@@ -747,33 +920,11 @@ function RoomType() {
                   }`}
                 >
                   <FaPlus className="w-4 h-4" />
-                  Manual
+                  Individual
                 </button>
               </div>
 
               <div className="mt-4">
-                {activeTab === "smart" && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                      <div className="text-center space-y-3">
-                        <div className="flex items-center justify-center gap-2 text-blue-700">
-                          <FaMagic className="w-5 h-5" />
-                          <h3 className="font-semibold">Geração Automática Inteligente</h3>
-                        </div>
-                        <p className="text-sm text-blue-600">
-                          Gera automaticamente {availableRooms} números sequenciais começando em 101
-                        </p>
-                        <button
-                          onClick={generateSmartNumbers}
-                          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center mx-auto"
-                        >
-                          <FaMagic className="w-4 h-4 mr-2" />
-                          Gerar {availableRooms} Quartos Automaticamente
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {activeTab === "range" && (
                   <div className="space-y-4">
@@ -781,7 +932,7 @@ function RoomType() {
                       <div className="space-y-4">
                         <h3 className="font-semibold flex items-center gap-2">
                           <FaHashtag className="w-4 h-4" />
-                          Gerar por Intervalo Numérico
+                          Gerar Números de Quartos
                         </h3>
                         <div className="grid grid-cols-3 gap-3 items-end">
                           <div className="space-y-2">
@@ -818,67 +969,14 @@ function RoomType() {
                   </div>
                 )}
 
-                {activeTab === "floor" && (
-                  <div className="space-y-4">
-                    <div className="p-4 border border-gray-200 rounded-lg">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <FaBuilding className="w-4 h-4" />
-                          Gerar por Andar
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm text-gray-700">Andares (separados por vírgula)</label>
-                            <input
-                              value={floorPrefix}
-                              onChange={(e) => setFloorPrefix(e.target.value)}
-                              placeholder="1, 2, 3"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm text-gray-700">Quartos por Andar</label>
-                            <input
-                              value={roomsPerFloor}
-                              onChange={(e) => setRoomsPerFloor(e.target.value)}
-                              placeholder="5"
-                              type="number"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm text-gray-700">Número Inicial</label>
-                            <input
-                              value={startingRoom}
-                              onChange={(e) => setStartingRoom(e.target.value)}
-                              placeholder="01"
-                              type="number"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          onClick={generateFloorNumbers}
-                          disabled={!floorPrefix || !roomsPerFloor || !startingRoom}
-                          className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Gerar Quartos por Andar
-                        </button>
-                        <p className="text-xs text-gray-500">
-                          Ex: Andares 1,2,3 com 5 quartos cada, começando em 01 = 101, 102, 103, 104, 105, 201, 202...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
+                {/* acredito que vou apagar isso */}
                 {activeTab === "manual" && (
                   <div className="space-y-4">
                     <div className="p-4 border border-gray-200 rounded-lg">
                       <div className="space-y-4">
                         <h3 className="font-semibold flex items-center gap-2">
                           <FaPlus className="w-4 h-4" />
-                          Adicionar Manualmente
+                          Adicionar Número de Quarto
                         </h3>
                         <div className="flex gap-2">
                           <input
@@ -937,13 +1035,15 @@ function RoomType() {
             )}
           </div>
 
-          <button
+          <button 
+            type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={roomNumbers.length === 0}
+            // disabled={roomNumbers.length === 0}
           >
             Cadastrar Tipo de Quarto
           </button>
-        </div>
+        </form>
+
       </div>
     </div>
   )
