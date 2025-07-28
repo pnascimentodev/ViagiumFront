@@ -51,7 +51,7 @@ function StarRating({
   return (
 
     <div className="bg-gradient-to-r from-[#003194] to-[#FFA62B] flex justify-center items-center min-h-screen ">
-        <div className="w-full bg-[#FFFFFF] max-w-2xl mx-auto rounded-lg shadow-md ">
+        <div className="w-full bg-[#FFFFFF] max-w-sm mx-auto rounded-lg shadow-md px-4">
           <div className="flex items-center justify-center p-6 gap-6">
             <img src={logo} alt="Logo Viagium" className="h-20" />
             <h2 className="text-2xl  font-bold">Escreva sua Avaliação</h2>
