@@ -13,6 +13,8 @@ import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
 import Package from './pages/package/Package'
+import ResetClient from './pages/password/ResetClient'
+import ResetAffiliate from './pages/password/ResetAffiliate'
 
 function App() {
   return (
@@ -22,11 +24,13 @@ function App() {
       <Route path="/affiliate" element={<LoginAffiliate />} />
       <Route path="/register" element={<Register/>} />
       <Route path="/affiliatepage" element={<AffiliatePage />} />
-      <Route path="footer" element={<Footer/>}/>
+      <Route path="/footer" element={<Footer/>}/>
       <Route path="/resetpassword" element={<ResetPassword />} />
       <Route path="/forgotpassword" element={<ForgotPassword />} />
       <Route path="/forgotpassaffiliate" element={<ForgotPassAffiliate />} />
       <Route path="/forgotpassclient" element={<ForgotPassClient />} />
+      <Route path="/resetpassclient" element={<ResetClient />} />     
+      <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />         
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
       <Route path="/package" element={<Package />} />

@@ -12,7 +12,7 @@ interface LoginProps {
     newUserOption: boolean;
 }
 
-async function Login({ userType, newUserOption }: LoginProps) {
+function Login({ userType, newUserOption }: LoginProps) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [password, setPassword] = useState("");
