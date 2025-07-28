@@ -12,9 +12,11 @@ import EmailClient from './pages/password/EmailClient'
 import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
+import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
 import Package from './pages/package/Package'
 import ResetClient from './pages/password/ResetClient'
 import ResetAffiliate from './pages/password/ResetAffiliate'
+import ProfileEditor from "./pages/profile/profile-editor.tsx";
 
 function App() {
   return (
@@ -33,7 +35,9 @@ function App() {
       <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />         
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
+      <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
+      <Route path="/profile" element={<ProfileEditor />} />
     </Routes>
   )
 }
