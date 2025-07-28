@@ -1,17 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
 import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import { MdWifi, MdPool, MdLocalParking, MdFitnessCenter, MdRestaurant, MdPets, MdAccessible, MdRoomService, MdAcUnit, MdSpa, MdRestaurantMenu, MdLocalBar, MdRectangle } from "react-icons/md";
 
 interface ModalHotelProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+interface Amenity {
+    amenityId: number;
+    name: string;
+    iconName: string;
+}
+
 function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
+    // Mapeamento dos nomes dos ícones para componentes do react-icons/md
+    const getIconComponent = (iconName: string) => {
+        const iconMap: { [key: string]: React.ComponentType<any> } = {
+            'wifi': MdWifi,
+            'pool': MdPool,
+            'local_parking': MdLocalParking,
+            'fitness_center': MdFitnessCenter,
+            'restaurant': MdRestaurant,
+            'pets': MdPets,
+            'accessible': MdAccessible,
+            'room_service': MdRoomService,
+            'ac_unit': MdAcUnit,
+            'spa': MdSpa,
+            'restaurant_menu': MdRestaurantMenu,
+            'local_bar': MdLocalBar
+        };
+
+        return iconMap[iconName] || MdRectangle; // fallback para um ícone padrão
+    };
+
     // Form state
     const [form, setForm] = useState({
         RazaoSocial: "",
@@ -33,7 +61,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         telefoneHotel: "",
         imagemHotel: "",
         descricao: "",
-        diferenciais: [],
+        diferenciais: [] as string[],
         cnpj: "",
         inscricaoEstadual: "",
         numeroCadastur: "",
@@ -41,8 +69,95 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         termos: false,
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [amenities, setAmenities] = useState<Amenity[]>([]);
+    const [loadingAmenities, setLoadingAmenities] = useState(false);
     //O que é Cadastur? Interrogation
     const [showCadasturInfo, setShowCadasturInfo] = useState(false);
+
+    // Função para buscar amenities da API
+    const fetchAmenities = async () => {
+        setLoadingAmenities(true);
+        try {
+            // Chamada para a API de amenities            
+            // Exemplo: 'http://localhost:3001/api/rota'
+            const response = await axios.get('https://localhost:5028/api/Amenity/Hotel');
+            setAmenities(response.data);
+        } catch (error) {
+            console.error('Erro ao buscar amenities:', error);
+            // Fallback para amenities estáticos em caso de erro da API
+            setAmenities([
+                {
+                    amenityId: 1,
+                    name: "Wi-Fi gratuito",
+                    iconName: "wifi"
+                },
+                {
+                    amenityId: 2,
+                    name: "Piscina",
+                    iconName: "pool"
+                },
+                {
+                    amenityId: 3,
+                    name: "Estacionamento",
+                    iconName: "local_parking"
+                },
+                {
+                    amenityId: 4,
+                    name: "Academia",
+                    iconName: "fitness_center"
+                },
+                {
+                    amenityId: 5,
+                    name: "Café da manhã incluso",
+                    iconName: "restaurant"
+                },
+                {
+                    amenityId: 6,
+                    name: "Pet friendly",
+                    iconName: "pets"
+                },
+                {
+                    amenityId: 7,
+                    name: "Acessibilidade",
+                    iconName: "accessible"
+                },
+                {
+                    amenityId: 8,
+                    name: "Serviço de quarto",
+                    iconName: "room_service"
+                },
+                {
+                    amenityId: 9,
+                    name: "Ar-condicionado",
+                    iconName: "ac_unit"
+                },
+                {
+                    amenityId: 10,
+                    name: "Spa",
+                    iconName: "spa"
+                },
+                {
+                    amenityId: 11,
+                    name: "Restaurante",
+                    iconName: "restaurant_menu"
+                },
+                {
+                    amenityId: 12,
+                    name: "Bar",
+                    iconName: "local_bar"
+                }
+            ]);
+        } finally {
+            setLoadingAmenities(false);
+        }
+    };
+
+    // Carrega amenities quando o modal abre
+    useEffect(() => {
+        if (isOpen) {
+            fetchAmenities();
+        }
+    }, [isOpen]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         const target = e.target as HTMLInputElement | HTMLTextAreaElement;
@@ -471,47 +586,51 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 <label className="block text-sm font-medium text-[#003194] mb-2">
                                     Diferenciais do hotel
                                 </label>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-md border border-gray-300 p-4">
-                                    {[
-                                        { label: "Wi-Fi gratuito", value: "wifi" },
-                                        { label: "Piscina", value: "piscina" },
-                                        { label: "Estacionamento", value: "estacionamento" },
-                                        { label: "Academia", value: "academia" },
-                                        { label: "Café da manhã incluso", value: "cafe" },
-                                        { label: "Pet friendly", value: "pet" },
-                                        { label: "Acessibilidade", value: "acessibilidade" },
-                                        { label: "Serviço de quarto", value: "servicoQuarto" },
-                                        { label: "Ar-condicionado", value: "arCondicionado" },
-                                    ].map((item) => (
-                                        <label key={item.value} className="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                name="diferenciais"
-                                                value={item.value}
-                                                checked={Array.isArray(form.diferenciais) && form.diferenciais.includes(item.value)}
-                                                onChange={e => {
-                                                    const checked = e.target.checked;
-                                                    setForm(prev => {
-                                                        const prevDifs = Array.isArray(prev.diferenciais) ? prev.diferenciais : [];
-                                                        return {
-                                                            ...prev,
-                                                            diferenciais: checked
-                                                                ? [...prevDifs, item.value]
-                                                                : prevDifs.filter((v: string) => v !== item.value)
-                                                        };
-                                                    });
-                                                    setErrors(prev => {
-                                                        const newErrors = { ...prev };
-                                                        delete newErrors.diferenciais;
-                                                        return newErrors;
-                                                    });
-                                                }}
-                                                className="h-4 w-4 text-[#003194] border-gray-300 rounded"
-                                            />
-                                            <span className="text-[#003194]">{item.label}</span>
-                                        </label>
-                                    ))}
-                                </div>
+                                {loadingAmenities ? (
+                                    <div className="rounded-md border border-gray-300 p-4">
+                                        <div className="flex items-center justify-center text-[#003194]">
+                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003194] mr-2"></div>
+                                            Carregando amenities...
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 rounded-md border border-gray-300 p-4">
+                                        {amenities.map((amenity) => {
+                                            const IconComponent = getIconComponent(amenity.iconName);
+                                            return (
+                                                <label key={amenity.amenityId} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="diferenciais"
+                                                        value={amenity.amenityId.toString()}
+                                                        checked={form.diferenciais.includes(amenity.amenityId.toString())}
+                                                        onChange={e => {
+                                                            const checked = e.target.checked;
+                                                            setForm(prev => {
+                                                                return {
+                                                                    ...prev,
+                                                                    diferenciais: checked
+                                                                        ? [...prev.diferenciais, amenity.amenityId.toString()]
+                                                                        : prev.diferenciais.filter(v => v !== amenity.amenityId.toString())
+                                                                };
+                                                            });
+                                                            setErrors(prev => {
+                                                                const newErrors = { ...prev };
+                                                                delete newErrors.diferenciais;
+                                                                return newErrors;
+                                                            });
+                                                        }}
+                                                        className="h-4 w-4 text-[#003194] border-gray-300 rounded focus:ring-[#003194]"
+                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <IconComponent className="text-lg text-[#003194]" />
+                                                        <span className="text-[#003194] font-medium">{amenity.name}</span>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                                 {errors.diferenciais && <div style={{ color: "red", fontWeight: 500 }}>{errors.diferenciais}</div>}
                             </div>
 
