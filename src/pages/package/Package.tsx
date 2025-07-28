@@ -5,12 +5,15 @@ import { Button } from '../../components/Button';
 import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
+import axios from 'axios';
 
 function Package() {
 
   const [numPessoas, setNumPessoas] = useState(1);
   const [currentPackageIndex] = useState(0);
   const [packageImageIndex, setPackageImageIndex] = useState(0);
+  const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+  const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
   const [hotelImageIndex, setHotelImageIndex] = useState(0);
   const [roomTypeIndex, setRoomTypeIndex] = useState(0);
   const [showHotelModal, setShowHotelModal] = useState(false);
@@ -19,6 +22,22 @@ function Package() {
   const closeHotelModal = () => setShowHotelModal(false);
   const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
   const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+
+    useEffect(() => {
+    axios.get(`http://localhost:5028/api/Amenity/Hotel`)
+      .then(res => { 
+      setRoomIncludes(res.data);
+    })
+      .catch(() => setRoomIncludes([]));
+  }, [hotelImageIndex]);
+
+  useEffect(() => {
+  if (showHotelModal) {
+    axios.get('http://localhost:5028/api/Amenity/TypeRoom')
+      .then(res => setRoomTypeAmenities(res.data))
+      .catch(() => setRoomTypeAmenities([]));
+  }
+}, [showHotelModal, roomTypeIndex]);
 
   const packageDetails = [
     {
@@ -44,18 +63,6 @@ function Package() {
       roomTypes: [
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"],
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
-      ],
-      roomIncludes: [
-        [
-          "Café da manhã incluso",
-          "Vista para o canal",
-          "Wi-Fi grátis"
-        ],
-        [
-          "Café da manhã incluso",
-          "Piscina",
-          "Frigobar"
-        ]
       ],
     },
     
@@ -232,8 +239,8 @@ function Package() {
                       </select>
                       <div className="justify-center mt-2">
                         <ul className="space-y-1">
-                          {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
-                            <li key={idx} className="text-gray-600 text-xs">{item}</li>
+                          {roomIncludes.map((item) => (
+                            <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
                           ))}
                         </ul>
                       </div>
@@ -255,7 +262,7 @@ function Package() {
 
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="bg-white rounded-lg p-6 max-w-xl w-full relative z-[100000]">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full relative z-[100000]" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
               <button
                 className="absolute top-2 right-2 text-gray-500 text-xl z-[100001]"
                 onClick={closeHotelModal}
@@ -269,11 +276,11 @@ function Package() {
                 className="w-full h-48 object-cover rounded mb-4"
               />
               <p className="mb-2 text-xl">{currentPackage.hotelAddresses[hotelImageIndex]}</p>
-              <ul className="mb-2">
-                {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
-                  <li key={idx} className="text-xl">{item}</li>
-                ))}
-              </ul>
+                <ul className="mb-2">
+                  {roomTypeAmenities.map((item) => (
+                    <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
+                  ))}
+                </ul>
                 <span className="flex items-center font-semibold text-xl">
                   Avaliação:&nbsp;
                   <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">

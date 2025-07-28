@@ -4,7 +4,7 @@ import logo from "../assets/img/logo.svg";
 import boleto from "../assets/img/boleto.svg"
 import cartao from "../assets/img/cartao.svg"
 import pix from "../assets/img/pix.svg"
-
+import { Link } from 'react-router-dom';
 
 function Footer(){
     return(
@@ -89,7 +89,7 @@ function Footer(){
                         </div>
                         <div className="flex w-full md:w-auto">
                             <button className="bg-[#FFFFFF] hover:scale-105 hover:text-[#FFA62B] px-4 py-2 rounded font-medium transition-colors duration-200">
-                                Cadastre-se
+                            <Link to="/register" className="block w-full h-full">Cadastre-se</Link>
                             </button>
                         </div>
                     </div>
