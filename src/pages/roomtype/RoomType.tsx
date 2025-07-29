@@ -87,7 +87,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
   const [availableRooms, setAvailableRooms] = useState("") 
-  const [activeTab, setActiveTab] = useState("smart")
+  const [activeTab, setActiveTab] = useState("range") // Estado para controlar a aba ativa (range ou manual)
 
   // Estados para geração automática
   const [startNumber, setStartNumber] = useState("")
@@ -304,7 +304,7 @@ function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
   const { name, value } = e.target
   setForm(prev => ({ ...prev, [name]: value }))
-
+  
   if (name === 'numberOfRoomsAvailable') {
     setAvailableRooms(value)
   }
