@@ -43,6 +43,7 @@ function Package() {
     {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
+      origem: "Recife",
       images: [italyImg],
       pacoteehospedagem: [5524, 6000],
       encargos: [1300, 1300],
@@ -112,7 +113,10 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-4">Informações</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Duração</h2>
+                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.origem}
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h2 className="font-semibold">Duração</h2>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <FaRegCalendarAlt className=" text-xl" />
@@ -123,7 +127,7 @@ function Package() {
                       </select>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Número de pessoas</h2>
+                      <h2 className="font-semibold">Número de pessoas</h2>
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
