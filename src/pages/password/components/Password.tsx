@@ -128,7 +128,6 @@ function Password({actualPassword}: ForgotProps) {
             setCurrentPasswordError("");
         }
         
-        if (!valid) return;
 
     if (actualPassword) {
       // Usuário logado: envia senha atual + nova senha
@@ -136,11 +135,14 @@ function Password({actualPassword}: ForgotProps) {
         currentPassword,
         newPassword,
       });
-    } else {
+    } else 
+        console.log("Usuário não logado, apenas redefinindo a senha");
+        {
       axios.post('http://localhost:5028/api/User/1/forgot-password', {
         newPassword,
       });
     }
+    if (!valid) return;
   }
 
     return (
