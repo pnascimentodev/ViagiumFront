@@ -42,6 +42,36 @@ function Register() {
     return name.trim().length >= 1;
   }
 
+  // Função para validar senha completa
+  function validatePassword(password: string): string[] {
+    const errors: string[] = [];
+    
+    if (!password) {
+      return ["A senha é obrigatória."];
+    }
+    
+    if (password.length < 8) {
+      errors.push("• Pelo menos 8 caracteres");
+    }
+    
+    // Verifica se tem pelo menos uma letra maiúscula
+    if (!/[A-Z]/.test(password)) {
+      errors.push("• Pelo menos uma letra maiúscula (A-Z)");
+    }
+    
+    // Verifica se tem pelo menos um número
+    if (!/[0-9]/.test(password)) {
+      errors.push("• Pelo menos um número (0-9)");
+    }
+    
+    // Verifica se tem pelo menos um caractere especial
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push("• Pelo menos um caractere especial (!@#$%^&*)");
+    }
+    
+    return errors;
+  }
+
   function handleNomeBlur() {
     if (nome && !validateName(nome)) {
       setNomeError("Insira seu nome.");
@@ -74,10 +104,12 @@ function Register() {
     }
   }
 
+  // Função atualizada de validação de senha
   function handlePasswordBlur() {
-    if (senha && senha.length < 8) {
-      setSenhaError("A senha deve ter pelo menos 8 caracteres.");
-    } else if (senha && senha.length >= 8) {
+    const errors = validatePassword(senha);
+    if (errors.length > 0) {
+      setSenhaError(errors.join('\n'));
+    } else {
       setSenhaError("");
     }
   }
@@ -150,12 +182,10 @@ function Register() {
       setConfirmarEmailError("");
     }
 
-    // Senha
-    if (!senha) {
-      setSenhaError("Digite uma senha.");
-      valid = false;
-    } else if (senha.length < 8) {
-      setSenhaError("A senha deve ter pelo menos 8 caracteres.");
+    // Senha - validação completa
+    const senhaValidationErrors = validatePassword(senha);
+    if (senhaValidationErrors.length > 0) {
+      setSenhaError(senhaValidationErrors.join('\n'));
       valid = false;
     } else {
       setSenhaError("");
@@ -218,7 +248,6 @@ function Register() {
         phone: phone.replace(/\D/g, ""),
         documentNumber: /^[0-9.\-]+$/.test(documentNumber) ? documentNumber.replace(/\D/g, "") : documentNumber,
         birthDate: birthDate,
-        role: 1
       });
       setBackendError("");
       setShowSuccess(true);
@@ -315,7 +344,11 @@ function Register() {
                       onChange={(e) => setSenha(e.target.value)}
                       onBlur={handlePasswordBlur}
                   />
-                  {senhaError && <span className="text-red-500 text-sm">{senhaError}</span>}
+                  {senhaError && (
+                    <div className="text-red-500 text-sm whitespace-pre-line">
+                      {senhaError}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -440,4 +473,3 @@ function Register() {
 }
 
 export default Register;
-

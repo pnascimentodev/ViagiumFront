@@ -6,7 +6,7 @@ export interface InputProps {
   icon?: React.ReactNode;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: () => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   hasError?: boolean;
 }
 
