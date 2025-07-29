@@ -40,10 +40,9 @@ export default function Payment() {
     const [packageDetails] = useState({
     nome: "Pacote Viagem Rio",
     destino: "Rio de Janeiro",
-    data: "10/09/2025",
+    duracao: "10/09/2025",
     pessoas: 2,
     preco: 3200.00,
-    descricao: "Inclui hotel, café da manhã e passeio turístico."
     });
 
     function handleCardInputChange(field: string, value: string) {
@@ -103,9 +102,8 @@ export default function Payment() {
         <div className="space-y-1 ml-6">
           <div><span className="font-semibold text-gray-700">Nome:</span> {packageDetails.nome}</div>
           <div><span className="font-semibold text-gray-700">Destino:</span> {packageDetails.destino}</div>
-          <div><span className="font-semibold text-gray-700">Data:</span> {packageDetails.data}</div>
+          <div><span className="font-semibold text-gray-700">Duração:</span> {packageDetails.duracao}</div>
           <div><span className="font-semibold text-gray-700">Pessoas:</span> {packageDetails.pessoas}</div>
-          <div><span className="font-semibold text-gray-700">Descrição:</span> {packageDetails.descricao}</div>
           <div className="mb-6"><span className="font-semibold text-gray-700">Preço:</span> R$ {packageDetails.preco.toFixed(2)}</div>
         </div>
         <hr className="w-full mb-2 mt-2" />
