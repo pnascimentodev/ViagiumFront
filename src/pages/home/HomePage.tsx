@@ -1,44 +1,13 @@
 import type React from "react"
 import { useEffect } from "react"
-import Navbar from "../../components/navbars/Navbar"
+import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer";
 import HotelCarousel from "../../components/HotelCarousel";
+import { Link } from "react-router-dom";
+import TravelPackageCard from "../../components/TravelPackageCard";
+import Badge from "../../components/Badge";
 
-// Custom Card Component
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-    return <div className={`bg-white rounded-lg shadow-md overflow-hidden ${className}`}>{children}</div>
-}
-
-const CardContent = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
-    return <div className={`p-4 ${className}`}>{children}</div>
-}
-
-// Custom Badge Component
-const Badge = ({
-    children,
-    className = "",
-    variant = "default",
-}: {
-    children: React.ReactNode
-    className?: string
-    variant?: "default" | "blue" | "teal" | "green" | "red"
-}) => {
-    const variants = {
-        default: "bg-gray-100 text-gray-800",
-        blue: "bg-blue-100 text-blue-800",
-        teal: "bg-teal-100 text-teal-800",
-        green: "bg-green-100 text-green-800",
-        red: "bg-red-100 text-red-800",
-    }
-
-    return (
-        <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${variants[variant]} ${className}`}
-        >
-            {children}
-        </span>
-    )
-}
+// ...existing code...
 
 export default function HomePage() {
     useEffect(() => {
@@ -117,14 +86,18 @@ export default function HomePage() {
                                 A Viagium conecta viajantes com destinos e hotéis incríveis
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button className="bg-[#003194] text-white px-6 py-3 rounded-lg shadow-lg hover:bg-[#002377] transition-colors text-lg font-bold cursor-pointer transform hover:scale-105 ">
-                                    <span className="inline-block mr-2">📍</span>
-                                    Explore Destinos
-                                </button>
-                                <button className="bg-[#003194] text-white px-6 py-3 rounded-lg shadow-lg hover:bg-[#002377] transition-colors text-lg font-bold cursor-pointer transform hover:scale-105 ">
-                                    <span className="inline-block">📈</span>
-                                    Seja nosso filiado
-                                </button>
+                                <Link to="/packages">
+                                    <button className="bg-[#003194] text-white px-6 py-3 rounded-lg shadow-lg hover:bg-[#002377] transition-colors text-lg font-bold cursor-pointer transform hover:scale-105 ">
+                                        <span className="inline-block mr-2">📍</span>
+                                        Explore Destinos
+                                    </button>
+                                </Link>
+                                <Link to="/affiliatePage">
+                                    <button className="bg-[#003194] text-white px-6 py-3 rounded-lg shadow-lg hover:bg-[#002377] transition-colors text-lg font-bold cursor-pointer transform hover:scale-105 ">
+                                        <span className="inline-block">📈</span>
+                                        Seja nosso filiado
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -133,9 +106,9 @@ export default function HomePage() {
 
             {/* Featured Travel Packages Section */}
             <section id="pacotes" className="py-16 bg-white">
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4 py-10">
                     <div className="text-center mb-12">
-                        <Badge variant="blue" className="mb-4">
+                        <Badge variant="blue" className="mb-10">
                             Os melhores pacotes
                         </Badge>
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Descubra lugares incríveis</h2>
@@ -146,65 +119,20 @@ export default function HomePage() {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         {featuredPackages.map((pkg) => (
-                            <Card
-                                key={pkg.id}
-                                className="shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
-                            >
-                                <div className="relative overflow-hidden">
-                                    <img
-                                        src={pkg.image || "/placeholder.svg"}
-                                        alt={pkg.destination}
-                                        width={400}
-                                        height={300}
-                                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute bottom-3 left-3">
-                                        <Badge variant="red">
-                                            Faltam 5 vagas 🔥
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <CardContent>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-semibold text-gray-900">{pkg.destination}</h3>
-                                        <div className="flex items-center space-x-1">
-                                            <span className="inline-block text-yellow-400">⭐</span>
-                                            <span className="text-sm text-gray-600">{pkg.rating}</span>
-                                        </div>
-                                    </div>
-                                    <h4 className="text-lg font-bold text-blue-600 mb-2">{pkg.title}</h4>
-                                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{pkg.description}</p>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-1 text-gray-500">
-                                            <span className="inline-block">🕒</span>
-                                            <span className="text-sm">{pkg.duration}</span>
-                                        </div>
-                                        <span className="text-xs text-gray-500">{pkg.reviews} reviews</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="text-2xl font-bold text-gray-900">{pkg.price}</span>
-                                            <span className="text-sm text-gray-500 line-through ml-2">{pkg.originalPrice}</span>
-                                        </div>
-                                        <a href="#" className="inline-block">
-                                            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
-                                                Ver pacote
-                                            </button>
-                                        </a>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <TravelPackageCard key={pkg.id} pkg={pkg} />
                         ))}
                     </div>
 
                     {/* Find Your Perfect Package Button */}
                     <div className="text-center">
-                        <button
-                            className="bg-gradient-to-r from-[#FFA62B] to-[#1A3799] text-white px-12 py-4 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer rounded-xl mb-2"
-                        >
-                            <span className="inline-block mr-2">📍</span>
-                            Ache seu pacote perfeito
-                        </button>
+                        <Link to="/packages">
+                            <button
+                                className="bg-gradient-to-r from-[#FFA62B] to-[#1A3799] text-white px-12 py-4 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer rounded-xl mb-2"
+                            >
+                                <span className="inline-block mr-2">📍</span>
+                                Ache seu pacote perfeito
+                            </button>
+                        </Link>
                         <p className="text-gray-600 text-lg mt-3">Explore todos os nossos destinos </p>
                     </div>
                 </div>
@@ -212,7 +140,7 @@ export default function HomePage() {
 
             {/* Travelers Benefits Section */}
             <section id="vantagens" className="py-16 bg-[#003194]">
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto py-10 px-4 flex flex-col gap-4">
                     <div className="text-center mb-12">
                         <Badge variant="blue" className="mb-4">
                             Para Viajantes
@@ -224,8 +152,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                            <CardContent className="p-8 text-center">
+                        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                            <div className="p-8 text-center">
                                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="inline-block text-2xl">💰</span>
                                 </div>
@@ -233,11 +161,11 @@ export default function HomePage() {
                                 <p className="text-gray-600">
                                     Oferecemos tarifas competitivas e ofertas exclusivas que você não encontrará em nenhum outro lugar
                                 </p>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                            <CardContent className="p-8 text-center">
+                        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                            <div className="p-8 text-center">
                                 <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="inline-block text-2xl">📅</span>
                                 </div>
@@ -245,11 +173,11 @@ export default function HomePage() {
                                 <p className="text-gray-600">
                                     Reserve suas férias dos sonhos em apenas alguns cliques com nossa plataforma
                                 </p>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                            <CardContent className="p-8 text-center">
+                        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                            <div className="p-8 text-center">
                                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="inline-block text-2xl">🛡️</span>
                                 </div>
@@ -257,15 +185,15 @@ export default function HomePage() {
                                 <p className="text-gray-600">
                                     Suas reservas e informações pessoais estão protegidas com segurança de ponta
                                 </p>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             {/* Hotels Benefits Section */}
             <section id="parceiros" className="py-16 bg-white">
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4 py-10">
                     <div className="text-center mb-12">
                         <Badge variant="teal" className="mb-4">
                             Para Hotéis Parceiros
@@ -315,11 +243,13 @@ export default function HomePage() {
                                     </div>
                                 </div>
                             </div>
-                            <button
-                                className="bg-[#1A3799] text-white px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer rounded-xl"
-                            >
-                                <span className="text-white" style={{ textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)" }}>Registre seu Hotel</span>
-                            </button>
+                            <Link to="/affiliatePage">
+                                <button
+                                    className="bg-[#1A3799] text-white px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer rounded-xl w-full"
+                                >
+                                    <span className="text-white" style={{ textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)" }}>Registre seu Hotel</span>
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -327,15 +257,15 @@ export default function HomePage() {
 
             {/* Testimonials Section */}
             <section className="py-16 bg-gray-50 flex flex-col gap-20">
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4 py-10">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">As Melhores Avaliações</h2>
                         <p className="text-xl text-gray-600">Confiado por milhares de viajantes e parceiros hoteleiros em todo o mundo</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 mb-12">
-                        <Card className="shadow-lg">
-                            <CardContent className="p-6">
+                        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <div className="p-6">
                                 <div className="flex items-center mb-4">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="inline-block text-yellow-400">⭐</span>
@@ -353,11 +283,11 @@ export default function HomePage() {
                                         <p className="text-sm text-gray-500">Cliente</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card className="shadow-lg">
-                            <CardContent className="p-6">
+                        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <div className="p-6">
                                 <div className="flex items-center mb-4">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="inline-block text-yellow-400">⭐</span>
@@ -376,11 +306,11 @@ export default function HomePage() {
                                         <p className="text-sm text-gray-500">Gerente de Hotel</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <Card className="shadow-lg">
-                            <CardContent className="p-6">
+                        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                            <div className="p-6">
                                 <div className="flex items-center mb-4">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="inline-block text-yellow-400">⭐</span>
@@ -398,13 +328,13 @@ export default function HomePage() {
                                         <p className="text-sm text-gray-500">Viajante Frequente</p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Partner Logos */}
-                <div className="text-center container mx-auto px-4 mb-6">
+                <div className="text-center container mx-auto px-4 mb-20">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-10">As Melhores Redes de Hotéis Estão Aqui</h2>
                     <div className="mx-auto">
                         <HotelCarousel />
