@@ -12,6 +12,7 @@ import EmailClient from './pages/password/EmailClient'
 import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
+import HomePage from './pages/home/HomePage'
 import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
 import Package from './pages/package/Package'
 import ResetClient from './pages/password/ResetClient'
@@ -22,6 +23,7 @@ import Review from './pages/review/Review.tsx'
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomePage />} />
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />
