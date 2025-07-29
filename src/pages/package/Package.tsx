@@ -6,6 +6,7 @@ import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 function Package() {
 
@@ -260,11 +261,13 @@ function Package() {
             </div>
             </div>
             <div className="p-6 pt-8">
+              <Link to="/payment">
               <Button
                 className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" style={{ backgroundColor: '#FFA62B', color: '#003194'}}
               >
                 Reservar Agora
               </Button>
+              </Link>
             </div>
           </div>
         </div>
