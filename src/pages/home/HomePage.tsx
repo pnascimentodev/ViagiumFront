@@ -15,17 +15,18 @@ export default function HomePage() {
     const featuredPackages = [
         {
             id: 1,
-            destination: "Santorini, Grécia",
             title: "Paraíso Mediterrâneo",
             description: "7 dias de pores do sol deslumbrantes, vilarejos brancos e águas cristalinas",
             price: "R$ 6.499",
             originalPrice: "R$ 7.999",
             duration: "7 dias",
-            image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Santorini/Grécia
+            image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             rating: 4.9,
             reviews: 68,
             qtySalesLimit: 50,
             qtySold: 3,
+            originAddress: { country: "Brasil", city: "São Paulo" },
+            destinationAddress: { country: "Grécia", city: "Santorini" },
         },
         {
             id: 2,
@@ -35,11 +36,13 @@ export default function HomePage() {
             price: "R$ 4.499",
             originalPrice: "R$ 5.999",
             duration: "10 dias",
-            image: "https://plus.unsplash.com/premium_photo-1661878915254-f3163e91d870?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Bali
+            image: "https://plus.unsplash.com/premium_photo-1661878915254-f3163e91d870?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             rating: 4.8,
             reviews: 25,
             qtySalesLimit: 10,
             qtySold: 8,
+            originAddress: { country: "Brasil", city: "Rio de Janeiro" },
+            destinationAddress: { country: "Indonésia", city: "Bali" },
         },
         {
             id: 3,
@@ -49,12 +52,13 @@ export default function HomePage() {
             price: "R$ 7.999",
             originalPrice: "R$ 9.499",
             duration: "5 dias",
-            image: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=1484&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Tokyo
+            image: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=1484&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             rating: 4.9,
             reviews: 312,
             qtySalesLimit: 80,
             qtySold: 65,
-
+            originAddress: { country: "Brasil", city: "Curitiba" },
+            destinationAddress: { country: "Japão", city: "Tóquio" },
         },
         {
             id: 4,
@@ -64,11 +68,13 @@ export default function HomePage() {
             price: "R$ 8.499",
             originalPrice: "R$ 10.499",
             duration: "6 dias",
-            image: "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Swiss Alps
+            image: "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             rating: 4.7,
             reviews: 156,
             qtySalesLimit: 50,
             qtySold: 41,
+            originAddress: { country: "Brasil", city: "Porto Alegre" },
+            destinationAddress: { country: "Suíça", city: "Interlaken" },
         },
     ]
 

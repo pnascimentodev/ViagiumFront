@@ -1,8 +1,12 @@
 import Badge from "./Badge";
 
+export type Address = {
+    country: string;
+    city: string;
+};
+
 export type TravelPackage = {
     id: number;
-    destination: string;
     title: string;
     description: string;
     price: string;
@@ -13,6 +17,8 @@ export type TravelPackage = {
     reviews: number;
     qtySalesLimit: number;
     qtySold: number;
+    originAddress: Address;
+    destinationAddress: Address;
 };
 
 type TravelPackageCardProps = {
@@ -24,7 +30,7 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
         <div className="relative overflow-hidden">
             <img
                 src={pkg.image || "/placeholder.svg"}
-                alt={pkg.destination}
+                alt={pkg.destinationAddress.city}
                 width={400}
                 height={300}
                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
@@ -41,7 +47,11 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
         </div>
         <div className="p-4">
             <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{pkg.destination}</h3>
+                <div className="flex items-center gap-4 mr-8">
+                    <h3 className="font text-xs text-gray-900">{`${pkg.originAddress.city}, ${pkg.originAddress.country}`}</h3>
+                    <h3 className="font text-gray-900">{`→`}</h3>
+                    <h3 className="font-semibold text-xs text-gray-900">{`${pkg.destinationAddress.city}, ${pkg.destinationAddress.country}`}</h3>
+                </div>
                 <div className="flex items-center space-x-1">
                     <span className="inline-block text-yellow-400">⭐</span>
                     <span className="text-sm text-gray-600">{pkg.rating}</span>
