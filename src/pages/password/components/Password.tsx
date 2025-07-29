@@ -3,6 +3,7 @@ import { Input } from "../../../components/Input.tsx";
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa"; // Adicione o FaRegEye
+import axios from "axios";
 
 interface ForgotProps {
     actualPassword: boolean;
@@ -96,9 +97,9 @@ function Password({actualPassword}: ForgotProps) {
             setConfirmPasswordError("");
         }
     }
-
-    function handleLogin(e: React.FormEvent) {
-        e.preventDefault();
+    
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
         let valid = true;
 
         const passwordValidation = validatePassword(newPassword);
@@ -129,7 +130,18 @@ function Password({actualPassword}: ForgotProps) {
         
         if (!valid) return;
 
+    if (actualPassword) {
+      // Usuário logado: envia senha atual + nova senha
+       axios.put('http://localhost:5028/api/User/reset-password', {
+        currentPassword,
+        newPassword,
+      });
+    } else {
+      axios.post('http://localhost:5028/api/User/1/forgot-password', {
+        newPassword,
+      });
     }
+  }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-[linear-gradient(to_bottom,rgba(0,49,148,0.9),#fff),url('https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg')]">
@@ -141,7 +153,7 @@ function Password({actualPassword}: ForgotProps) {
                     </div>
                     <p className="text-center mt-6">Crie uma nova senha para acessar sua conta</p>
                 </div>
-                <form className="w-full flex flex-col items-center mb-12" onSubmit={handleLogin}>
+                <form className="w-full flex flex-col items-center mb-12" onSubmit={handleSubmit}>
                     <div className="w-full flex flex-col gap-3">
                         {actualPassword && (
                             <div className="flex flex-col justify-center gap-1">
