@@ -44,18 +44,22 @@ function Email({ userType }: EmailProps) {
         if (!valid) return;
 
         let endpoint = "";
-        if (userType === "client") endpoint = "/api/User/by-email";
+        if (userType === "client") endpoint = "/api/User/forgot-password-email";
         if (userType === "affiliate") endpoint = "/api/Affiliate/by-email";
 
         try {
-            await axios.get(`http://localhost:5028${endpoint}`, { params: { email } });
+            if (userType === "client") {
+                await axios.post(`http://localhost:5028${endpoint}`, email, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } else if (userType === "affiliate") {
+                await axios.get(`http://localhost:5028${endpoint}`, { params: { email } });
+            }
             setBackendError("");
             setShowSuccess(true);
             setTimeout(() => {
                 setShowSuccess(false);
-                if (userType === "client") {
-                    navigate("/forgotpassclient");
-                } else if (userType === "affiliate") {
+                if (userType === "affiliate") {
                     navigate("/forgotpassaffiliate");
                 }
             }, 2000); // Exibe animação por 2 segundos

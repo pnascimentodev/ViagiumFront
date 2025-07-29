@@ -32,16 +32,6 @@ function Password({actualPassword}: ForgotProps) {
          return "";
     }
 
-    function handleCurrentPasswordBlur() {
-        const errorMessage = validateCurrentPassword(currentPassword);
-        setCurrentPasswordError(errorMessage);
-        if (errorMessage) {
-            setCurrentPasswordError(errorMessage);
-        } else {
-            setCurrentPasswordError("");
-        }
-    }
-
     function validatePassword(newPassword: string) {
         if (!newPassword || newPassword.trim() === "") {
             return "A senha é obrigatória.";
@@ -58,7 +48,7 @@ function Password({actualPassword}: ForgotProps) {
         if (!/[0-9]/.test(newPassword)) {
             return "A senha deve conter pelo menos um número.";
         }
-        if (!/[!@#$%^&*(),.?\":{}|<>]/.test(newPassword)) {
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
             return "A senha deve conter pelo menos um caractere especial.";
         }
         return "";
@@ -68,11 +58,13 @@ function Password({actualPassword}: ForgotProps) {
         const errorMessage = validatePassword(newPassword);
         setNewPasswordError(errorMessage);
         if (errorMessage) {
-            setConfirmPasswordError(errorMessage);
+            return false;
         } else if (confirmPassword !== newPassword) {
             setConfirmPasswordError("As senhas não coincidem.");
+            return false;
         } else {
             setConfirmPasswordError("");
+            return true;
         }
     }
 
@@ -90,57 +82,55 @@ function Password({actualPassword}: ForgotProps) {
         const errorMessage = validateConfirmPassword(confirmPassword);
         if (errorMessage) {
             setConfirmPasswordError(errorMessage);
-        } else if (confirmPassword !== newPassword) {
-            setConfirmPasswordError(errorMessage);
+            return false;
         } else {
             setConfirmPasswordError("");
+            return true;
         }
     }
-    
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-        let valid = true;
 
-        const passwordValidation = validatePassword(newPassword);
-        if (passwordValidation) {
-            setNewPasswordError(passwordValidation);
-            valid = false;
-        } else if (newPassword !== confirmPassword) {
-            setNewPasswordError("As senhas não coincidem.");
-            valid = false;
-        } else {
-            setNewPasswordError("");
-        }
-        const confirmPasswordValidation = validateConfirmPassword(confirmPassword);
-        if (confirmPasswordValidation) {
-            setConfirmPasswordError(confirmPasswordValidation);
-            valid = false;
-        } else {
-            setConfirmPasswordError("");
-        }
-        
-        const currentPasswordValidation = validateCurrentPassword(currentPassword);
-        if (currentPasswordValidation) {
-            setCurrentPasswordError(currentPasswordValidation);
-            valid = false;
+    function handleCurrentPasswordBlur() {
+        const errorMessage = validateCurrentPassword(currentPassword);
+        setCurrentPasswordError(errorMessage);
+        if (errorMessage) {
+            return false;
         } else {
             setCurrentPasswordError("");
+            return true;
+        }
+    }
+
+    function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        let valid = true;
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get("id");
+
+        // Validação das senhas
+        const isNewPasswordValid = handlePasswordBlur();
+        const isConfirmPasswordValid = handleConfirmPasswordBlur();
+        const isCurrentPasswordValid = actualPassword ? handleCurrentPasswordBlur() : true;
+
+        valid = isNewPasswordValid && isConfirmPasswordValid && isCurrentPasswordValid;
+
+        console.log("Chegou aqui viu Myrelinha")
+        if (!valid) {
+            return;
         }
 
-        if (!valid) return;
-
-    if (actualPassword) {
-      // Usuário logado: envia senha atual + nova senha
-       axios.put('http://localhost:5028/api/User/reset-password', {
-        currentPassword,
-        newPassword,
-      });
-    } else {
-      axios.post('http://localhost:5028/api/User/1/forgot-password', {
-        newPassword,
-      });
+        console.log("Toc Toc quem é?");
+        if (actualPassword) {
+            axios.put('http://localhost:5028/api/User/reset-password', {
+                currentPassword,
+                newPassword,
+            });
+        } else {
+            console.log("Erro da API");
+            axios.post(`http://localhost:5028/api/User/${userId}/forgot-password`, {
+                newPassword,
+            });
+        }
     }
-  }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-[linear-gradient(to_bottom,rgba(0,49,148,0.9),#fff),url('https://images.pexels.com/photos/13644895/pexels-photo-13644895.jpeg')]">
@@ -253,3 +243,4 @@ function Password({actualPassword}: ForgotProps) {
 }
 
 export default Password;
+
