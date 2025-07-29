@@ -72,6 +72,7 @@ function Password({actualPassword}: ForgotProps) {
             setConfirmPasswordError("As senhas não coincidem.");
         } else {
             setConfirmPasswordError("");
+            return true
         }
     }
 
@@ -125,7 +126,7 @@ function Password({actualPassword}: ForgotProps) {
         } else {
             setCurrentPasswordError("");
         }
-
+        
         if (!valid) return;
 
     }
