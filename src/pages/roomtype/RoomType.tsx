@@ -46,7 +46,7 @@ import { validateRequired } from "../../utils/validations"
 // Interface para os adicionais vindos da API
 interface Amenity {
   amenityId: number
-  slug: string
+  name: string      
   iconName: string
 }
 
@@ -84,46 +84,6 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   MdChildFriendly,
 }
 
-// Função para converter slug em label legível
-function slugToLabel(slug: string): string {
-  const labelMap: Record<string, string> = {
-    "banheira": "Banheira",
-    "varanda": "Varanda",
-    "vista-mar": "Vista para o Mar",
-    "cama-king-size": "Cama King Size",
-    "cama-queen-size": "Cama Queen Size",
-    "sofa-cama": "Sofá Cama", 
-    "mesa-trabalho": "Mesa de Trabalho",
-    "chaleira-eletrica": "Chaleira Elétrica",
-    "cofre": "Cofre",
-    "espelho-corpo-inteiro": "Espelho de Corpo Inteiro",
-    "secador-cabelo": "Secador de Cabelo",
-    "roupao-chinelos": "Roupão e Chinelos",
-    "acessivel-pcd": "Acessível PCD",
-    "isolamento-acustico": "Isolamento Acústico",
-    "tomada-perto-cama": "Tomada Perto da Cama",
-    "cozinha-acoplada": "Cozinha Acoplada",
-    "micro-ondas": "Micro-ondas",
-    "utensilios-cozinha": "Utensílios de Cozinha",
-    "geladeira": "Geladeira",
-    "area-estar": "Área de Estar",
-    "smart-tv": "Smart TV",
-    "cortinas-blackout": "Cortinas Blackout",
-    "controle-temperatura": "Controle de Temperatura",
-    "assistente-virtual": "Assistente Virtual",
-    "iluminacao-ambiente": "Iluminação Ambiente",
-    "chuveiro-aquecido": "Chuveiro Aquecido",
-    "maquina-cafe": "Máquina de Café",
-    "sem-carpete": "Sem Carpete",
-    "entrada-cartao": "Entrada por Cartão",
-    "espaco-refeicoes": "Espaço para Refeições",
-    "piscina-privativa": "Piscina Privativa",
-    "berco-disponivel": "Berço Disponível",
-  }
-  
-  return labelMap[slug] || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-}
-
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
   const [availableRooms, setAvailableRooms] = useState("") 
@@ -132,15 +92,12 @@ function RoomType() {
   // Estados para geração automática
   const [startNumber, setStartNumber] = useState("")
   const [endNumber, setEndNumber] = useState("")
-  // const [floorPrefix, setFloorPrefix] = useState("")
-  // const [roomsPerFloor, setRoomsPerFloor] = useState("")
-  // const [startingRoom, setStartingRoom] = useState("")
 
   // Estados para adição manual
   const [currentRoomNumber, setCurrentRoomNumber] = useState("")
 
   // Estados para diferenciais do quarto
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]) // Lista de diferenciais selecionados
+  const [selectedAmenities, setSelectedAmenities] = useState<number[]>([]) // Lista de diferenciais selecionados
   const [amenities, setAmenities] = useState<Amenity[]>([]) // Lista de diferenciais disponíveis
   const [loadingAmenities, setLoadingAmenities] = useState(true) // Estado para indicar se os diferenciais estão sendo carregados
   const [errorAmenities, setErrorAmenities] = useState<string | null>(null) // Estado para erros ao carregar diferenciais
@@ -180,7 +137,7 @@ function RoomType() {
     const fetchAmenities = async () => { // Função para buscar os diferenciais da API
       try {
         setLoadingAmenities(true) // Indica que os diferenciais estão sendo carregados
-        const response = await fetch('https://localhost:7259/api/Amenity') // Requisição para a API
+        const response = await fetch('https://localhost:7259/api/Amenity/TypeRoom') // Requisição para a API
         
         if (!response.ok) { // Verifica se a resposta foi bem sucedida
           throw new Error(`Erro na API: ${response.status}`) // Lança erro se a resposta não for
@@ -250,18 +207,18 @@ function RoomType() {
   }
 
   // Função para alternar a seleção de um diferencial (basicamente um interruptor (toggle) para selecionar e desselecionar diferenciais do quarto.)
-  function toggleAmenity(amenitySlug: string) {
-    // Se o amenitySlug JÁ ESTÁ na lista de selecionados:
+  function toggleAmenity(amenityId: number) {
+    // Se o amenityId JÁ ESTÁ na lista de selecionados:
     setSelectedAmenities((prev) =>
-      prev.includes(amenitySlug) 
-    ? prev.filter((slug) => slug !== amenitySlug) // REMOVE da lista 
-    : [...prev, amenitySlug], // ADICIONA na lista
+      prev.includes(amenityId) 
+    ? prev.filter((id) => id !== amenityId) // REMOVE da lista 
+    : [...prev, amenityId], // ADICIONA na lista
     )
   }
 
   // Função para remover um diferencial selecionado
-  function removeAmenity(amenityToRemove: string) {
-    setSelectedAmenities(selectedAmenities.filter((amenity) => amenity !== amenityToRemove))
+  function removeAmenity(amenityToRemove: number) {
+    setSelectedAmenities(selectedAmenities.filter((id) => id !== amenityToRemove))
   }
 
   // Função para abrir o seletor de arquivos
@@ -302,46 +259,6 @@ function RoomType() {
     // Armazenar arquivo selecionado
     setSelectedImage(file)
   }
-
-  // Função para fazer upload da imagem para a API (VERIFICAR)
-  // async function uploadImageToAPI(file: File): Promise<string | null> {
-  //   try {
-  //     setUploadingImage(true)
-  //     setUploadError(null)
-
-  //     // Criar FormData para envio multipart/form-data
-  //     const formData = new FormData()
-  //     formData.append('image', file) // 'image' é o nome do campo esperado pela API
-
-  //     // Fazer requisição para API
-  //     const response = await axios.post('https://localhost:7259/api/upload/image', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //       timeout: 30000, // 30 segundos timeout
-  //     })
-
-  //     // Retornar URL da imagem ou ID conforme sua API retorna
-  //     return response.data.imageUrl || response.data.url || response.data.id
-
-  //   } catch (error: any) {
-  //     console.error('Erro no upload:', error)
-      
-  //     if (error.code === 'ECONNABORTED') {
-  //       setUploadError('Timeout no upload. Tente novamente.')
-  //     } else if (error.response?.status === 413) {
-  //       setUploadError('Arquivo muito grande para o servidor.')
-  //     } else if (error.response?.status >= 400 && error.response?.status < 500) {
-  //       setUploadError('Erro na requisição. Verifique o arquivo.')
-  //     } else {
-  //       setUploadError('Erro no servidor. Tente novamente.')
-  //     }
-      
-  //     return null
-  //   } finally {
-  //     setUploadingImage(false)
-  //   }
-  // }
 
   // Função para remover imagem selecionada
   function removeSelectedImage() {
@@ -387,6 +304,10 @@ function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
   const { name, value } = e.target
   setForm(prev => ({ ...prev, [name]: value }))
+
+  if (name === 'numberOfRoomsAvailable') {
+    setAvailableRooms(value)
+  }
 }
 
 function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -465,7 +386,6 @@ function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement |
 async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    console.log("enviando...");
     // Validar campos obrigatórios
     const newErrors: { [key: string]: string } = {};
     if(!validateRequired(form.name)) newErrors.name = 'Campo obrigatório.';
@@ -473,7 +393,6 @@ async function handleSubmit(e: React.FormEvent) {
     if(!validateRequired(form.pricePerNight)) newErrors.pricePerNight = 'Campo obrigatório.';
     if(!validateRequired(form.maxOccupancy)) newErrors.maxOccupancy = 'Campo obrigatório.';
     if(!validateRequired(form.numberOfRoomsAvailable)) newErrors.numberOfRoomsAvailable = 'Campo obrigatório.';
-    // if(!validateRequired(form.imageUrl)) newErrors.imageUrl = 'Campo obrigatório.'; - chat gpt pediu pra apagar
 
     if (!selectedImage) {
       newErrors.imageUrl = 'Selecione uma imagem para o tipo de quarto.';
@@ -481,80 +400,49 @@ async function handleSubmit(e: React.FormEvent) {
       return;
     }
 
-    setErrors(newErrors);
+    // ADICIONAR validação para números dos quartos
+    if (roomNumbers.length === 0) {
+      newErrors.roomNumbers = 'Adicione pelo menos um número de quarto.';
+    }
 
-    console.log("chegou aqui linha 480...");
-    // Se houver erros, não enviar o formulário
-    // if (Object.keys(newErrors).length > 0) return;
+    setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
       console.log("⚠️ Erros de validação encontrados:", newErrors);
       return;
     }
 
-    console.log("chegou aqui linha 484...");
-     // Upload da imagem
-  // let imageUrl = form.imageUrl;
-  // if (selectedImage) {
-  //   const uploadedUrl = await uploadImageToAPI(selectedImage);
-  //   if (!uploadedUrl) {
-  //     setUploadError("Erro ao enviar imagem.");
-  //     return;
-  //   }
-  //   imageUrl = uploadedUrl;
-  // } else {
-  //   newErrors.imageUrl = 'Selecione uma imagem para o tipo de quarto.';
-  //   setErrors(newErrors);
-  //   return;
-  // }
-
-  console.log("chegou aqui linha 500...");
-
     const priceValue = form.pricePerNight.replace(',', '.') // Substitui vírgula por ponto para conversão correta
 
-    // Enviar dados do formulário para a API
-    // const data = {
-    //   name: form.name,
-    //   description: form.description,
-    //   pricePerNight: parseFloat(priceValue), // ← Converter para number
-    //   maxOccupancy: form.maxOccupancy,
-    //   numberOfRoomsAvailable: form.numberOfRoomsAvailable,
-    //   imageUrl: form.imageUrl,
-    //   hotelId: "1"
-    // }
-
-    // console.log("Dados enviados ao backend:", data);
-
-
-    // axios.post('https://localhost:7259/api/roomtype', data)
-    // .then(() => {
-    //   alert("Cadastro realizado com sucesso!");
-    // })
-    // .catch(error => {
-    //   const msg = error.response?.data?.message || error.message || 'Erro ao cadastrar tipo de quarto.';
-    //   alert(msg);
-    // });
 
     const data = new FormData();
-data.append('Name', form.name);
-data.append('Description', form.description);
-data.append('PricePerNight', priceValue); // como string
-data.append('MaxOccupancy', form.maxOccupancy.toString());
-data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
-data.append('HotelId', "1"); // id mockado para teste
+    data.append('Name', form.name);
+    data.append('Description', form.description);
+    data.append('PricePerNight', priceValue); // como string
+    data.append('MaxOccupancy', form.maxOccupancy.toString());
+    data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
+    data.append('HotelId', "2"); // id mockado para teste
+    data.append('Image', selectedImage); 
 
-// O nome do campo tem que ser exatamente igual ao nome da propriedade no DTO: "Image"
-data.append('Image', selectedImage);
+    // ADICIONAR OS AMENITIES SELECIONADOS COMO LISTA
+    selectedAmenities.forEach((amenityId, index) => {
+      data.append(`Amenities[${index}]`, amenityId.toString());
+    });
 
-axios.post('https://localhost:7259/api/roomtype', data, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-})
-.then(() => alert('Cadastro realizado com sucesso!'))
-.catch(error => {
-  const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
-  alert(msg);
-});
-  }
+    //  ADICIONAR OS NÚMEROS DOS QUARTOS
+    roomNumbers.forEach((roomNumber, index) => {
+      data.append(`RoomsNumber[${index}]`, roomNumber);
+    });
+
+    axios.post('https://localhost:7259/api/roomtype', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(() => alert('Cadastro realizado com sucesso!'))
+    .catch(error => {
+      const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
+      alert(msg);
+    });
+      }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
@@ -593,8 +481,7 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                 <label htmlFor="description" className="text-sm font-medium text-gray-700">
                   Descrição *
                 </label>
-                <input
-                  type="text"
+                <textarea
                   id="description"
                   name="description"
                   placeholder="Descreva as características e comodidades do quarto..."
@@ -620,7 +507,7 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                     name="pricePerNight"
                     placeholder="R$ 0,00"
                     value={form.pricePerNight}
-                    onChange={handleChange}
+                    onChange={handlePriceChange}
                     onBlur={handleBlur}
 
                     className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -789,8 +676,7 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {currentPageAmenities.map((amenity) => {
                         const IconComponent = iconMap[amenity.iconName] || MdBed // Fallback icon
-                        const isSelected = selectedAmenities.includes(amenity.slug)
-                        const label = slugToLabel(amenity.slug)
+                        const isSelected = selectedAmenities.includes(amenity.amenityId)
 
                         return (
                           <div
@@ -800,17 +686,17 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                                 ? "border-blue-500 bg-blue-50 text-blue-700"
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
-                            onClick={() => toggleAmenity(amenity.slug)}
+                            onClick={() => toggleAmenity(amenity.amenityId)}
                           >
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => toggleAmenity(amenity.slug)}
+                              onChange={() => toggleAmenity(amenity.amenityId)}
                               className="pointer-events-none w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <IconComponent className={`w-4 h-4 ${isSelected ? "text-blue-600" : "text-gray-500"}`} />
                             <span className={`text-sm font-medium ${isSelected ? "text-blue-700" : "text-gray-700"}`}>
-                              {label}
+                              {amenity.name}
                             </span>
                           </div>
                         )
@@ -847,9 +733,8 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm text-gray-600">Diferenciais selecionados:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedAmenities.map((amenitySlug, index) => {
-                        const amenity = amenities.find((a) => a.slug === amenitySlug)
-                        const label = amenity ? slugToLabel(amenity.slug) : amenitySlug
+                      {selectedAmenities.map((amenityId, index) => {
+                        const amenity = amenities.find((a) => a.amenityId === amenityId)
                         const IconComponent = amenity ? (iconMap[amenity.iconName] || MdBed) : MdBed
 
                         return (
@@ -858,10 +743,10 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                             className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-md text-sm font-medium hover:bg-blue-200"
                           >
                             <IconComponent className="w-3 h-3" />
-                            {label}
+                            {amenity?.name || 'Diferencial não encontrado'}
                             <button
                               className="ml-1 w-4 h-4 flex items-center justify-center hover:bg-blue-300 hover:text-blue-900 rounded"
-                              onClick={() => removeAmenity(amenitySlug)}
+                              onClick={() => removeAmenity(amenityId)}
                             >
                               <FaTimes className="w-3 h-3" />
                             </button>
@@ -983,7 +868,7 @@ axios.post('https://localhost:7259/api/roomtype', data, {
                             value={currentRoomNumber}
                             onChange={(e) => setCurrentRoomNumber(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="Ex: 101, A01, Suite-1..."
+                            placeholder="Ex: 101"
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                           <button
@@ -1038,7 +923,7 @@ axios.post('https://localhost:7259/api/roomtype', data, {
           <button 
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            // disabled={roomNumbers.length === 0}
+            disabled={roomNumbers.length === 0 || uploadingImage}
           >
             Cadastrar Tipo de Quarto
           </button>
@@ -1049,4 +934,4 @@ axios.post('https://localhost:7259/api/roomtype', data, {
   )
 }
 
-export default RoomType
+export default RoomType;
