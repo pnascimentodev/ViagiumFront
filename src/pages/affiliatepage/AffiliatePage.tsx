@@ -1,6 +1,7 @@
 import { FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn } from "react-icons/fa";
 import HotelCarousel from "../../components/HotelCarousel";
 import "keen-slider/keen-slider.min.css";
+import {useKeenSlider} from "keen-slider/react";
 import { useState } from "react";
 import axios from "axios";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateTerms } from "../../utils/validations.ts";
