@@ -25,6 +25,9 @@ function Password({actualPassword}: ForgotProps) {
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // Estado para mensagem de sucesso
+    const [successMessage, setSuccessMessage] = useState("");
+
     function validateCurrentPassword(currentPassword: string) {
         if (!currentPassword || currentPassword.trim() === "") {
             return "A senha é obrigatória.";
@@ -113,21 +116,22 @@ function Password({actualPassword}: ForgotProps) {
 
         valid = isNewPasswordValid && isConfirmPasswordValid && isCurrentPasswordValid;
 
-        console.log("Chegou aqui viu Myrelinha")
         if (!valid) {
             return;
         }
 
-        console.log("Toc Toc quem é?");
         if (actualPassword) {
             axios.put('http://localhost:5028/api/User/reset-password', {
                 currentPassword,
                 newPassword,
+            }).then(() => {
+                setSuccessMessage("Senha alterada com sucesso");
             });
         } else {
-            console.log("Erro da API");
             axios.post(`http://localhost:5028/api/User/${userId}/forgot-password`, {
                 newPassword,
+            }).then(() => {
+                setSuccessMessage("Senha alterada com sucesso");
             });
         }
     }
@@ -143,6 +147,9 @@ function Password({actualPassword}: ForgotProps) {
                     <p className="text-center mt-6">Crie uma nova senha para acessar sua conta</p>
                 </div>
                 <form className="w-full flex flex-col items-center mb-12" onSubmit={handleSubmit}>
+                    {successMessage && (
+                        <div className="text-green-600 font-semibold text-center mb-4">{successMessage}</div>
+                    )}
                     <div className="w-full flex flex-col gap-3">
                         {actualPassword && (
                             <div className="flex flex-col justify-center gap-1">
@@ -243,4 +250,3 @@ function Password({actualPassword}: ForgotProps) {
 }
 
 export default Password;
-
