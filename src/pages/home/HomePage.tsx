@@ -1,4 +1,3 @@
-import type React from "react"
 import { useEffect } from "react"
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer";
@@ -24,7 +23,9 @@ export default function HomePage() {
             duration: "7 dias",
             image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Santorini/Grécia
             rating: 4.9,
-            reviews: 234,
+            reviews: 68,
+            qtySalesLimit: 50,
+            qtySold: 3,
         },
         {
             id: 2,
@@ -36,7 +37,9 @@ export default function HomePage() {
             duration: "10 dias",
             image: "https://plus.unsplash.com/premium_photo-1661878915254-f3163e91d870?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Bali
             rating: 4.8,
-            reviews: 189,
+            reviews: 25,
+            qtySalesLimit: 10,
+            qtySold: 8,
         },
         {
             id: 3,
@@ -49,6 +52,9 @@ export default function HomePage() {
             image: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=1484&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Tokyo
             rating: 4.9,
             reviews: 312,
+            qtySalesLimit: 80,
+            qtySold: 65,
+
         },
         {
             id: 4,
@@ -61,6 +67,8 @@ export default function HomePage() {
             image: "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Swiss Alps
             rating: 4.7,
             reviews: 156,
+            qtySalesLimit: 50,
+            qtySold: 41,
         },
     ]
 

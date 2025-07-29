@@ -11,6 +11,8 @@ export type TravelPackage = {
     image: string;
     rating: number;
     reviews: number;
+    qtySalesLimit: number;
+    qtySold: number;
 };
 
 type TravelPackageCardProps = {
@@ -27,11 +29,15 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
                 height={300}
                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="absolute bottom-3 left-3">
-                <Badge variant="red">
-                    Faltam 5 vagas 🔥
-                </Badge>
-            </div>
+
+            {pkg.qtySalesLimit && pkg.qtySalesLimit - pkg.qtySold <= 10 && (
+                <div className="absolute bottom-3 left-3">
+                    <Badge variant="red">
+                        Faltam {pkg.qtySalesLimit - pkg.qtySold} vagas 🔥
+                    </Badge>
+                </div>
+            )}
+
         </div>
         <div className="p-4">
             <div className="flex items-center justify-between mb-2">
@@ -55,7 +61,7 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
                     <span className="text-2xl font-bold text-gray-900">{pkg.price}</span>
                     <span className="text-sm text-gray-500 line-through ml-2">{pkg.originalPrice}</span>
                 </div>
-                <a href="#" className="inline-block">
+                <a href={`/package/${pkg.id}`} className="inline-block">
                     <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
                         Ver pacote
                     </button>
