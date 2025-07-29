@@ -1,33 +1,18 @@
 import { useKeenSlider } from "keen-slider/react";
-import { useState, } from "react";
+import { useEffect, useState, } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "keen-slider/keen-slider.min.css";
 
-const hotels = [
-    {
-        name: "Hotel Paris Tower",
-        image: "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg",
-    },
-    {
-        name: "Hotel Vista Mar",
-        image: "https://images.pexels.com/photos/21014/pexels-photo.jpg",
-    },
-    {
-        name: "Hotel Jardim Europa",
-        image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-    },
-    {
-        name: "Hotel Central Palace",
-        image: "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg",
-    },
-    {
-        name: "Hotel Lago Azul",
-        image: "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg",
-    },
-];
+type Hotel = {
+    name: string;
+    imageUrl: string;
+};
 
 const HotelCarousel = () => {
+    const [hotels, setHotels] = useState<Hotel[]>([]);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [loading, setLoading] = useState(true);
+
     const [sliderRef, instanceRef] = useKeenSlider({
         initial: 0,
         loop: true,
@@ -51,13 +36,29 @@ const HotelCarousel = () => {
         },
     });
 
+    useEffect(() => {
+        fetch("https://localhost:7259/api/Hotel")
+            .then(res => res.json())
+            .then(data => setHotels(data))
+            .catch(() => setHotels([]))
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <span>Carregando hotéis...</span>
+            </div>
+        );
+    }
+
     return (
         <div className="relative w-full mx-auto">
             <div ref={sliderRef} className="keen-slider rounded-lg overflow-visible">
                 {hotels.map((hotel, idx) => (
                     <div key={idx} className="keen-slider__slide flex items-center justify-center">
                         <div className="bg-gray-100 rounded-xl shadow-md flex items-center justify-center w-[100%] h-90 md:h-90 mx-auto transition-transform duration-300 relative overflow-hidden">
-                            <img src={hotel.image} alt={hotel.name} className="object-cover w-full h-full rounded-xl" />
+                            <img src={hotel.imageUrl} alt={hotel.name} className="object-cover w-full h-full rounded-xl" />
                             <div className="absolute inset-0 flex items-center justify-center ">
                                 <span className="text-white font-bold text-3xl px-8 py-2 rounded-lg text-center" style={{ textShadow: "2px 2px 8px #000" }}>{hotel.name}</span>
                             </div>
