@@ -42,6 +42,7 @@ import {
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { validateRequired } from "../../utils/validations"
+import { maskCurrency, unmaskCurrency } from "../../utils/masks"
 
 // Interface para os adicionais vindos da API
 interface Amenity {
@@ -107,7 +108,12 @@ function RoomType() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null) // Estado para o arquivo selecionado
   const [uploadingImage, setUploadingImage] = useState(false) // Estado para indicar se está enviando a imagem
   const [uploadError, setUploadError] = useState<string | null>(null) // Estado para erros de upload
-  
+
+  const [displayPrice, setDisplayPrice] = useState('');
+
+  // Estado para mostrar mensagem de sucesso
+  const [showSuccess, setShowSuccess] = useState(false);
+
   // Referência para o input de arquivo (oculto)
   const fileInputRef = useRef<HTMLInputElement>(null) 
 
@@ -137,7 +143,7 @@ function RoomType() {
     const fetchAmenities = async () => { // Função para buscar os diferenciais da API
       try {
         setLoadingAmenities(true) // Indica que os diferenciais estão sendo carregados
-        const response = await fetch('https://localhost:7259/api/Amenity/TypeRoom') // Requisição para a API
+        const response = await fetch('http://localhost:5028/api/Amenity/TypeRoom') // Requisição para a API
         
         if (!response.ok) { // Verifica se a resposta foi bem sucedida
           throw new Error(`Erro na API: ${response.status}`) // Lança erro se a resposta não for
@@ -271,6 +277,7 @@ function RoomType() {
     }
   }
 
+  // Estado para o formulário
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -284,21 +291,16 @@ function RoomType() {
 
   // Função para formatar o preço enquanto digita
 function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
-  let value = e.target.value
-  
-  // Remove caracteres não numéricos exceto . e ,
-  value = value.replace(/[^\d.,]/g, '')
-  
-  // Substitui vírgula por ponto para padronização interna
-  value = value.replace(',', '.')
-  
-  // Limita a 2 casas decimais
-  const parts = value.split('.')
-  if (parts[1] && parts[1].length > 2) {
-    value = `${parts[0]}.${parts[1].slice(0, 2)}`
-  }
-  
-  setForm(prev => ({ ...prev, pricePerNight: value }))
+    const inputValue = e.target.value;
+    
+    // Aplica a máscara visual
+     const formatted = maskCurrency(inputValue);
+     setDisplayPrice(formatted); // ← Para exibição: "R$ 150,50"
+
+    // Extrai valor limpo para o estado do form
+    const cleanValue = unmaskCurrency(formatted);
+
+    setForm(prev => ({ ...prev, pricePerNight: cleanValue }));
 }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -332,9 +334,7 @@ function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement |
   if (name === 'pricePerNight') {
     if (!validateRequired(value)) {
       newErrors.pricePerNight = 'Campo obrigatório.'
-    } else if (isNaN(Number(value)) || Number(value) <= 0) {
-      newErrors.pricePerNight = 'Preço deve ser um número válido maior que zero.'
-    } else {
+    }  else {
       delete newErrors.pricePerNight
     }
   }
@@ -349,24 +349,6 @@ function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement |
       delete newErrors.numberOfRoomsAvailable
     }
   }
-
-  // Validação para Preço por noite
-  if (name === 'pricePerNight') {
-  if (!validateRequired(value)) {
-    newErrors.pricePerNight = 'Campo obrigatório.'
-  } else {
-    // Substitui vírgula por ponto para validação
-    const numericValue = value.replace(',', '.')
-    
-    if (isNaN(Number(numericValue)) || Number(numericValue) <= 0) {
-      newErrors.pricePerNight = 'Preço deve ser um número válido maior que zero.'
-    } else if (Number(numericValue) > 9999.99) {
-      newErrors.pricePerNight = 'Preço muito alto. Máximo R$ 9.999,99.'
-    } else {
-      delete newErrors.pricePerNight
-    }
-  }
-}
 
  // Validação para maxOccupancy
   if (name === 'maxOccupancy') {
@@ -412,13 +394,10 @@ async function handleSubmit(e: React.FormEvent) {
       return;
     }
 
-    const priceValue = form.pricePerNight.replace(',', '.') // Substitui vírgula por ponto para conversão correta
-
-
     const data = new FormData();
     data.append('Name', form.name);
     data.append('Description', form.description);
-    data.append('PricePerNight', priceValue); // como string
+    data.append('PricePerNight', form.pricePerNight); // como string
     data.append('MaxOccupancy', form.maxOccupancy.toString());
     data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
     data.append('HotelId', "2"); // id mockado para teste
@@ -434,15 +413,50 @@ async function handleSubmit(e: React.FormEvent) {
       data.append(`RoomsNumber[${index}]`, roomNumber);
     });
 
-    axios.post('https://localhost:7259/api/roomtype', data, {
+    axios.post('http://localhost:5028/api/roomtype', data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-    .then(() => alert('Cadastro realizado com sucesso!'))
+    .then(() => {
+      setShowSuccess(true); // ← MOSTRAR MENSAGEM DE SUCESSO
+      
+      // RESETAR TODOS OS ESTADOS PARA O ESTADO INICIAL
+      setForm({
+        name: '',
+        description: '',
+        pricePerNight: '',
+        maxOccupancy: '',
+        numberOfRoomsAvailable: '',
+        imageUrl: '',
+      });
+      
+      setDisplayPrice('');
+      setAvailableRooms('');
+      setRoomNumbers([]);
+      setSelectedAmenities([]);
+      setSelectedImage(null);
+      setErrors({});
+      setUploadError(null);
+      
+      // Resetar campos de geração de quartos
+      setStartNumber('');
+      setEndNumber('');
+      setCurrentRoomNumber('');
+      
+      // Limpar input file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      setTimeout(() => {
+      setShowSuccess(false);
+    }, 4000); // ← OCULTAR MENSAGEM DE SUCESSO APÓS 4 SEGUNDOS
+    })
     .catch(error => {
+      setShowSuccess(false); // Garantir que não mostra sucesso em caso de erro
       const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
       alert(msg);
     });
-      }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
@@ -506,7 +520,7 @@ async function handleSubmit(e: React.FormEvent) {
                     id="price"
                     name="pricePerNight"
                     placeholder="R$ 0,00"
-                    value={form.pricePerNight}
+                    value={displayPrice}
                     onChange={handlePriceChange}
                     onBlur={handleBlur}
 
@@ -848,7 +862,7 @@ async function handleSubmit(e: React.FormEvent) {
                             Gerar Intervalo
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500">Ex: De 101 até 115 gerará: 101, 102, 103... 115</p>
+                        <p className="text-xs text-gray-500 mt-3">Ex: De 101 até 115 gerará: 101, 102, 103... 115</p>
                       </div>
                     </div>
                   </div>
@@ -890,14 +904,14 @@ async function handleSubmit(e: React.FormEvent) {
             {roomNumbers.length > 0 && (
               <div className="p-4 border border-gray-200 rounded-lg">
                 <div className="space-y-3">
-                  <h4 className="font-medium text-sm text-gray-600">Quartos Adicionados:</h4>
+                  <h4 className="font-medium text-sm text-gray-600">Números de Quartos Adicionados:</h4>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {roomNumbers.map((number, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white rounded-md text-sm font-medium"
                       >
-                        Quarto {number}
+                        Quarto nº {number}
                         <button
                           className="ml-1 w-4 h-4 flex items-center justify-center hover:bg-red-600 hover:text-white rounded"
                           onClick={() => removeRoomNumber(number)}
@@ -908,13 +922,17 @@ async function handleSubmit(e: React.FormEvent) {
                     ))}
                   </div>
 
-                  {roomNumbers.length !== Number.parseInt(availableRooms) && (
-                    <p className="text-sm text-gray-500">
-                      {roomNumbers.length < Number.parseInt(availableRooms)
-                        ? `Faltam ${Number.parseInt(availableRooms) - roomNumbers.length} quarto(s)`
-                        : `${roomNumbers.length - Number.parseInt(availableRooms)} quarto(s) a mais que o esperado`}
-                    </p>
-                  )}
+                  {roomNumbers.length > 0 && 
+                    availableRooms && 
+                    !isNaN(Number.parseInt(availableRooms)) && 
+                    Number.parseInt(availableRooms) > 0 && 
+                    roomNumbers.length !== Number.parseInt(availableRooms) && (
+                      <p className="text-sm text-gray-500">
+                        {roomNumbers.length < Number.parseInt(availableRooms)
+                          ? `Faltam ${Number.parseInt(availableRooms) - roomNumbers.length} quarto(s)`
+                          : `${roomNumbers.length - Number.parseInt(availableRooms)} quarto(s) a mais que o esperado`}
+                      </p>
+                    )}
                 </div>
               </div>
             )}
@@ -927,6 +945,14 @@ async function handleSubmit(e: React.FormEvent) {
           >
             Cadastrar Tipo de Quarto
           </button>
+
+          {showSuccess && (
+          <div className="flex flex-col items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg -mt-2">
+            <span className="text-green-600 font-bold text-md">
+              Tipo de quarto cadastrado com sucesso!
+            </span>
+          </div>
+    )}
         </form>
 
       </div>
