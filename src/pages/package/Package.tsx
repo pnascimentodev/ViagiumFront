@@ -39,13 +39,14 @@ function Package() {
   }
 }, [showHotelModal, roomTypeIndex]);
 
-  const packageDetails = [
+  const [packageDetails] = useState([
     {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
       images: [italyImg],
       pacoteehospedagem: [5524, 6000],
       encargos: [1300, 1300],
+      desconto: [600, 650],
       duracoes: [
         "01/06/2025 - 05/06/2025",
         "10/07/2025 - 14/07/2025"
@@ -65,8 +66,7 @@ function Package() {
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
       ],
     },
-    
-  ];
+  ]);
 
   useEffect(() => {
     setPackageImageIndex(0);
@@ -82,7 +82,8 @@ function Package() {
   const pacoteImages = currentPackage.images;
   const pacoteehospedagem = currentPackage.pacoteehospedagem[hotelImageIndex] * numPessoas;
   const encargos = currentPackage.encargos[hotelImageIndex];
-  const valorTotal = pacoteehospedagem + encargos;
+  const desconto = currentPackage.desconto[hotelImageIndex];
+  const valorTotal = (pacoteehospedagem + encargos) - desconto;
 
   return (
     <div>
@@ -147,6 +148,10 @@ function Package() {
                     <div className="flex justify-between text-sm">
                       <span>Pacote + transporte</span>
                       <span className="font-semibold">{`R$ ${pacoteehospedagem.toLocaleString('pt-BR')},00`}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Desconto</span>
+                      <span className="font-semibold">{`R$ ${desconto.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Impostos e encargos:</span>
