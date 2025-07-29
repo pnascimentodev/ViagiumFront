@@ -48,7 +48,7 @@ function Email({ userType }: EmailProps) {
         if (userType === "affiliate") endpoint = "/api/Affiliate/by-email";
 
         try {
-            await axios.get(`https://localhost:7259${endpoint}`, { params: { email } });
+            await axios.get(`http://localhost:5028${endpoint}`, { params: { email } });
             setBackendError("");
             setShowSuccess(true);
             setTimeout(() => {

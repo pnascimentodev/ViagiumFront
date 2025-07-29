@@ -12,7 +12,7 @@ interface LoginProps {
     newUserOption: boolean;
 }
 
-async function Login({ userType, newUserOption }: LoginProps) {
+function Login({ userType, newUserOption }: LoginProps) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [password, setPassword] = useState("");
@@ -71,9 +71,9 @@ async function Login({ userType, newUserOption }: LoginProps) {
 
         // chamando o endpoint pra login e autenticação
         let endpoint = "";
-        if (userType === "affiliate") endpoint = "https://localhost:7259/api/Affiliate/login";
-        if (userType === "client") endpoint = "https://localhost:7259/api/User/by-email";
-        if (userType === "admin") endpoint = "https://localhost:7259/api/User/by-email";
+        if (userType === "affiliate") endpoint = "http://localhost:5028/api/Affiliate/login";
+        if (userType === "client") endpoint = "http://localhost:5028/api/User/auth";
+        if (userType === "admin") endpoint = "http://localhost:5028/api/User/auth";
 
 
         axios.post(endpoint, { email, password })

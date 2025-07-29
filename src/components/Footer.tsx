@@ -4,12 +4,12 @@ import logo from "../assets/img/logo.svg";
 import boleto from "../assets/img/boleto.svg"
 import cartao from "../assets/img/cartao.svg"
 import pix from "../assets/img/pix.svg"
-
+import { Link } from 'react-router-dom';
 
 function Footer(){
     return(
-        <footer className="bg-[#003194E6] text-white">
-            <div className="container mx-auto px-4 py-12">
+        <footer className="bg-[#003194E6] text-white flex flex-col items-center justify-center">
+            <div className="w-full max-w-6xl p-6 mb-8">
                 <div className="mb-8">
                     <h2 className="text-2xl text-[#FFFFFF] md:text-3xl font-bold mb-4">Descubra o mundo com quem entende de viagem</h2>
                 </div>
@@ -89,7 +89,7 @@ function Footer(){
                         </div>
                         <div className="flex w-full md:w-auto">
                             <button className="bg-[#FFFFFF] hover:scale-105 hover:text-[#FFA62B] px-4 py-2 rounded font-medium transition-colors duration-200">
-                                Cadastre-se
+                            <Link to="/register" className="block w-full h-full">Cadastre-se</Link>
                             </button>
                         </div>
                     </div>

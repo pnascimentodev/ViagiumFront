@@ -105,4 +105,25 @@ export function unmaskCurrency(maskedValue: string): string {
     numericString = numericString.replace(',', '.');
     
     return numericString;
+
+export function maskCardNumber(value: string){
+    let v = value.replace(/\D/g, "");
+    if (v.length > 12) {
+        return `${v.slice(0, 4)} ${v.slice(4, 8)} ${v.slice(8, 12)} ${v.slice(12)}`;
+    } else if (v.length > 8) {
+        return `${v.slice(0, 4)} ${v.slice(4, 8)} ${v.slice(8)}`;
+    } else if (v.length > 4) {
+        return `${v.slice(0, 4)} ${v.slice(4)}`;
+    }
+    return v;
+}
+
+export function maskValidateExpirationDate(value: string) {
+    // Aceita apenas MM/YY
+    let v = value.replace(/\D/g, "");
+    if (v.length > 4) v = v.slice(0, 4);
+    if (v.length > 2) {
+        return `${v.slice(0, 2)}/${v.slice(2)}`;
+    }
+    return v;
 }
