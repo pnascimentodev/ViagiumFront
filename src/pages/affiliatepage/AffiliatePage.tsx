@@ -8,13 +8,10 @@ import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassa
 import { validateCPF, validatePassaporte } from "../../utils/validations.ts";
 import { fetchAddressByCEP } from "../../utils/cepApi";
 import type { AddressData } from "../../utils/cepApi";
-import AffiliatePageNavbar from "../../components/navbars/AffiliatePageNavbar.tsx";
 import Footer from "../../components/Footer.tsx";
+import Navbar from "../../components/Navbar.tsx";
 
 function AffiliatePage() {
-
-
-  // Form state
   const [form, setForm] = useState({
     companyName: "",
     tradeName: "",
@@ -215,7 +212,7 @@ function AffiliatePage() {
 
         <div className="flex flex-col bg-gradient-to-b from-[#00319400] to-[#003194FF]">
 
-          <AffiliatePageNavbar />
+          <Navbar navType="affiliatePage" />
 
           {/* Hero Section */}
           <div className="flex flex-col justify-center items-center text-center max-w-3xl mx-auto h-[50vh] p-5 gap-4">
