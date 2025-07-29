@@ -1,0 +1,587 @@
+"use client"
+
+import React, {type ChangeEvent, type ReactNode, useState } from "react"
+import {
+    FaUser,
+    FaKey,
+    FaExclamationTriangle,
+    FaTimes,
+    FaEye,
+    FaEyeSlash,
+    FaStar,
+    FaUserEdit,
+    FaShieldAlt, FaPassport,
+} from "react-icons/fa"
+import { MdLocationOn, MdEmail, MdPhone, MdDateRange, MdAccountCircle } from "react-icons/md"
+
+const mockUser = {
+    firstName: "Maria",
+    lastName: "Silva",
+    email: "maria@email.com",
+    phone: "11999999999",
+    documentNumber: "12345678900",
+    birthDate: "1988-05-20",
+    isActive: true,
+}
+
+// Custom Button Component
+type ButtonProps = {
+    children: ReactNode;
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    disabled?: boolean;
+    variant?: "primary" | "outline" | "ghost" | "danger";
+    className?: string;
+    type?: "button" | "submit" | "reset";
+    [key: string]: any;
+}
+const Button = ({
+    children,
+    onClick,
+    disabled = false,
+    variant = "primary",
+    className = "",
+    type = "button",
+    ...props
+}: ButtonProps) => {
+    const baseClasses =
+        "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+
+    const variants = {
+        primary:
+            "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] focus:ring-orange-500",
+        outline: "border-2 bg-white hover:bg-gray-50 focus:ring-gray-500",
+        ghost: "hover:bg-gray-100 focus:ring-gray-500",
+        danger: "bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl focus:ring-red-500",
+    }
+
+    const disabledClasses = disabled ? "opacity-50 cursor-not-allowed transform-none" : ""
+
+    return (
+        <button
+            type={type}
+            onClick={onClick}
+            disabled={disabled}
+            className={`${baseClasses} ${variants[variant as keyof typeof variants]} ${disabledClasses} ${className}`}
+            {...props}
+        >
+            {children}
+        </button>
+    )
+}
+
+// Custom Input Component
+type InputProps = {
+    label?: ReactNode;
+    error?: ReactNode;
+    className?: string;
+    [key: string]: any;
+}
+const Input = ({ label, error, className = "", ...props }: InputProps) => {
+    return (
+        <input
+            className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${className}`}
+            {...props}
+        />
+    )
+}
+
+// Custom Label Component
+type LabelProps = {
+    children: ReactNode;
+    htmlFor?: string;
+    className?: string;
+}
+const Label = ({ children, htmlFor, className = "" }: LabelProps) => {
+    return (
+        <label htmlFor={htmlFor} className={`block text-sm font-semibold text-gray-700 mb-2 ${className}`}>
+            {children}
+        </label>
+    )
+}
+
+// Custom Card Components
+type CardProps = {
+    children: ReactNode;
+    className?: string;
+}
+const Card = ({ children, className = "" }: CardProps) => {
+    return <div className={`bg-white rounded-3xl shadow-2xl overflow-hidden ${className}`}>{children}</div>
+}
+const CardContent = ({ children, className = "" }: CardProps) => {
+    return <div className={`p-6 ${className}`}>{children}</div>
+}
+
+// Custom Modal Component
+type ModalProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    children: ReactNode;
+}
+const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+    if (!isOpen) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+                {children}
+            </div>
+        </div>
+    )
+}
+
+type ModalHeaderProps = {
+    children: ReactNode;
+    onClose: () => void;
+}
+const ModalHeader = ({ children, onClose }: ModalHeaderProps) => {
+    return (
+        <div className="relative p-6 border-b border-gray-200">
+            {children}
+            <button onClick={onClose} className="absolute right-4 top-4 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <FaTimes className="h-4 w-4" />
+            </button>
+        </div>
+    )
+}
+
+type ModalContentProps = {
+    children: ReactNode;
+}
+const ModalContent = ({ children }: ModalContentProps) => {
+    return <div className="p-6">{children}</div>
+}
+
+export default function ProfileEditor() {
+    const [user, setUser] = useState(mockUser)
+    const [isLoading, setIsLoading] = useState(false)
+    const [showChangePassword, setShowChangePassword] = useState(false)
+    const [showDeactivateAccount, setShowDeactivateAccount] = useState(false)
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    })
+
+    const handleInputChange = (field: keyof typeof mockUser, value: string) => {
+        setUser((prev) => ({ ...prev, [field]: value }))
+    }
+    const handlePasswordChange = (field: keyof typeof passwordData, value: string) => {
+        setPasswordData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const handleSaveProfile = async () => {
+        setIsLoading(true)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setIsLoading(false)
+        alert("Perfil atualizado com sucesso!")
+    }
+
+    const handleChangePassword = async () => {
+        if (!passwordData.currentPassword) {
+            alert("Por favor, insira sua senha atual")
+            return
+        }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            alert("As novas senhas não coincidem")
+            return
+        }
+        if (passwordData.newPassword.length < 6) {
+            alert("A nova senha deve ter pelo menos 6 caracteres")
+            return
+        }
+
+        setIsLoading(true)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setIsLoading(false)
+        setShowChangePassword(false)
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+        alert("Senha alterada com sucesso!")
+    }
+
+    const handleDeactivateAccount = async () => {
+        setIsLoading(true)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setIsLoading(false)
+        setShowDeactivateAccount(false)
+        alert("Conta desativada com sucesso!")
+    }
+
+    const isPasswordValid =
+        passwordData.currentPassword &&
+        passwordData.newPassword &&
+        passwordData.confirmPassword &&
+        passwordData.newPassword === passwordData.confirmPassword
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-blue-900 p-8">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-5xl font-bold text-white mb-2">Editar Perfil de Viagem</h1>
+                    <p className="text-orange-100 text-xl">Atualize suas informações pessoais e configurações</p>
+                </div>
+
+                <div className="grid lg:grid-cols-3 gap-8">
+                    {/* Left Column - Profile Summary */}
+                    <div className="lg:col-span-1 space-y-6">
+                        {/* Profile Card */}
+                        <Card>
+                            {/* Profile Header */}
+                            <div className="relative h-32 bg-gradient-to-r from-orange-400 to-blue-600 overflow-hidden">
+                                <div className="absolute inset-0 bg-blue-600 bg-opacity-20"></div>
+                                <div className="relative z-10 p-6 h-full flex items-end">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm -ml-2">
+                                            <MdAccountCircle className="w-8 h-8 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold text-lg ml-3">
+                                                {user.firstName} {user.lastName}
+                                            </p>
+                                            <p className="text-orange-100 ml-3">Membro desde 2022</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <CardContent>
+                                <div className="flex flex-col gap-2 ml-4"> {/* gap-10 para espaçamento maior entre os itens */}
+                                    <div className="flex items-center gap-2 text-gray-600"> {/* gap-5 para espaçamento maior entre ícone e texto */}
+                                        <MdEmail className="w-5 h-5 text-orange-500" />
+                                        <span className="text-sm pl-2">{user.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <MdPhone className="w-5 h-5 text-orange-500" />
+                                        <span className="text-sm pl-2">{user.phone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <MdDateRange className="w-5 h-5 text-orange-500" />
+                                        <span className="text-sm pl-2">Nascido em {new Date(user.birthDate).toLocaleDateString("pt-BR")}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                        <FaPassport className="w-5 h-5 text-orange-500" />
+                                        <span className="text-sm pl-2">Doc: {user.documentNumber}</span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 pt-6 border-t">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-gray-700">Status da Conta</span>
+                                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Ativo
+                    </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Travel Stats Card */}
+                        <Card className="mt-6">
+                            <CardContent>
+                                <div className="bg-blue-50 rounded-2xl p-4 mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center space-x-2">
+                                            <MdLocationOn className="w-5 h-5 text-blue-600" />
+                                            <span className="font-semibold text-blue-900">Estatísticas de Viagem</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <FaStar className="w-4 h-4 star-yellow" style={{ color: '#facc15', fill: '#facc15' }} />                                            <span className="text-blue-900 font-bold">4.8</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-blue-700 text-sm">Avaliação média dos destinos</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Viagens Realizadas</span>
+                                        <span className="font-bold text-orange-600 text-lg">12</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Países Visitados</span>
+                                        <span className="font-bold text-orange-600 text-lg">8</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Próxima Viagem</span>
+                                        <span className="font-bold text-blue-600">Mar/2024</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right Column - Edit Form */}
+                    <div className="lg:col-span-2">
+                        <Card>
+                            {/* Form Header */}
+                            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6">
+                                <h2 className="text-2xl font-bold text-white flex items-center">
+                                    <FaUserEdit className="w-6 h-6 mr-3" style={{ color: '#fff', fill: '#fff' }} />
+                                    Informações Pessoais
+                                </h2>
+                                <p className="text-orange-100 mt-1">Mantenha seus dados sempre atualizados</p>
+                            </div>
+
+                            <CardContent className="p-8">
+                                <div className="space-y-8">
+                                    {/* Personal Details Section */}
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <h3 className="font-bold text-gray-800 mb-6 text-lg flex items-center">
+                                            <FaUser className="w-5 h-5 mr-2 text-orange-500" style={{ color: '#f97316', fill: '#f97316' }} />
+                                            Dados Pessoais
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <Label htmlFor="firstName">Nome</Label>
+                                                <Input
+                                                    id="firstName"
+                                                    label={null}
+                                                    error={null}
+                                                    value={user.firstName}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("firstName", e.target.value)}
+                                                    placeholder="Digite seu nome"
+                                                    className="h-12"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="lastName">Sobrenome</Label>
+                                                <Input
+                                                    id="lastName"
+                                                    label={null}
+                                                    error={null}
+                                                    value={user.lastName}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("lastName", e.target.value)}
+                                                    placeholder="Digite seu sobrenome"
+                                                    className="h-12"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                            <div>
+                                                <Label htmlFor="email">E-mail</Label>
+                                                <Input
+                                                    id="email"
+                                                    label={null}
+                                                    error={null}
+                                                    type="email"
+                                                    value={user.email}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("email", e.target.value)}
+                                                    placeholder="Digite seu e-mail"
+                                                    className="h-12"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="phone">Telefone</Label>
+                                                <Input
+                                                    id="phone"
+                                                    label={null}
+                                                    error={null}
+                                                    value={user.phone}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("phone", e.target.value)}
+                                                    placeholder="Digite seu telefone"
+                                                    className="h-12"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                            <div>
+                                                <Label htmlFor="birthDate">Data de Nascimento</Label>
+                                                <Input
+                                                    id="birthDate"
+                                                    label={null}
+                                                    error={null}
+                                                    type="date"
+                                                    value={user.birthDate}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("birthDate", e.target.value)}
+                                                    className="h-12"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="documentNumber">Número do Documento</Label>
+                                                <Input
+                                                    id="documentNumber"
+                                                    label={null}
+                                                    error={null}
+                                                    value={user.documentNumber}
+                                                    disabled
+                                                    className="h-12 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">Este campo não pode ser alterado</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Security Section */}
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <h3 className="font-bold text-gray-800 mb-6 text-lg flex items-center">
+                                            <FaShieldAlt className="w-5 h-5 mr-2 text-orange-500" />
+                                            Segurança da Conta
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowChangePassword(true)}
+                                                className="justify-start border-blue-200 hover:bg-blue-50 text-blue-700 py-4 px-6 h-14 text-base"
+                                            >
+                                                <FaKey className="w-5 h-5 mr-3 text-blue-700" style={{ color: '#2563eb', fill: '#2563eb' }} />
+                                                Alterar Senha
+                                            </Button>
+
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setShowDeactivateAccount(true)}
+                                                className="justify-start border-red-200 hover:bg-red-50 text-red-600 py-4 px-6 h-14 text-base"
+                                            >
+                                                <FaExclamationTriangle className="w-5 h-5 mr-3" style={{ color: '#dc2626', fill: '#dc2626' }} />
+                                                Desativar Conta
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Save Button */}
+                                <div className="mt-8 pt-8 border-t">
+                                    <Button onClick={handleSaveProfile} disabled={isLoading} className="w-full py-6 px-8 text-xl">
+                                        {isLoading ? "Salvando Alterações..." : "Salvar Alterações"}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* Change Password Modal */}
+                <Modal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)}>
+                    <ModalHeader onClose={() => setShowChangePassword(false)}>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+                            <FaKey className="w-6 h-6 text-orange-500" />
+                            <span>Alterar Senha</span>
+                        </h2>
+                    </ModalHeader>
+                    <ModalContent>
+                        <div className="space-y-6">
+                            <div>
+                                <Label htmlFor="currentPassword">Senha Atual</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="currentPassword"
+                                        label={null}
+                                        error={null}
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={passwordData.currentPassword}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("currentPassword", e.target.value)}
+                                        placeholder="Digite sua senha atual"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showCurrentPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="newPassword">Nova Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="newPassword"
+                                        label={null}
+                                        error={null}
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={passwordData.newPassword}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("newPassword", e.target.value)}
+                                        placeholder="Digite a nova senha"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showNewPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="confirmPassword"
+                                        label={null}
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={passwordData.confirmPassword}
+                                        onChange={(e: { target: { value: string } }) => handlePasswordChange("confirmPassword", e.target.value)}
+                                        placeholder="Confirme a nova senha"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showConfirmPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            {passwordData.newPassword &&
+                                passwordData.confirmPassword &&
+                                passwordData.newPassword !== passwordData.confirmPassword && (
+                                    <p className="text-red-500 text-sm">As senhas não coincidem</p>
+                                )}
+                            <Button onClick={handleChangePassword} disabled={!isPasswordValid || isLoading} className="w-full h-12">
+                                {isLoading ? "Alterando..." : "Alterar Senha"}
+                            </Button>
+                        </div>
+                    </ModalContent>
+                </Modal>
+
+                {/* Deactivate Account Modal */}
+                <Modal isOpen={showDeactivateAccount} onClose={() => setShowDeactivateAccount(false)}>
+
+                    <ModalContent>
+                        <div className="space-y-6">
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                                <div className="flex items-start space-x-4">
+                                    <div>
+                                        <h3 className="font-bold text-red-800 mb-3">Atenção: Esta ação é irreversível!</h3>
+                                        <p className="text-red-700 text-sm leading-relaxed mb-3">
+                                            Tem certeza que deseja desativar sua conta? Isso irá:
+                                        </p>
+                                        <ul className="text-red-700 text-sm space-y-2 list-disc list-inside">
+                                            <li>Cancelar todas as reservas ativas</li>
+                                            <li>Remover acesso ao histórico de viagens</li>
+                                            <li>Excluir suas preferências salvas</li>
+                                            <li>Desativar permanentemente sua conta</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex space-x-4 mt-4 ">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeactivateAccount(false)}
+                                    className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 h-12"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button variant="danger" onClick={handleDeactivateAccount} disabled={isLoading} className="flex-1 h-12 ml-4">
+                                    {isLoading ? "Desativando..." : "Sim, Desativar"}
+                                </Button>
+                            </div>
+                        </div>
+                    </ModalContent>
+                </Modal>
+            </div>
+        </div>
+    )
+}
