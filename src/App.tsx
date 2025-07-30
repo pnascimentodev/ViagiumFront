@@ -18,6 +18,7 @@ import ResetClient from './pages/password/ResetClient'
 import ResetAffiliate from './pages/password/ResetAffiliate'
 import ProfileEditor from "./pages/profile/profile-editor.tsx";
 import AdminDashboard from './pages/admindashboard/AdminDashboard.tsx'
+import FAQSection from './pages/faqsection/FaqSection.tsx'
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
       <Route path="/package" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
       <Route path="/admindashboard" element={<AdminDashboard />} />
+      <Route path="/faq" element={<FAQSection/>} />
     </Routes>
   )
 }
