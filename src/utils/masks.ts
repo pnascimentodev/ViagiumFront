@@ -105,7 +105,7 @@ export function unmaskCurrency(maskedValue: string): string {
     numericString = numericString.replace(',', '.');
     
     return numericString;
-
+}
 export function maskCardNumber(value: string){
     let v = value.replace(/\D/g, "");
     if (v.length > 12) {
