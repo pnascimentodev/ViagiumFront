@@ -6,10 +6,12 @@ import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
+import { useNavigate } from "react-router-dom";
 
 function Package() {
 
+  const navigate = useNavigate();
   const [numPessoas, setNumPessoas] = useState(1);
   const [currentPackageIndex] = useState(0);
   const [packageImageIndex, setPackageImageIndex] = useState(0);
@@ -23,6 +25,7 @@ function Package() {
   const closeHotelModal = () => setShowHotelModal(false);
   const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
   const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+
 
     useEffect(() => {
     axios.get(`http://localhost:5028/api/Amenity/Hotel`)
@@ -89,6 +92,7 @@ function Package() {
 
   return (
     <div>
+        <Navbar />
       <div className="min-h-screen bg-gradient-to-r h-full from-[#003194] to-[#FFA62B] flex justify-center items-center">
         <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
@@ -261,13 +265,13 @@ function Package() {
             </div>
             </div>
             <div className="p-6 pt-8">
-              <Link to="/payment">
               <Button
-                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" style={{ backgroundColor: '#FFA62B', color: '#003194'}}
+                onClick={() => navigate("/reservation", { state: { numPessoas } })}
+                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                style={{ backgroundColor: '#FFA62B', color: '#003194' }}
               >
                 Reservar Agora
               </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -321,11 +325,10 @@ function Package() {
           >
             &times;
           </button>
-          <h2 className="text-2xl font-bold text-center mb-8 text-[#003194]">Avaliações do Pacote de Viagem</h2>
+          <h2 className="text-2xl font-bold text-center mb-8 ">Avaliações do Pacote de Viagem</h2>
       {/* Nota geral */}
       <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-3xl font-bold text-[#003194]">4.3</span>
           <div className="flex gap-1">
             {[...Array(5)].map((_, idx) => (
               <svg key={idx} className="w-5 h-5" fill={idx < 4 ? "#FFA62B" : "#E5E7EB"} viewBox="0 0 20 20">

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskValidateExpirationDate } from "../../utils/masks";
+import Navbar from '../../components/Navbar';
+import Footer from "../../components/Footer";
 
 const paymentMethods = [
   { id: "pix", name: "PIX", icon: FaPix },
@@ -91,6 +93,8 @@ export default function Payment() {
     }
 
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-b h-full from-[#003194] to-[#000000] flex justify-center items-center">
       <div className="max-w-2xl w-full bg-[#FFFFFF] mt-20 mb-20 rounded-xl shadow-2xl p-6">
         <h1 className="text-2xl font-bold mb-2 flex justify-center items-center">Confirme o Pagamento</h1>
@@ -247,6 +251,8 @@ export default function Payment() {
           </button>
         </form>
       </div>
+    </div>
+    <Footer />
     </div>
   );
 }
