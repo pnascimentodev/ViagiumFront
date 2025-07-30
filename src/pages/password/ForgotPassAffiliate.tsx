@@ -1,8 +1,9 @@
-import Password from './components/Password';
+
+import PasswordAffiliate from "./components/PasswordAffiliate.tsx";
 
 function ForgotPassword() {
   return (
-    <Password actualPassword={false} />
+    <PasswordAffiliate actualPassword={false} />
   )
 }
 

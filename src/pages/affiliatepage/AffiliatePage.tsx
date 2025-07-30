@@ -194,7 +194,7 @@ function AffiliatePage() {
       }
     };
 
-    axios.post("https://localhost:7259/api/affiliate/create", data)
+    axios.post("http://localhost:5028/api/affiliate/create", data)
       .then(() => {
         alert("Cadastro realizado com sucesso!");
       })
