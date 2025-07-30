@@ -110,7 +110,6 @@ export default function Reservation() {
   // Adicione reservationRooms se houver
 };
 
-
   const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
     setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
   }
