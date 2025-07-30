@@ -19,8 +19,10 @@ import Package from './pages/package/Package'
 import ResetClient from './pages/password/ResetClient'
 import ResetAffiliate from './pages/password/ResetAffiliate'
 import ProfileEditor from "./pages/profile/profile-editor.tsx";
+import AdminDashboard from './pages/admindashboard/AdminDashboard.tsx'
 import Review from './pages/review/Review.tsx'
 import Payment from './pages/payment/Payment.tsx'
+import Reservation from './pages/reservation/Reservation.tsx'
 
 function App() {
   return (
@@ -44,8 +46,10 @@ function App() {
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
+      <Route path="/admindashboard" element={<AdminDashboard />} />
       <Route path="/review" element={<Review />} />
       <Route path="/payment" element={<Payment />} />
+      <Route path="/reservation" element={<Reservation />} />
     </Routes>
   )
 }
