@@ -1,4 +1,3 @@
-
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
 import { FaEnvelope } from "react-icons/fa";
@@ -71,15 +70,18 @@ function Login({ userType, newUserOption }: LoginProps) {
 
         // chamando o endpoint pra login e autenticação
         let endpoint = "";
-        if (userType === "affiliate") endpoint = "https://localhost:7259/api/Affiliate/login";
-        if (userType === "client") endpoint = "https://localhost:7259/api/User/by-email";
-        if (userType === "admin") endpoint = "https://localhost:7259/api/User/by-email";
+        if (userType === "affiliate") endpoint = "http://localhost:5028/api/Affiliate/login";
+        if (userType === "client") endpoint = "http://localhost:5028/api/User/auth";
+        if (userType === "admin") endpoint = "http://localhost:5028/api/User/auth";
 
 
         axios.post(endpoint, { email, password })
         .then(response => {
             console.log("Login bem-sucedido:", response.data);
             // redirecionar ou atualizar estado conforme necessário
+            if (userType === "client") {
+                window.location.href = "/";
+            }
         })
         .catch(error => {
             console.error("Erro no login:", error);

@@ -12,16 +12,22 @@ import EmailClient from './pages/password/EmailClient'
 import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
+import RoomType from './pages/roomtype/RoomType'
+import HomePage from './pages/home/HomePage'
 import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
 import Package from './pages/package/Package'
 import ResetClient from './pages/password/ResetClient'
 import ResetAffiliate from './pages/password/ResetAffiliate'
 import ProfileEditor from "./pages/profile/profile-editor.tsx";
 import AdminDashboard from './pages/admindashboard/AdminDashboard.tsx'
+import Review from './pages/review/Review.tsx'
+import Payment from './pages/payment/Payment.tsx'
+import Reservation from './pages/reservation/Reservation.tsx'
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomePage />} />
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />
@@ -36,10 +42,14 @@ function App() {
       <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />         
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
+      <Route path='/roomtype' element={<RoomType />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
       <Route path="/admindashboard" element={<AdminDashboard />} />
+      <Route path="/review" element={<Review />} />
+      <Route path="/payment" element={<Payment />} />
+      <Route path="/reservation" element={<Reservation />} />
     </Routes>
   )
 }
