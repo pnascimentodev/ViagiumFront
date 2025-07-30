@@ -47,12 +47,14 @@ function Package() {
     {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
-      origem: "Recife",
       images: [italyImg],
+      originAddress: {city:"Recife", country: 'Brasil'},
+      destinationAddress: {city:"Veneza", country: 'Itália'},
+      vehicleType: "Avião",
       pacoteehospedagem: [5524, 6000],
       encargos: [1300, 1300],
       desconto: [600, 650],
-      duracoes: [
+      duration: [
         "01/06/2025 - 05/06/2025",
         "10/07/2025 - 14/07/2025"
       ],
@@ -118,7 +120,10 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-4">Informações</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.origem}
+                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.originAddress.city}, {currentPackage.originAddress.country}
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="font-semibold ">Destino:&nbsp;</span>{currentPackage.destinationAddress.city}, {currentPackage.destinationAddress.country}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <h2 className="font-semibold">Duração</h2>
@@ -126,7 +131,7 @@ function Package() {
                     <div className="flex items-center space-x-3 mb-2">
                       <FaRegCalendarAlt className=" text-xl" />
                       <select className="w-full border rounded px-2 py-1">
-                        {currentPackage.duracoes.map((duracao, idx) => (
+                        {currentPackage.duration.map((duracao, idx) => (
                           <option key={idx}>{duracao}</option>
                         ))}
                       </select>
