@@ -12,6 +12,7 @@ import EmailClient from './pages/password/EmailClient'
 import EmailAffiliate from './pages/password/EmailAffiliate'
 import ForgotPassClient from './pages/password/ForgotPassClient'
 import ForgotPassAffiliate from './pages/password/ForgotPassAffiliate'
+import RoomType from './pages/roomtype/RoomType'
 import HomePage from './pages/home/HomePage'
 import AffiliateDashboard from './pages/affiliatedashboard/AffiliateDashboard'
 import Package from './pages/package/Package'
@@ -39,6 +40,7 @@ function App() {
       <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />         
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
+      <Route path='/roomtype' element={<RoomType />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
