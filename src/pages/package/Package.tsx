@@ -93,7 +93,7 @@ function Package() {
   return (
     <div>
         <Navbar />
-      <div className="min-h-screen bg-gradient-to-r h-full from-[#003194] to-[#FFA62B] flex justify-center items-center">
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
             {currentPackage.title}
