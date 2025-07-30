@@ -95,11 +95,15 @@ export default function Payment() {
   return (
     <div>
       <Navbar />
-    <div className="min-h-screen bg-gradient-to-b h-full from-[#003194] to-[#000000] flex justify-center items-center">
-      <div className="max-w-2xl w-full bg-[#FFFFFF] mt-20 mb-20 rounded-xl shadow-2xl p-6">
-        <h1 className="text-2xl font-bold mb-2 flex justify-center items-center">Confirme o Pagamento</h1>
-        <p className="text-gray-600 flex justify-center items-center">Selecione o método de pagamento e complete as informações</p>
-        <hr className="w-full mb-2 mt-2" />
+
+    <div className="min-h-screen h-full bg-gray-50 py-8 px-4">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">Confirme o Pagamento</h1>
+        <p className="text-gray-600">Selecione o método de pagamento e complete as informações</p>
+      </div>
+
+      <div className="flex justify-center items-center">
+      <div className="max-w-2xl w-full bg-[#FFFFFF] mb-20 rounded-xl shadow-2xl p-6">
         <div className="ml-6 mt-6 max-w-2xl w-full">
             <h2 className="text-xl font-bold mb-2">Detalhes do Pacote</h2>
         </div>
@@ -251,6 +255,7 @@ export default function Payment() {
           </button>
         </form>
       </div>
+    </div>
     </div>
     <Footer />
     </div>

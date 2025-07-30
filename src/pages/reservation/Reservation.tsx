@@ -76,11 +76,11 @@ export default function Reservation() {
   return (
         <div>
           <Navbar />
+          
         <div className="min-h-screen bg-gray-50 py-8 px-4">
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold] mb-2">Confirme sua Reserva</h1>
+              <h1 className="text-3xl font-bold mb-2">Confirme sua Reserva</h1>
               <p className="text-gray-600">Revise as informações e confirme sua reserva</p>
             </div>
 
