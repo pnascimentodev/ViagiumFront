@@ -44,7 +44,7 @@ function Email({ userType }: EmailProps) {
 
         let endpoint = "";
         if (userType === "client") endpoint = "/api/User/forgot-password-email";
-        if (userType === "affiliate") endpoint = "/api/Affiliate/by-email";
+        if (userType === "affiliate") endpoint = "/api/Affiliate/forgot-password";
 
         try {
             if (userType === "client") {
@@ -52,7 +52,9 @@ function Email({ userType }: EmailProps) {
                     headers: { 'Content-Type': 'application/json' }
                 });
             } else if (userType === "affiliate") {
-                await axios.get(`http://localhost:5028${endpoint}`, { params: { email } });
+                await axios.post(`http://localhost:5028${endpoint}`, email, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
             setBackendError("");
             setShowSuccess(true);
