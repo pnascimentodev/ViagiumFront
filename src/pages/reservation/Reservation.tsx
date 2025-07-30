@@ -36,7 +36,7 @@ interface PackageDetails {
 
 interface Reservation{
   id: number
-  startDate: string
+  startDate: Date
   totalPrice: string
 }
 
@@ -284,8 +284,8 @@ export default function Reservation() {
                   {/* Resumo da Reserva */}
                   <div className="bg-white rounded-lg mt-4 shadow-md p-6">
                     <div className="flex items-center mb-4">
-                      <FaDollarSign className="w-5 h-5 text-[#003194] mr-2" />
-                      <h2 className="text-xl font-semibold text-[#003194]">Resumo da Reserva</h2>
+                      <FaDollarSign className="w-5 h-5 mr-2" />
+                      <h2 className="text-xl font-semibold">Resumo da Reserva</h2>
                     </div>
 
                     <div className="space-y-3 mb-6">
