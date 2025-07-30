@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskValidateExpirationDate } from "../../utils/masks";
+import Navbar from '../../components/Navbar';
+import Footer from "../../components/Footer";
 
 const paymentMethods = [
   { id: "pix", name: "PIX", icon: FaPix },
@@ -40,10 +42,9 @@ export default function Payment() {
     const [packageDetails] = useState({
     nome: "Pacote Viagem Rio",
     destino: "Rio de Janeiro",
-    data: "10/09/2025",
+    duracao: "10/09/2025",
     pessoas: 2,
     preco: 3200.00,
-    descricao: "Inclui hotel, café da manhã e passeio turístico."
     });
 
     function handleCardInputChange(field: string, value: string) {
@@ -92,6 +93,8 @@ export default function Payment() {
     }
 
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gradient-to-b h-full from-[#003194] to-[#000000] flex justify-center items-center">
       <div className="max-w-2xl w-full bg-[#FFFFFF] mt-20 mb-20 rounded-xl shadow-2xl p-6">
         <h1 className="text-2xl font-bold mb-2 flex justify-center items-center">Confirme o Pagamento</h1>
@@ -103,9 +106,8 @@ export default function Payment() {
         <div className="space-y-1 ml-6">
           <div><span className="font-semibold text-gray-700">Nome:</span> {packageDetails.nome}</div>
           <div><span className="font-semibold text-gray-700">Destino:</span> {packageDetails.destino}</div>
-          <div><span className="font-semibold text-gray-700">Data:</span> {packageDetails.data}</div>
+          <div><span className="font-semibold text-gray-700">Duração:</span> {packageDetails.duracao}</div>
           <div><span className="font-semibold text-gray-700">Pessoas:</span> {packageDetails.pessoas}</div>
-          <div><span className="font-semibold text-gray-700">Descrição:</span> {packageDetails.descricao}</div>
           <div className="mb-6"><span className="font-semibold text-gray-700">Preço:</span> R$ {packageDetails.preco.toFixed(2)}</div>
         </div>
         <hr className="w-full mb-2 mt-2" />
@@ -249,6 +251,8 @@ export default function Payment() {
           </button>
         </form>
       </div>
+    </div>
+    <Footer />
     </div>
   );
 }

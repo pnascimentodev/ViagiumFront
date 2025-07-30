@@ -6,9 +6,12 @@ import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
 import axios from 'axios';
+import Navbar from '../../components/Navbar';
+import { useNavigate } from "react-router-dom";
 
 function Package() {
 
+  const navigate = useNavigate();
   const [numPessoas, setNumPessoas] = useState(1);
   const [currentPackageIndex] = useState(0);
   const [packageImageIndex, setPackageImageIndex] = useState(0);
@@ -22,6 +25,7 @@ function Package() {
   const closeHotelModal = () => setShowHotelModal(false);
   const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
   const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+
 
     useEffect(() => {
     axios.get(`http://localhost:5028/api/Amenity/Hotel`)
@@ -39,13 +43,15 @@ function Package() {
   }
 }, [showHotelModal, roomTypeIndex]);
 
-  const packageDetails = [
+  const [packageDetails] = useState([
     {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
+      origem: "Recife",
       images: [italyImg],
       pacoteehospedagem: [5524, 6000],
       encargos: [1300, 1300],
+      desconto: [600, 650],
       duracoes: [
         "01/06/2025 - 05/06/2025",
         "10/07/2025 - 14/07/2025"
@@ -65,8 +71,7 @@ function Package() {
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
       ],
     },
-    
-  ];
+  ]);
 
   useEffect(() => {
     setPackageImageIndex(0);
@@ -82,10 +87,12 @@ function Package() {
   const pacoteImages = currentPackage.images;
   const pacoteehospedagem = currentPackage.pacoteehospedagem[hotelImageIndex] * numPessoas;
   const encargos = currentPackage.encargos[hotelImageIndex];
-  const valorTotal = pacoteehospedagem + encargos;
+  const desconto = currentPackage.desconto[hotelImageIndex];
+  const valorTotal = (pacoteehospedagem + encargos) - desconto;
 
   return (
     <div>
+        <Navbar />
       <div className="min-h-screen bg-gradient-to-r h-full from-[#003194] to-[#FFA62B] flex justify-center items-center">
         <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
@@ -111,7 +118,10 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-4">Informações</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Duração</h2>
+                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.origem}
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h2 className="font-semibold">Duração</h2>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <FaRegCalendarAlt className=" text-xl" />
@@ -122,7 +132,7 @@ function Package() {
                       </select>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Número de pessoas</h2>
+                      <h2 className="font-semibold">Número de pessoas</h2>
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
@@ -147,6 +157,10 @@ function Package() {
                     <div className="flex justify-between text-sm">
                       <span>Pacote + transporte</span>
                       <span className="font-semibold">{`R$ ${pacoteehospedagem.toLocaleString('pt-BR')},00`}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Desconto</span>
+                      <span className="font-semibold">{`R$ ${desconto.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Impostos e encargos:</span>
@@ -252,7 +266,9 @@ function Package() {
             </div>
             <div className="p-6 pt-8">
               <Button
-                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" style={{ backgroundColor: '#FFA62B', color: '#003194'}}
+                onClick={() => navigate("/reservation", { state: { numPessoas } })}
+                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                style={{ backgroundColor: '#FFA62B', color: '#003194' }}
               >
                 Reservar Agora
               </Button>
@@ -309,11 +325,10 @@ function Package() {
           >
             &times;
           </button>
-          <h2 className="text-2xl font-bold text-center mb-8 text-[#003194]">Avaliações do Pacote de Viagem</h2>
+          <h2 className="text-2xl font-bold text-center mb-8 ">Avaliações do Pacote de Viagem</h2>
       {/* Nota geral */}
       <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-3xl font-bold text-[#003194]">4.3</span>
           <div className="flex gap-1">
             {[...Array(5)].map((_, idx) => (
               <svg key={idx} className="w-5 h-5" fill={idx < 4 ? "#FFA62B" : "#E5E7EB"} viewBox="0 0 20 20">
