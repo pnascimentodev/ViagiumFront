@@ -1,4 +1,3 @@
-
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
 import { FaEnvelope } from "react-icons/fa";
@@ -80,6 +79,9 @@ function Login({ userType, newUserOption }: LoginProps) {
         .then(response => {
             console.log("Login bem-sucedido:", response.data);
             // redirecionar ou atualizar estado conforme necessário
+            if (userType === "client") {
+                window.location.href = "/";
+            }
         })
         .catch(error => {
             console.error("Erro no login:", error);

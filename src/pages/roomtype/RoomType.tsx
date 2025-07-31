@@ -47,7 +47,7 @@ import { maskCurrency, unmaskCurrency } from "../../utils/masks"
 // Interface para os adicionais vindos da API
 interface Amenity {
   amenityId: number
-  name: string      
+  name: string
   iconName: string
 }
 
@@ -87,7 +87,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 
 function RoomType() {
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
-  const [availableRooms, setAvailableRooms] = useState("") 
+  const [availableRooms, setAvailableRooms] = useState("")
   const [activeTab, setActiveTab] = useState("range") // Estado para controlar a aba ativa (range ou manual)
 
   // Estados para geração automática
@@ -113,9 +113,11 @@ function RoomType() {
 
   // Estado para mostrar mensagem de sucesso
   const [showSuccess, setShowSuccess] = useState(false);
+  const [rangeError, setRangeError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Referência para o input de arquivo (oculto)
-  const fileInputRef = useRef<HTMLInputElement>(null) 
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Constantes para paginação dos adicionais
   const ITEMS_PER_PAGE = 9 // 3 colunas x 4 itens
@@ -144,11 +146,11 @@ function RoomType() {
       try {
         setLoadingAmenities(true) // Indica que os diferenciais estão sendo carregados
         const response = await fetch('http://localhost:5028/api/Amenity/TypeRoom') // Requisição para a API
-        
+
         if (!response.ok) { // Verifica se a resposta foi bem sucedida
           throw new Error(`Erro na API: ${response.status}`) // Lança erro se a resposta não for
         }
-        
+
         // Converte a resposta em JSON e atualiza o estado
         const data: Amenity[] = await response.json() // Converte a resposta em JSON
         setAmenities(data) // Atualiza o estado com os diferenciais recebidos
@@ -167,7 +169,7 @@ function RoomType() {
     fetchAmenities() // Chama a função para buscar os diferenciais
   }, [])
 
-  // Função para Geração automática de números de quartos por intervalo (Intervalor) 
+  // Função para Geração automática de números de quartos por intervalo (Varios quartos de uma vez) 
   function generateRangeNumbers() {
     if (!startNumber || !endNumber) return
 
@@ -175,6 +177,31 @@ function RoomType() {
     const end = Number.parseInt(endNumber)
 
     if (start >= end) return
+
+    const rangeCount = (end - start) + 1
+    const maxRooms = availableRooms ? Number.parseInt(availableRooms) : null
+
+    if (maxRooms && maxRooms > 0) {
+      // Verificar se o intervalo excede o limite máximo
+      if (rangeCount > maxRooms) {
+        setRangeError(`Não é possível gerar ${rangeCount} quartos. O limite é ${maxRooms} quartos disponíveis.`)
+        return
+      }
+
+      if (rangeCount < maxRooms) {
+        setRangeError(`Você deve cadastrar exatamente ${maxRooms} números de quartos. Faltam ${maxRooms - rangeCount} quarto(s).`)
+        return
+      }
+
+      // Verificar se já tem quartos adicionados + novo intervalo vai exceder
+      if (roomNumbers.length + rangeCount > maxRooms) {
+        const quartosRestantes = maxRooms - roomNumbers.length
+        setRangeError(`Você já tem ${roomNumbers.length} quartos adicionados. Só pode adicionar mais ${quartosRestantes} quarto(s).`)
+        return
+      }
+
+
+    }
 
     const newNumbers: string[] = []
     for (let i = start; i <= end; i++) {
@@ -184,24 +211,94 @@ function RoomType() {
     setRoomNumbers(newNumbers)
     setStartNumber("")
     setEndNumber("")
-  }
+    setRangeError(null)
 
-  // Função para adicionar um número de quarto manualmente a lista de números de quartos
-  function addRoomNumber() {
-    if (currentRoomNumber.trim() && !roomNumbers.includes(currentRoomNumber.trim())) {
-      setRoomNumbers([...roomNumbers, currentRoomNumber.trim()])
-      setCurrentRoomNumber("")
+    // ADICIONAR ESTA LÓGICA: Limpar erro se a quantidade gerada estiver correta
+    if (maxRooms && maxRooms > 0) {
+      const newErrors = { ...errors }
+
+      if (newNumbers.length === maxRooms) {
+        // Quantidade correta - limpar erro
+        delete newErrors.roomNumbers
+      }
+
+      setErrors(newErrors)
     }
   }
 
-  // Função para remover um número de quarto específico
+  function addRoomNumber() {
+    if (!currentRoomNumber.trim()) return
+
+    // Verificar se já existe
+    if (roomNumbers.includes(currentRoomNumber.trim())) return
+
+    // NOVA VALIDAÇÃO: Verificar limite antes de adicionar
+    const maxRooms = availableRooms ? Number.parseInt(availableRooms) : null
+
+    if (maxRooms && maxRooms > 0) {
+      // Verificar se já atingiu o limite máximo
+      if (roomNumbers.length >= maxRooms) {
+        // NÃO PERMITIR adicionar mais quartos - função retorna sem fazer nada
+        return
+      }
+    }
+
+    const newRoomNumbers = [...roomNumbers, currentRoomNumber.trim()]
+    setRoomNumbers(newRoomNumbers)
+    setCurrentRoomNumber("")
+
+    // Gerenciar mensagens de erro após adicionar
+    if (maxRooms && maxRooms > 0) {
+      const newErrors = { ...errors }
+
+      if (newRoomNumbers.length === maxRooms) {
+        // Quantidade correta - limpar erro
+        setRangeError(null)
+      } else if (newRoomNumbers.length < maxRooms) {
+        // Quantidade menor - adicionar erro
+        setRangeError(`Você deve cadastrar exatamente ${maxRooms} números de quartos. Faltam ${maxRooms - newRoomNumbers.length} quarto(s).`)
+      }
+
+      setErrors(newErrors)
+    }
+  }
+
   function removeRoomNumber(numberToRemove: string) {
-    setRoomNumbers(roomNumbers.filter((num) => num !== numberToRemove))
+    const newRoomNumbers = roomNumbers.filter((num) => num !== numberToRemove)
+    setRoomNumbers(newRoomNumbers)
+
+    // NOVA LÓGICA: Adicionar erro se a quantidade ficar incorreta após remover
+    const maxRooms = availableRooms ? Number.parseInt(availableRooms) : null
+
+    if (maxRooms && maxRooms > 0) {
+      const newErrors = { ...errors }
+
+      if (newRoomNumbers.length === maxRooms) {
+        // Quantidade correta - limpar erro
+        delete newErrors.roomNumbers
+      } else if (newRoomNumbers.length < maxRooms) {
+        // Quantidade menor - adicionar erro
+        newErrors.roomNumbers = `Você deve cadastrar exatamente ${maxRooms} números de quartos. Faltam ${maxRooms - newRoomNumbers.length} quarto(s). (veio aqui)`
+      } else {
+        // Quantidade maior - adicionar erro  
+        newErrors.roomNumbers = `Você deve cadastrar exatamente ${maxRooms} números de quartos. Você tem ${newRoomNumbers.length - maxRooms} quarto(s) a mais.`
+      }
+
+      setErrors(newErrors)
+    }
   }
 
   // Função para limpar todos os números de quartos (na aba automático)
   function clearAllRooms() {
     setRoomNumbers([])
+
+    const maxRooms = availableRooms ? Number.parseInt(availableRooms) : null
+
+    if (maxRooms && maxRooms > 0) {
+      const newErrors = { ...errors }
+      newErrors.roomNumbers = `Você deve cadastrar exatamente ${maxRooms} números de quartos. Faltam ${maxRooms} quarto(s). (retorna esse)`
+      setErrors(newErrors)
+    }
   }
 
   // Função para lidar com o pressionamento da tecla Enter no campo de número de quarto (na aba manual)
@@ -216,9 +313,9 @@ function RoomType() {
   function toggleAmenity(amenityId: number) {
     // Se o amenityId JÁ ESTÁ na lista de selecionados:
     setSelectedAmenities((prev) =>
-      prev.includes(amenityId) 
-    ? prev.filter((id) => id !== amenityId) // REMOVE da lista 
-    : [...prev, amenityId], // ADICIONA na lista
+      prev.includes(amenityId)
+        ? prev.filter((id) => id !== amenityId) // REMOVE da lista 
+        : [...prev, amenityId], // ADICIONA na lista
     )
   }
 
@@ -270,7 +367,7 @@ function RoomType() {
   function removeSelectedImage() {
     setSelectedImage(null)
     setUploadError(null)
-    
+
     // Limpar input file
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -290,91 +387,94 @@ function RoomType() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // Função para formatar o preço enquanto digita
-function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
     const inputValue = e.target.value;
-    
+
     // Aplica a máscara visual
-     const formatted = maskCurrency(inputValue);
-     setDisplayPrice(formatted); // ← Para exibição: "R$ 150,50"
+    const formatted = maskCurrency(inputValue);
+    setDisplayPrice(formatted); // ← Para exibição: "R$ 150,50"
 
     // Extrai valor limpo para o estado do form
     const cleanValue = unmaskCurrency(formatted);
 
     setForm(prev => ({ ...prev, pricePerNight: cleanValue }));
-}
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-  const { name, value } = e.target
-  setForm(prev => ({ ...prev, [name]: value }))
-  
-  if (name === 'numberOfRoomsAvailable') {
-    setAvailableRooms(value)
-  }
-}
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
 
-function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-  const { name, value } = e.target
-  
-  // Validar apenas o campo que perdeu o foco
-  const newErrors = { ...errors }
-  
-  // Validação individual por campo
-  if (name === 'name' && !validateRequired(value)) {
-    newErrors.name = 'Campo obrigatório.'
-  } else if (name === 'name') {
-    delete newErrors.name // Remove erro se válido
-  }
-  
-  if (name === 'description' && !validateRequired(value)) {
-    newErrors.description = 'Campo obrigatório.'
-  } else if (name === 'description') {
-    delete newErrors.description
-  }
-  
-  if (name === 'pricePerNight') {
-    if (!validateRequired(value)) {
-      newErrors.pricePerNight = 'Campo obrigatório.'
-    }  else {
-      delete newErrors.pricePerNight
+    if (name === 'numberOfRoomsAvailable') {
+      setAvailableRooms(value)
     }
   }
 
-  // Validação para numberOfRoomsAvailable
-  if (name === 'numberOfRoomsAvailable') {
-    if (!validateRequired(value)) {
-      newErrors.numberOfRoomsAvailable = 'Campo obrigatório.'
-    } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
-      newErrors.numberOfRoomsAvailable = 'Deve ser um número inteiro maior que zero.'
-    } else {
-      delete newErrors.numberOfRoomsAvailable
-    }
-  }
+  function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value } = e.target
 
- // Validação para maxOccupancy
-  if (name === 'maxOccupancy') {
-    if (!validateRequired(value)) {
-      newErrors.maxOccupancy = 'Campo obrigatório.'
-    } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
-      newErrors.maxOccupancy = 'Deve ser um número inteiro maior que zero.'
-    } else {
-      delete newErrors.maxOccupancy
-    }
-  }
-  
-  
-  setErrors(newErrors)
-};
+    // Validar apenas o campo que perdeu o foco
+    const newErrors = { ...errors }
 
-async function handleSubmit(e: React.FormEvent) {
+    // Validação individual por campo
+    if (name === 'name' && !validateRequired(value)) {
+      newErrors.name = 'Campo obrigatório.'
+    } else if (name === 'name') {
+      delete newErrors.name // Remove erro se válido
+    }
+
+    if (name === 'description' && !validateRequired(value)) {
+      newErrors.description = 'Campo obrigatório.'
+    } else if (name === 'description') {
+      delete newErrors.description
+    }
+
+    if (name === 'pricePerNight') {
+      if (!validateRequired(value)) {
+        newErrors.pricePerNight = 'Campo obrigatório.'
+      } else {
+        delete newErrors.pricePerNight
+      }
+    }
+
+    // Validação para numberOfRoomsAvailable
+    if (name === 'numberOfRoomsAvailable') {
+      if (!validateRequired(value)) {
+        newErrors.numberOfRoomsAvailable = 'Campo obrigatório.'
+      } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
+        newErrors.numberOfRoomsAvailable = 'Deve ser um número inteiro maior que zero.'
+      } else {
+        delete newErrors.numberOfRoomsAvailable
+      }
+    }
+
+    // Validação para maxOccupancy
+    if (name === 'maxOccupancy') {
+      if (!validateRequired(value)) {
+        newErrors.maxOccupancy = 'Campo obrigatório.'
+      } else if (isNaN(Number(value)) || Number(value) <= 0 || !Number.isInteger(Number(value))) {
+        newErrors.maxOccupancy = 'Deve ser um número inteiro maior que zero.'
+      } else {
+        delete newErrors.maxOccupancy
+      }
+    }
+
+
+    setErrors(newErrors)
+  };
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // INICIAR LOADING
+    // setIsSubmitting(true);
 
     // Validar campos obrigatórios
     const newErrors: { [key: string]: string } = {};
-    if(!validateRequired(form.name)) newErrors.name = 'Campo obrigatório.';
-    if(!validateRequired(form.description)) newErrors.description = 'Campo obrigatório.';
-    if(!validateRequired(form.pricePerNight)) newErrors.pricePerNight = 'Campo obrigatório.';
-    if(!validateRequired(form.maxOccupancy)) newErrors.maxOccupancy = 'Campo obrigatório.';
-    if(!validateRequired(form.numberOfRoomsAvailable)) newErrors.numberOfRoomsAvailable = 'Campo obrigatório.';
+    if (!validateRequired(form.name)) newErrors.name = 'Campo obrigatório.';
+    if (!validateRequired(form.description)) newErrors.description = 'Campo obrigatório.';
+    if (!validateRequired(form.pricePerNight)) newErrors.pricePerNight = 'Campo obrigatório.';
+    if (!validateRequired(form.maxOccupancy)) newErrors.maxOccupancy = 'Campo obrigatório.';
+    if (!validateRequired(form.numberOfRoomsAvailable)) newErrors.numberOfRoomsAvailable = 'Campo obrigatório.';
 
     if (!selectedImage) {
       newErrors.imageUrl = 'Selecione uma imagem para o tipo de quarto.';
@@ -382,9 +482,20 @@ async function handleSubmit(e: React.FormEvent) {
       return;
     }
 
-    // ADICIONAR validação para números dos quartos
     if (roomNumbers.length === 0) {
       newErrors.roomNumbers = 'Adicione pelo menos um número de quarto.';
+    }
+
+    // NOVA VALIDAÇÃO - quantidade exata de quartos
+    const availableRoomsNumber = Number.parseInt(form.numberOfRoomsAvailable);
+    if (availableRooms && !isNaN(availableRoomsNumber) && availableRoomsNumber > 0) {
+      if (roomNumbers.length !== availableRoomsNumber) {
+        if (roomNumbers.length < availableRoomsNumber) {
+          newErrors.roomNumbers = `Você deve cadastrar exatamente ${availableRoomsNumber} números de quartos. Faltam ${availableRoomsNumber - roomNumbers.length} quarto(s).`;
+        } else {
+          newErrors.roomNumbers = `Você deve cadastrar exatamente ${availableRoomsNumber} números de quartos. Você tem ${roomNumbers.length - availableRoomsNumber} quarto(s) a mais.`;
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -394,6 +505,8 @@ async function handleSubmit(e: React.FormEvent) {
       return;
     }
 
+    setIsSubmitting(true);
+
     const data = new FormData();
     data.append('Name', form.name);
     data.append('Description', form.description);
@@ -401,7 +514,7 @@ async function handleSubmit(e: React.FormEvent) {
     data.append('MaxOccupancy', form.maxOccupancy.toString());
     data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
     data.append('HotelId', "2"); // id mockado para teste
-    data.append('Image', selectedImage); 
+    data.append('Image', selectedImage);
 
     // ADICIONAR OS AMENITIES SELECIONADOS COMO LISTA
     selectedAmenities.forEach((amenityId, index) => {
@@ -416,59 +529,63 @@ async function handleSubmit(e: React.FormEvent) {
     axios.post('http://localhost:5028/api/roomtype', data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-    .then(() => {
-      setShowSuccess(true); // ← MOSTRAR MENSAGEM DE SUCESSO
-      
-      // RESETAR TODOS OS ESTADOS PARA O ESTADO INICIAL
-      setForm({
-        name: '',
-        description: '',
-        pricePerNight: '',
-        maxOccupancy: '',
-        numberOfRoomsAvailable: '',
-        imageUrl: '',
-      });
-      
-      setDisplayPrice('');
-      setAvailableRooms('');
-      setRoomNumbers([]);
-      setSelectedAmenities([]);
-      setSelectedImage(null);
-      setErrors({});
-      setUploadError(null);
-      
-      // Resetar campos de geração de quartos
-      setStartNumber('');
-      setEndNumber('');
-      setCurrentRoomNumber('');
-      
-      // Limpar input file
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      .then(() => {
+        setShowSuccess(true); // ← MOSTRAR MENSAGEM DE SUCESSO
 
-      setTimeout(() => {
-      setShowSuccess(false);
-    }, 4000); // ← OCULTAR MENSAGEM DE SUCESSO APÓS 4 SEGUNDOS
-    })
-    .catch(error => {
-      setShowSuccess(false); // Garantir que não mostra sucesso em caso de erro
-      const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
-      alert(msg);
-    });
-}
+        // RESETAR TODOS OS ESTADOS PARA O ESTADO INICIAL
+        setForm({
+          name: '',
+          description: '',
+          pricePerNight: '',
+          maxOccupancy: '',
+          numberOfRoomsAvailable: '',
+          imageUrl: '',
+        });
+
+        setDisplayPrice('');
+        setAvailableRooms('');
+        setRoomNumbers([]);
+        setSelectedAmenities([]);
+        setSelectedImage(null);
+        setErrors({});
+        setUploadError(null);
+        setRangeError(null);
+
+        // Resetar campos de geração de quartos
+        setStartNumber('');
+        setEndNumber('');
+        setCurrentRoomNumber('');
+
+        // Limpar input file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 4000); // ← OCULTAR MENSAGEM DE SUCESSO APÓS 4 SEGUNDOS
+      })
+      .catch(error => {
+        setShowSuccess(false); // Garantir que não mostra sucesso em caso de erro
+        const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
+        alert(msg);
+      })
+      .finally(() => {
+        setIsSubmitting(false); // ← SEMPRE PARAR LOADING NO FINAL
+      });
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
-  style={{
-    background: 'linear-gradient(to bottom, #003194, black)',
-  }}> 
+      style={{
+        background: 'linear-gradient(to bottom, #003194, black)',
+      }}>
       <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl">
         <div className="text-center p-6">
           <h1 className="text-2xl font-bold text-gray-900">Cadastrar Tipo de Quarto</h1>
           <p className="text-gray-600 mt-2">Registre um novo tipo de quarto no sistema de pacotes de viagem</p>
-        </div> 
-        
+        </div>
+
         <form className="flex flex-col gap-5 p-6 space-y-6" onSubmit={handleSubmit}>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -561,7 +678,7 @@ async function handleSubmit(e: React.FormEvent) {
                   value={form.numberOfRoomsAvailable}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  
+
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 {errors.numberOfRoomsAvailable && <div style={{ color: 'red', fontWeight: 500 }}>{errors.numberOfRoomsAvailable}</div>}
@@ -569,7 +686,7 @@ async function handleSubmit(e: React.FormEvent) {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Imagem do Quarto</label>
-                
+
                 {/* Input de arquivo oculto */}
                 <input
                   ref={fileInputRef}
@@ -649,7 +766,7 @@ async function handleSubmit(e: React.FormEvent) {
             </div>
           </div>
 
-          <div className="space-y-4"> 
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-lg font-semibold text-gray-900 ">Diferenciais do Quarto</label>
               <span className="px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-50">
@@ -666,8 +783,8 @@ async function handleSubmit(e: React.FormEvent) {
                 {errorAmenities && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-sm text-red-600">{errorAmenities}</p>
-                    <button 
-                      onClick={() => window.location.reload()} 
+                    <button
+                      onClick={() => window.location.reload()}
                       className="text-sm text-red-700 underline mt-1"
                     >
                       Tentar novamente
@@ -689,17 +806,16 @@ async function handleSubmit(e: React.FormEvent) {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {currentPageAmenities.map((amenity) => {
-                        const IconComponent = iconMap[amenity.iconName] || MdBed // Fallback icon
+                        const IconComponent = iconMap[amenity.iconName] || MdBed
                         const isSelected = selectedAmenities.includes(amenity.amenityId)
 
                         return (
                           <div
                             key={amenity.amenityId}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${
-                              isSelected
-                                ? "border-blue-500 bg-blue-50 text-blue-700"
-                                : "border-gray-200 hover:border-gray-300"
-                            }`}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${isSelected
+                              ? "border-blue-500 bg-blue-50 text-blue-700"
+                              : "border-gray-200 hover:border-gray-300"
+                              }`}
                             onClick={() => toggleAmenity(amenity.amenityId)}
                           >
                             <input
@@ -716,7 +832,7 @@ async function handleSubmit(e: React.FormEvent) {
                         )
                       })}
                     </div>
-                    
+
                     {totalAmenitiesPages > 1 && (
                       <div className="flex items-center justify-between pt-4">
                         <button
@@ -726,11 +842,11 @@ async function handleSubmit(e: React.FormEvent) {
                         >
                           Anterior
                         </button>
-                        
+
                         <span className="text-sm text-gray-600">
                           Página {currentAmenitiesPage + 1} de {totalAmenitiesPages}
                         </span>
-                        
+
                         <button
                           onClick={goToNextAmenitiesPage}
                           disabled={currentAmenitiesPage >= totalAmenitiesPages - 1}
@@ -797,26 +913,24 @@ async function handleSubmit(e: React.FormEvent) {
 
             <div className="w-full">
               <div className="flex border-b border-gray-200">
-               
+
                 <button
                   onClick={() => setActiveTab("range")}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === "range"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${activeTab === "range"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
                 >
                   <FaHashtag className="w-4 h-4" />
                   Vários Quartos de Uma Vez
                 </button>
-                
+
                 <button
                   onClick={() => setActiveTab("manual")}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                    activeTab === "manual"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${activeTab === "manual"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
                 >
                   <FaPlus className="w-4 h-4" />
                   Individual
@@ -838,7 +952,10 @@ async function handleSubmit(e: React.FormEvent) {
                             <label className="text-sm text-gray-700">Número Inicial</label>
                             <input
                               value={startNumber}
-                              onChange={(e) => setStartNumber(e.target.value)}
+                              onChange={(e) => {
+                                setStartNumber(e.target.value)
+                                setRangeError(null) // ← Limpar erro ao digitar
+                              }}
                               placeholder="101"
                               type="number"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -848,7 +965,10 @@ async function handleSubmit(e: React.FormEvent) {
                             <label className="text-sm text-gray-700">Número Final</label>
                             <input
                               value={endNumber}
-                              onChange={(e) => setEndNumber(e.target.value)}
+                              onChange={(e) => {
+                                setEndNumber(e.target.value)
+                                setRangeError(null) // ← Limpar erro ao digitar
+                              }}
                               placeholder="115"
                               type="number"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -856,19 +976,34 @@ async function handleSubmit(e: React.FormEvent) {
                           </div>
                           <button
                             onClick={generateRangeNumbers}
-                            disabled={!startNumber || !endNumber}
+                            disabled={
+                              !startNumber ||
+                              !endNumber ||
+                              Boolean(availableRooms &&
+                                !isNaN(Number.parseInt(availableRooms)) &&
+                                Number.parseInt(availableRooms) > 0 &&
+                                roomNumbers.length >= Number.parseInt(availableRooms))
+                            }
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Gerar Intervalo
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-3">Ex: De 101 até 115 gerará: 101, 102, 103... 115</p>
+
+                        {rangeError ? (
+                          <p className="text-sm text-red-600 font-medium mt-3">
+                            ⚠️ {rangeError}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-3">
+                            Ex: De 101 até 115 gerará: 101, 102, 103... 115
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* acredito que vou apagar isso */}
                 {activeTab === "manual" && (
                   <div className="space-y-4">
                     <div className="p-4 border border-gray-200 rounded-lg">
@@ -887,7 +1022,14 @@ async function handleSubmit(e: React.FormEvent) {
                           />
                           <button
                             onClick={addRoomNumber}
-                            disabled={!currentRoomNumber.trim() || roomNumbers.includes(currentRoomNumber.trim())}
+                            disabled={
+                              !currentRoomNumber.trim() ||
+                              roomNumbers.includes(currentRoomNumber.trim()) ||
+                              Boolean(availableRooms &&
+                                !isNaN(Number.parseInt(availableRooms)) &&
+                                Number.parseInt(availableRooms) > 0 &&
+                                roomNumbers.length >= Number.parseInt(availableRooms))
+                            }
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                           >
                             <FaPlus className="w-4 h-4 mr-1" />
@@ -905,11 +1047,11 @@ async function handleSubmit(e: React.FormEvent) {
               <div className="p-4 border border-gray-200 rounded-lg">
                 <div className="space-y-3">
                   <h4 className="font-medium text-sm text-gray-600">Números de Quartos Adicionados:</h4>
-                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                  <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto">
                     {roomNumbers.map((number, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white rounded-md text-sm font-medium"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-gray-600 text-white rounded-md text-sm font-medium"
                       >
                         Quarto nº {number}
                         <button
@@ -922,37 +1064,53 @@ async function handleSubmit(e: React.FormEvent) {
                     ))}
                   </div>
 
-                  {roomNumbers.length > 0 && 
-                    availableRooms && 
-                    !isNaN(Number.parseInt(availableRooms)) && 
-                    Number.parseInt(availableRooms) > 0 && 
-                    roomNumbers.length !== Number.parseInt(availableRooms) && (
-                      <p className="text-sm text-gray-500">
-                        {roomNumbers.length < Number.parseInt(availableRooms)
-                          ? `Faltam ${Number.parseInt(availableRooms) - roomNumbers.length} quarto(s)`
-                          : `${roomNumbers.length - Number.parseInt(availableRooms)} quarto(s) a mais que o esperado`}
+                  {availableRooms &&
+                    !isNaN(Number.parseInt(availableRooms)) &&
+                    Number.parseInt(availableRooms) > 0 &&
+                    roomNumbers.length >= Number.parseInt(availableRooms) && (
+                      <p className="text-sm text-amber-600 font-medium">
+                        Limite atingido! Todos os {availableRooms} quartos foram adicionados.
                       </p>
                     )}
+
+                  {rangeError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-600 font-medium">
+                        ⚠️ {rangeError}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          <button 
+          <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={roomNumbers.length === 0 || uploadingImage}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            disabled={roomNumbers.length === 0 || uploadingImage || isSubmitting}
           >
-            Cadastrar Tipo de Quarto
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-3">
+                {/* Spinner com pulso */}
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="absolute inset-0 animate-ping rounded-full h-5 w-5 border border-white opacity-30"></div>
+                </div>
+                <span className="animate-pulse">Cadastrando tipo de quarto...</span>
+              </div>
+            ) : (
+              'Cadastrar Tipo de Quarto'
+            )}
           </button>
 
           {showSuccess && (
-          <div className="flex flex-col items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg -mt-2">
-            <span className="text-green-600 font-bold text-md">
-              Tipo de quarto cadastrado com sucesso!
-            </span>
-          </div>
-    )}
+            <div className="flex flex-col items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg -mt-2">
+              <span className="text-green-600 font-bold text-md">
+                Tipo de quarto cadastrado com sucesso!
+              </span>
+            </div>
+          )}
         </form>
 
       </div>

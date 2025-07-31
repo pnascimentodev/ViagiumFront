@@ -107,7 +107,7 @@ function Password({actualPassword}: ForgotProps) {
         e.preventDefault();
         let valid = true;
         const params = new URLSearchParams(window.location.search);
-        const userId = params.get("id");
+        const affiliateId = params.get("id");
 
         // Validação das senhas
         const isNewPasswordValid = handlePasswordBlur();
@@ -121,14 +121,14 @@ function Password({actualPassword}: ForgotProps) {
         }
 
         if (actualPassword) {
-            axios.put('http://localhost:5028/api/User/reset-password', {
+            axios.put('http://localhost:5028/api/Affiliate/update-password', {
                 currentPassword,
                 newPassword,
             }).then(() => {
                 setSuccessMessage("Senha alterada com sucesso");
             });
         } else {
-            axios.post(`http://localhost:5028/api/User/${userId}/forgot-password`, {
+            axios.post(`http://localhost:5028/api/Affiliate/forgot-password/${affiliateId}`, {
                 newPassword,
             }).then(() => {
                 setSuccessMessage("Senha alterada com sucesso");

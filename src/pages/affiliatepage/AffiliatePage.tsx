@@ -1,7 +1,6 @@
 import { FaCalendarAlt, FaChartLine, FaPercentage, FaUsers, FaShieldAlt, FaBullhorn } from "react-icons/fa";
 import HotelCarousel from "../../components/HotelCarousel";
 import "keen-slider/keen-slider.min.css";
-import {useKeenSlider} from "keen-slider/react";
 import { useState } from "react";
 import axios from "axios";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateTerms } from "../../utils/validations.ts";
@@ -194,7 +193,7 @@ function AffiliatePage() {
       }
     };
 
-    axios.post("https://localhost:7259/api/affiliate/create", data)
+    axios.post("http://localhost:5028/api/affiliate/create", data)
       .then(() => {
         alert("Cadastro realizado com sucesso!");
       })
