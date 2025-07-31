@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { FaChevronDown, FaUser, FaBars, FaTimes } from "react-icons/fa"
-import logo from "../../assets/img/logo.svg"
+import { FaChevronDown } from "react-icons/fa"
+import Navbar from "../../components/Navbar"
 
 function FAQSection() {
     const faqs = [
@@ -32,7 +32,6 @@ function FAQSection() {
     ]
 
     const [openItem, setOpenItem] = useState<number | null>(null)
-    const [menuOpen, setMenuOpen] = useState(false)
 
     const toggleItem = (index: number) => {
         setOpenItem(openItem === index ? null : index)
@@ -40,146 +39,7 @@ function FAQSection() {
 
     return (
         <>
-            <style>{`
-                .faq-navbar a,
-                .faq-navbar button {
-                    color: #003194 !important;
-                }
-                .faq-navbar a:hover,
-                .faq-navbar button:hover {
-                    color: #FFA62B !important;
-                }
-                .faq-navbar .fill-white {
-                    fill: #003194 !important;
-                }
-                .faq-navbar .group-hover\\:fill-orange-300 {
-                    fill: #003194 !important;
-                }
-                .faq-navbar .group:hover .group-hover\\:fill-orange-300 {
-                    fill: #FFA62B !important;
-                }
-            `}</style>
-            
-            {/* Navbar Customizada */}
-            <header className="w-full bg-transparent px-8 py-4">
-                <div className="flex h-15 items-center justify-between gap-5">
-                    <div className="flex items-center h-full gap-8">
-                        {/* Logo */}
-                        <div className="flex h-full items-center flex-shrink-0">
-                            <img
-                                src={logo || "/placeholder.svg"}
-                                alt="Logo"
-                                className="h-full"
-                            />
-                        </div>
-
-                        {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex items-center gap-5 text-[#003194]">
-                            <a
-                                href="#pacotes"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Pacotes
-                            </a>
-                            <a
-                                href="#vantagens"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Vantagens
-                            </a>
-                            <a
-                                href="#parceiros"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Parceiros
-                            </a>
-                            <a
-                                href="#area-afiliado"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Área do Afiliado
-                            </a>
-                            <a
-                                href="#acesso-admin"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Acesso Admin
-                            </a>
-                            <a
-                                href="#sobre-nos"
-                                className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg"
-                            >
-                                Sobre Nós
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Login Button */}
-                    <div className="flex-shrink-0 hidden md:block">
-                        <button className="group flex items-center text-[#003194] bg-transparent transition-colors duration-200 font-bold text-lg cursor-pointer hover:text-[#FFA62B]">
-                            <FaUser className="w-4 h-4 mr-2 fill-[#003194] group-hover:fill-[#FFA62B] transition-colors duration-200" />
-                            Login Cliente
-                        </button>
-                    </div>
-
-                    {/* Mobile Hamburger Button */}
-                    <div className="md:hidden ml-auto h-full w-22 bg-white rounded-2xl flex items-center justify-center">
-                        <button
-                            onClick={() => setMenuOpen(!menuOpen)}
-                            className="text-[#003194] focus:outline-none"
-                            aria-label="Abrir menu"
-                        >
-                            {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Dropdown Menu */}
-                {menuOpen && (
-                    <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg p-6 flex flex-col gap-4 z-50 absolute left-0 right-0 top-20 mx-8">
-                        <a
-                            href="#pacotes"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Pacotes
-                        </a>
-                        <a
-                            href="#vantagens"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Vantagens
-                        </a>
-                        <a
-                            href="#parceiros"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Parceiros
-                        </a>
-                        <a
-                            href="#area-afiliado"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Área do Afiliado
-                        </a>
-                        <a
-                            href="#acesso-admin"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Acesso Admin
-                        </a>
-                        <a
-                            href="#sobre-nos"
-                            className="hover:text-[#FFA62B] transition-colors duration-200 whitespace-nowrap font-medium text-lg text-[#003194]"
-                        >
-                            Sobre Nós
-                        </a>
-                        <button className="group flex items-center bg-transparent transition-colors duration-200 font-bold text-lg cursor-pointer hover:text-[#FFA62B] text-[#003194]">
-                            <FaUser className="w-4 h-4 mr-2 group-hover:fill-[#FFA62B] transition-colors duration-200 fill-[#003194]" />
-                            Login Cliente
-                        </button>
-                    </div>
-                )}
-            </header>
+            <Navbar />
             <section className="w-full py-12 md:py-24 lg:py-32">
                 <div className="container px-4 md:px-6">
                     <div className="mx-auto max-w-3xl text-center">

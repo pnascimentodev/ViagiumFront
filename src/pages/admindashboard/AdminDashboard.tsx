@@ -100,6 +100,23 @@ function AdminDashboard() {
         discountCoupon: "",
         selectedHotels: [],
         isActive: true,
+        // Novos campos
+        packageType: "fixed",
+        price: "",
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        // Campos para pacote com data fixa
+        fixedStartDate: "",
+        // Campos para pacote sazonal
+        seasonalPeriods: [
+            { startDate: "", endDate: "", isAvailable: true },
+            { startDate: "", endDate: "", isAvailable: true }
+        ],
+        // Campos para pacote recorrente
+        recurrenceStartDate: "",
+        recurrenceEndDate: "",
+        intervalDays: ""
     })
 
     const [userForm, setUserForm] = useState<UserFormData>({
@@ -134,6 +151,23 @@ function AdminDashboard() {
         discountCoupon: "",
         selectedHotels: [],
         isActive: true,
+        // Novos campos
+        packageType: "fixed",
+        price: "",
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        // Campos para pacote com data fixa
+        fixedStartDate: "",
+        // Campos para pacote sazonal
+        seasonalPeriods: [
+            { startDate: "", endDate: "", isAvailable: true },
+            { startDate: "", endDate: "", isAvailable: true }
+        ],
+        // Campos para pacote recorrente
+        recurrenceStartDate: "",
+        recurrenceEndDate: "",
+        intervalDays: ""
     });
 
     // Estados para edição de usuários
@@ -267,6 +301,23 @@ function AdminDashboard() {
                 discountCoupon: "",
                 selectedHotels: [],
                 isActive: true,
+                // Novos campos
+                packageType: "fixed",
+                price: "",
+                packageTax: "",
+                cupomDiscount: "",
+                discountValue: "",
+                // Campos para pacote com data fixa
+                fixedStartDate: "",
+                // Campos para pacote sazonal
+                seasonalPeriods: [
+                    { startDate: "", endDate: "", isAvailable: true },
+                    { startDate: "", endDate: "", isAvailable: true }
+                ],
+                // Campos para pacote recorrente
+                recurrenceStartDate: "",
+                recurrenceEndDate: "",
+                intervalDays: ""
             })
         } else {
             setUserForm({
@@ -290,27 +341,89 @@ function AdminDashboard() {
     const handlePackageSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        const packageData = {
-            Title: packageForm.title,
-            Description: packageForm.description,
-            OriginCity: packageForm.originCity,
-            OriginCountry: packageForm.originCountry,
-            DestinationCity: packageForm.destinationCity,
-            DestinationCountry: packageForm.destinationCountry,
-            Image: packageForm.image,
-            Duration: packageForm.duration,
-            MaxPeople: parseInt(packageForm.maxPeople),
-            VehicleType: packageForm.vehicleType,
-            OriginalPrice: parseFloat(packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
-            PackageFee: parseFloat(packageForm.packageFee.replace(/[^\d.,]/g, '').replace(',', '.')),
-            DiscountCoupon: packageForm.discountCoupon,
-            SelectedHotels: packageForm.selectedHotels,
-            IsActive: packageForm.isActive,
+        // Validações básicas
+        if (!packageForm.title.trim()) {
+            alert("Por favor, insira um título para o pacote");
+            return;
         }
 
-        console.log("Dados do pacote para envio:", packageData)
-        console.log("Hotéis selecionados:", packageForm.selectedHotels)
+        if (!packageForm.description.trim()) {
+            alert("Por favor, insira uma descrição para o pacote");
+            return;
+        }
 
+        // Validação baseada no tipo de pacote
+        if (packageForm.packageType === "fixed" && !packageForm.fixedStartDate) {
+            alert("Por favor, defina a data de início para o pacote de data fixa");
+            return;
+        }
+
+        if (packageForm.packageType === "seasonal") {
+            const period1Valid = packageForm.seasonalPeriods[0]?.startDate && packageForm.seasonalPeriods[0]?.endDate;
+            const period2Valid = packageForm.seasonalPeriods[1]?.startDate && packageForm.seasonalPeriods[1]?.endDate;
+            if (!period1Valid || !period2Valid) {
+                alert("Por favor, defina ambos os períodos sazonais");
+                return;
+            }
+        }
+
+        if (packageForm.packageType === "recurring") {
+            if (!packageForm.recurrenceStartDate || !packageForm.recurrenceEndDate || !packageForm.intervalDays) {
+                alert("Por favor, defina o período e intervalo para o pacote recorrente");
+                return;
+            }
+        }
+
+        // Construir dados do pacote baseado no tipo
+        let packageData: any = {
+            title: packageForm.title.trim(),
+            description: packageForm.description.trim(),
+            originAddressId: 1, // Simulado - você pode mapear isso baseado na cidade/país
+            destinationAddressId: 2, // Simulado
+            imageUrl: packageForm.image ? URL.createObjectURL(packageForm.image) : "",
+            duration: parseInt(packageForm.duration) || 1,
+            maxPeople: parseInt(packageForm.maxPeople),
+            vehicleType: packageForm.vehicleType,
+            originalPrice: parseFloat(packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
+            price: parseFloat(packageForm.price.replace(/[^\d.,]/g, '').replace(',', '.')),
+            packageTax: parseFloat(packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.')),
+            cupomDiscount: packageForm.cupomDiscount.trim(),
+            discountValue: parseInt(packageForm.discountValue) || 0,
+            createdBy: 1, // Simulado - ID do usuário atual
+            isActive: packageForm.isActive,
+        };
+
+        // Adicionar campos específicos do tipo de pacote
+        if (packageForm.packageType === "fixed") {
+            packageData.schedules = [{
+                startDate: packageForm.fixedStartDate,
+                isFixed: true,
+                isAvailable: true
+            }];
+        } else if (packageForm.packageType === "seasonal") {
+            packageData.schedules = packageForm.seasonalPeriods.map(period => ({
+                startDate: period.startDate,
+                endDate: period.endDate,
+                isFixed: false,
+                isAvailable: period.isAvailable
+            }));
+        } else if (packageForm.packageType === "recurring") {
+            packageData.recurrence = {
+                startDate: packageForm.recurrenceStartDate,
+                endDate: packageForm.recurrenceEndDate,
+                intervalDays: parseInt(packageForm.intervalDays)
+            };
+        }
+
+        console.log("=== DADOS DO PACOTE PARA ENVIO ===");
+        console.log("Tipo de pacote:", packageForm.packageType);
+        console.log("Dados completos:", packageData);
+        console.log("Hotéis selecionados:", packageForm.selectedHotels);
+        
+        // Aqui você faria a chamada para a API
+        // Por exemplo: await createPackage(packageData)
+        
+        alert(`Pacote "${packageForm.title}" criado com sucesso!\nTipo: ${packageForm.packageType}\nVerifique o console para ver todos os dados.`);
         closeModal()
     }
 
@@ -341,6 +454,23 @@ function AdminDashboard() {
             discountCoupon: "0",
             selectedHotels: [1, 3], // Hotéis já selecionados como exemplo
             isActive: packageItem.status === "Ativo",
+            // Novos campos
+            packageType: "fixed",
+            price: "R$ 1.799,99",
+            packageTax: "R$ 150,00",
+            cupomDiscount: "PROMO10",
+            discountValue: "10",
+            // Campos para pacote com data fixa
+            fixedStartDate: "2025-12-01",
+            // Campos para pacote sazonal
+            seasonalPeriods: [
+                { startDate: "2025-12-01", endDate: "2025-12-31", isAvailable: true },
+                { startDate: "2026-06-01", endDate: "2026-06-30", isAvailable: true }
+            ],
+            // Campos para pacote recorrente
+            recurrenceStartDate: "2025-08-01",
+            recurrenceEndDate: "2025-12-31",
+            intervalDays: "15"
         });
         
         setIsEditModalOpen(true);
@@ -457,6 +587,23 @@ function AdminDashboard() {
             discountCoupon: "",
             selectedHotels: [],
             isActive: true,
+            // Novos campos
+            packageType: "fixed",
+            price: "",
+            packageTax: "",
+            cupomDiscount: "",
+            discountValue: "",
+            // Campos para pacote com data fixa
+            fixedStartDate: "",
+            // Campos para pacote sazonal
+            seasonalPeriods: [
+                { startDate: "", endDate: "", isAvailable: true },
+                { startDate: "", endDate: "", isAvailable: true }
+            ],
+            // Campos para pacote recorrente
+            recurrenceStartDate: "",
+            recurrenceEndDate: "",
+            intervalDays: ""
         })
     }
 
@@ -627,7 +774,7 @@ function AdminDashboard() {
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {modalType === "pacotes" ? (
-                            <form onSubmit={handlePackageSubmit} className="space-y-6">
+                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
                                     <input
@@ -651,7 +798,160 @@ function AdminDashboard() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Novo campo: Tipo de Pacote */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pacote</label>
+                                    <select
+                                        required
+                                        value={packageForm.packageType}
+                                        onChange={(e) => setPackageForm({ 
+                                            ...packageForm, 
+                                            packageType: e.target.value as "fixed" | "seasonal" | "recurring"
+                                        })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="fixed">Data Fixa</option>
+                                        <option value="seasonal">Sazonal - 2x ao ano</option>
+                                        <option value="recurring">Recorrente - O ano todo</option>
+                                    </select>
+                                </div>
+
+                                {/* Campos condicionais baseados no tipo de pacote */}
+                                {packageForm.packageType === "fixed" && (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <h4 className="text-sm font-medium text-blue-900 mb-3">Configuração de Data Fixa</h4>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={packageForm.fixedStartDate}
+                                                onChange={(e) => setPackageForm({ ...packageForm, fixedStartDate: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {packageForm.packageType === "seasonal" && (
+                                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                        <h4 className="text-sm font-medium text-green-900 mb-3">Configuração Sazonal (2 períodos por ano)</h4>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">1º Período</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={packageForm.seasonalPeriods[0]?.startDate || ""}
+                                                            onChange={(e) => {
+                                                                const newPeriods = [...packageForm.seasonalPeriods];
+                                                                newPeriods[0] = { ...newPeriods[0], startDate: e.target.value };
+                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={packageForm.seasonalPeriods[0]?.endDate || ""}
+                                                            onChange={(e) => {
+                                                                const newPeriods = [...packageForm.seasonalPeriods];
+                                                                newPeriods[0] = { ...newPeriods[0], endDate: e.target.value };
+                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">2º Período</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={packageForm.seasonalPeriods[1]?.startDate || ""}
+                                                            onChange={(e) => {
+                                                                const newPeriods = [...packageForm.seasonalPeriods];
+                                                                newPeriods[1] = { ...newPeriods[1], startDate: e.target.value };
+                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
+                                                        <input
+                                                            type="date"
+                                                            required
+                                                            value={packageForm.seasonalPeriods[1]?.endDate || ""}
+                                                            onChange={(e) => {
+                                                                const newPeriods = [...packageForm.seasonalPeriods];
+                                                                newPeriods[1] = { ...newPeriods[1], endDate: e.target.value };
+                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {packageForm.packageType === "recurring" && (
+                                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                        <h4 className="text-sm font-medium text-purple-900 mb-3">Configuração Recorrente</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                                                <input
+                                                    type="date"
+                                                    required
+                                                    value={packageForm.recurrenceStartDate}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, recurrenceStartDate: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Fim</label>
+                                                <input
+                                                    type="date"
+                                                    required
+                                                    value={packageForm.recurrenceEndDate}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, recurrenceEndDate: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Intervalo (dias)</label>
+                                                <select
+                                                    required
+                                                    value={packageForm.intervalDays}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, intervalDays: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="">Selecione</option>
+                                                    <option value="7">A cada 7 dias</option>
+                                                    <option value="14">A cada 14 dias</option>
+                                                    <option value="15">A cada 15 dias</option>
+                                                    <option value="30">A cada 30 dias</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Origem</label>
                                         <input
@@ -764,7 +1064,7 @@ function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Preço Original</label>
                                         <input
@@ -773,44 +1073,63 @@ function AdminDashboard() {
                                             value={packageForm.originalPrice}
                                             onChange={(e) => setPackageForm({ ...packageForm, originalPrice: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 1.200,00"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Serviço</label>
-                                        <input
-                                            type="text"
-                                            value={packageForm.packageFee}
-                                            onChange={(e) => setPackageForm({ ...packageForm, packageFee: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 50,00"
+                                            placeholder="Ex: R$ 1.999,99"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem do Cupom de Desconto (%)</label>
-                                        <select
-                                            value={packageForm.discountCoupon}
-                                            onChange={(e) => setPackageForm({ ...packageForm, discountCoupon: e.target.value })}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Pacote</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={packageForm.packageTax}
+                                            onChange={(e) => setPackageForm({ ...packageForm, packageTax: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="0">Sem desconto</option>
-                                            <option value="5">5%</option>
-                                            <option value="10">10%</option>
-                                            <option value="15">15%</option>
-                                            <option value="20">20%</option>
-                                            <option value="25">25%</option>
-                                            <option value="30">30%</option>
-                                            <option value="35">35%</option>
-                                            <option value="40">40%</option>
-                                            <option value="45">45%</option>
-                                            <option value="50">50%</option>
-                                        </select>
+                                            placeholder="Ex: R$ 150,00"
+                                        />
                                     </div>
-                                    <div></div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="w-full space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem de Desconto (%)</label>
+                                            <select
+                                                value={packageForm.discountValue}
+                                                onChange={(e) => setPackageForm({ ...packageForm, discountValue: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <option value="0">Sem desconto</option>
+                                                <option value="5">5%</option>
+                                                <option value="10">10%</option>
+                                                <option value="15">15%</option>
+                                                <option value="20">20%</option>
+                                                <option value="25">25%</option>
+                                                <option value="30">30%</option>
+                                                <option value="35">35%</option>
+                                                <option value="40">40%</option>
+                                                <option value="45">45%</option>
+                                                <option value="50">50%</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
+                                            <input
+                                                type="text"
+                                                value={packageForm.cupomDiscount}
+                                                onChange={(e) => setPackageForm({ ...packageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Ex: CARNAVAL10"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="w-full">
+                                        {/* Espaço vazio para manter o layout */}
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-4 mb-4">
@@ -829,7 +1148,7 @@ function AdminDashboard() {
 
                             </form>
                         ) : (
-                            <form onSubmit={handleUserSubmit} className="space-y-10"> {/* Aumentado de 8 para 10 para mais espaço vertical */}
+                            <form id="user-form" onSubmit={handleUserSubmit} className="space-y-10"> {/* Aumentado de 8 para 10 para mais espaço vertical */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Nome e Sobrenome */}
                                     <div>
@@ -1140,7 +1459,7 @@ function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-3">Preço Original</label>
                                     <input
@@ -1150,17 +1469,6 @@ function AdminDashboard() {
                                         onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: R$ 1.200,00"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Taxa do Serviço</label>
-                                    <input
-                                        type="text"
-                                        value={editPackageForm.packageFee}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, packageFee: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 50,00"
                                     />
                                 </div>
                             </div>

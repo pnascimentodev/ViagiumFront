@@ -1,35 +1,86 @@
 import { useState, useEffect } from 'react';
 import italyImg from '../../assets/img/italy.jpg';
-import veneza3Img from '../../assets/img/veneza3.jpg';
-import veneza4Img from '../../assets/img/veneza4.jpg';
 import veneza1Img from '../../assets/img/veneza1.jpg';
 import { Button } from '../../components/Button';
-import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from 'react-icons/fa';
+import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
 import Footer from '../../components/Footer';
+import axios from 'axios';
+import Navbar from '../../components/Navbar';
+import { useNavigate } from "react-router-dom";
 
 function Package() {
 
-  const [currentPackageIndex] = useState(0);
-  const [packageImageIndex, setPackageImageIndex] = useState(0);
-  const [hotelImageIndex, setHotelImageIndex] = useState(0);
-  const [roomTypeIndex, setRoomTypeIndex] = useState(0);
-  const [showHotelModal, setShowHotelModal] = useState(false);
-  const openHotelModal = () => setShowHotelModal(true);
-  const closeHotelModal = () => setShowHotelModal(false);
+      interface PackageDetails {
+      id: number;
+      title: string;
+      description: string;
+      originAddressId: number;
+      destinationAddressId: number;
+      imageUrl: string;
+      duration: number;
+      maxPeople: number;
+      vehicleType: string;
+      originalPrice: number;
+      price: number;
+      packageTax: number;
+      cupomDiscount: string;
+      discountValue: number;
+      schedules: {
+        startDate: string;
+        endDate?: string;
+        isFixed: boolean;
+        isAvailable: boolean;
+      }[];
+    }
 
-  const packageDetails = [
+    const navigate = useNavigate();
+    const [numPessoas, setNumPessoas] = useState(1);
+    const [currentPackageIndex] = useState(0);
+    const [cupomDiscountInput, setCupomDiscountInput] = useState('');
+    const [packageImageIndex, setPackageImageIndex] = useState(0);
+    const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [hotelImageIndex, setHotelImageIndex] = useState(0);
+    const [roomTypeIndex, setRoomTypeIndex] = useState(0);
+    const [showHotelModal, setShowHotelModal] = useState(false);
+    const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
+    const openHotelModal = () => setShowHotelModal(true);
+    const closeHotelModal = () => setShowHotelModal(false);
+    const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
+    const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+
+
+      useEffect(() => {
+      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
+        .then(res => { 
+        setRoomIncludes(res.data);
+      })
+        .catch(() => setRoomIncludes([]));
+    }, [hotelImageIndex]);
+
+    useEffect(() => {
+    if (showHotelModal) {
+      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
+        .then(res => setRoomTypeAmenities(res.data))
+        .catch(() => setRoomTypeAmenities([]));
+    }
+  }, [showHotelModal, roomTypeIndex]);
+
+  const [packageDetails] = useState([
     {
       title: "Pacote Veneza Mágica – 5 dias de encanto!",
       description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
-      images: [italyImg, veneza3Img, veneza4Img],
-      passagem: [5524, 6000],
-      hospedagem: [
-        [1300, 1400, 1500], 
-        [1200, 1250, 1350]
-      ],
-      encargos: [1200, 1300],
-      duracoes: [
+      images: [italyImg],
+      originAddress: {city:"Recife", country: 'Brasil'},
+      destinationAddress: {city:"Veneza", country: 'Itália'},
+      vehicleType: "Avião",
+      originalPrice: [5524, 6000],
+      price: [5504, 4000],
+      packageTax: [1300, 1300],
+      cupomDiscount: ["Avanade10%", "Veneza20"],
+      discountValue: [550, 800],
+      duration: [
         "01/06/2025 - 05/06/2025",
         "10/07/2025 - 14/07/2025"
       ],
@@ -38,7 +89,6 @@ function Package() {
         "Hotel Gritti Palace"
       ],
       hotelRatings: [4.8, 4.6],
-      prices: [5600, 8700],
       hotelAddresses: [
         "Riva degli Schiavoni, 4196, 30122 Venezia VE, Itália",
         "Campo Santa Maria del Giglio, 2467, 30124 Venezia VE, Itália"
@@ -47,21 +97,8 @@ function Package() {
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"],
         ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
       ],
-      roomIncludes: [
-        [
-          "Café da manhã incluso",
-          "Vista para o canal",
-          "Wi-Fi grátis"
-        ],
-        [
-          "Café da manhã incluso",
-          "Piscina",
-          "Frigobar"
-        ]
-      ],
     },
-    
-  ];
+  ]);
 
   useEffect(() => {
     setPackageImageIndex(0);
@@ -75,26 +112,36 @@ function Package() {
 
   const currentPackage = packageDetails[currentPackageIndex];
   const pacoteImages = currentPackage.images;
+  const price = currentPackage.price[hotelImageIndex] * numPessoas;
+  const originalPrice = currentPackage.originalPrice[hotelImageIndex] * numPessoas;
+  const packageTax = currentPackage.packageTax[hotelImageIndex];
+  const cupomDiscount = currentPackage.cupomDiscount[hotelImageIndex];
+  const discountValue = currentPackage.discountValue[hotelImageIndex];
+  const valorFinal = (price + packageTax) - discountValue;
 
-  const prevPackageImage = () => {
-    setPackageImageIndex((prev) =>
-      prev === 0 ? pacoteImages.length - 1 : prev - 1
-    );
-  };
-  const nextPackageImage = () => {
-    setPackageImageIndex((prev) =>
-      prev === pacoteImages.length - 1 ? 0 : prev + 1
-    );
-  };
+    // Função para filtrar tipos de quarto pelo número de viajantes
+  function getRoomTypesByNumPessoas(roomTypesArray: string[], numPessoas: number) {
+    // Exemplo: verifica se o texto do tipo de quarto contém a quantidade máxima de hóspedes
+    return roomTypesArray.filter(tipo => {
+      // Extrai o número máximo de hóspedes do texto (ex: "até 2 hóspedes")
+      const match = tipo.match(/até (\d+) hóspedes?/i);
+      if (match) {
+        const max = parseInt(match[1], 10);
+        return numPessoas <= max;
+      }
+      // Se não encontrar, mostra todos
+      return true;
+    });
+  }
 
-  const passagem = currentPackage.passagem[hotelImageIndex];
-  const hospedagem = currentPackage.hospedagem[hotelImageIndex][roomTypeIndex];
-  const encargos = currentPackage.encargos[hotelImageIndex];
-  const valorTotal = passagem + hospedagem + encargos;
+    useEffect(() => {
+    setRoomTypeIndex(0);
+  }, [numPessoas, hotelImageIndex]);
 
   return (
     <div>
-      <div className="min-h-screen bg-gradient-to-r h-full from-[#003194] to-[#FFA62B] flex justify-center items-center">
+        <Navbar />
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
             {currentPackage.title}
@@ -106,32 +153,12 @@ function Package() {
               alt="Imagem do pacote"
               className="w-full h-64 object-cover"
             />
-            <button
-              onClick={nextPackageImage}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
-            >
-              <FaChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={prevPackageImage}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
-            >
-              <FaChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {pacoteImages.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${index === packageImageIndex ? "bg-white" : "bg-white/50"}`}
-                />
-              ))}
-            </div>
           </div>
           <p className="mb-6 leading-relaxed">
             {currentPackage.description}
           </p>
           <div className="grid md:grid-cols-2 gap-6 px-6">
-            {/* Left Column - Information */}
+            {/* Left Column - Information */} 
             <div className="space-y-6">
               {/* Travel Information */}
               <div>
@@ -139,55 +166,87 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-4">Informações</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Duração</h2>
+                      <span className="font-semibold">Tipo de veículo:&nbsp;</span>
+                      <span>{currentPackage.vehicleType}</span>
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.originAddress.city}, {currentPackage.originAddress.country}
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="font-semibold ">Destino:&nbsp;</span>{currentPackage.destinationAddress.city}, {currentPackage.destinationAddress.country}
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h2 className="font-semibold">Duração</h2>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <FaRegCalendarAlt className=" text-xl" />
                       <select className="w-full border rounded px-2 py-1">
-                        {currentPackage.duracoes.map((duracao, idx) => (
+                        {currentPackage.duration.map((duracao, idx) => (
                           <option key={idx}>{duracao}</option>
                         ))}
                       </select>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-medium">Número de pessoas</h2>
+                      <h2 className="font-semibold">Número de viajantes</h2>
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
-                      <select className="w-full border rounded px-2 py-1">
-                        <option>1 pessoa</option>
-                        <option>2 pessoas</option>
-                        <option>3 pessoas</option>
-                      </select>
+                          <select
+                            className="w-full border rounded px-2 py-1"
+                            value={numPessoas}
+                            onChange={e => setNumPessoas(Number(e.target.value))}
+                          >
+                            <option value={1}>1 pessoa</option>
+                            <option value={2}>2 pessoas</option>
+                            <option value={3}>3 pessoas</option>
+                            <option value={4}>4 pessoas</option>
+                          </select>
                     </div>
                   </div>
                 </div>
                 <div className="bg-[#FFFFFF] rounded-lg shadow-md mt-7 transition duration-300 hover:scale-105">
-                  <div className="flex p-4">
+                  <div className="flex ml-4 mt-4">
                     <h3 className="text-lg font-semibold">Resumo</h3>
                   </div>
-                  <div className="flex not-last-of-type:pl-4">
-                    <h3 className="text-lg font-semibold text-[#FFA62B]">Valor por pessoa</h3>
-                  </div>
                   <div className="p-4">
+                    <div className="flex items-center space-x-3">
+                        <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
+                        <input
+                          id="cupom"
+                          type="text"
+                          className="w-full border rounded px-2 py-1"
+                          value={cupomDiscountInput}
+                          onChange={e => setCupomDiscountInput(e.target.value)}
+                          placeholder="Insira seu cupom"
+                        />
+                  </div>
                     <div className="flex justify-between text-sm">
-                      <span>Passagens:</span>
-                      <span className="font-semibold">{`R$ ${passagem.toLocaleString('pt-BR')},00`}</span>
+                      <span className="line-through color-red text-red-600 font-bold">Preço Original</span>
+                      <span className="font-bold line-through text-red-600">{`R$ ${originalPrice.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Hospedagem:</span>
-                      <span className="font-semibold">{`R$ ${hospedagem.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Pacote + Hospedagem</span>
+                      <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Impostos e encargos:</span>
-                      <span className="font-semibold">{`R$ ${encargos.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Impostos e encargos:</span>
+                      <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <hr className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
-                      <span>Valor total</span>
-                      <span>{`R$ ${valorTotal.toLocaleString('pt-BR')},00`}</span>
+                      <span>Valor Final</span>
+                      <span>{`R$ ${valorFinal.toLocaleString('pt-BR')},00`}</span>
                     </div>
                   </div>
+                </div>
+                <div className="bg-[#FFFFFF] rounded-lg shadow-md mt-7 transition duration-300 hover:scale-105 p-4">
+                    <h3 className='font-bold mb-4 text-lg'>Avaliações do pacote</h3>
+                      <Button
+                        className="text-sm  px-4 py-2 rounded shadow font-bold hover:scale-101 transition-all duration-200 mb-4 "
+                        onClick={openAvaliacoesModal}
+                      >
+                        Ver avaliações
+                      </Button>
                 </div>
               </div>
             </div>
@@ -196,7 +255,7 @@ function Package() {
               <div className="space-y-6">
                 {/* Hotel Section */}
                 <div className="transition duration-300 hover:scale-105 bg-[#FFFFFF] rounded-lg shadow-md p-4">
-                  <h3 className="text-lg font-semibold mb-4">Hotel</h3>
+                  <h3 className="text-lg font-semibold mb-4 ">Hotel</h3>
                   <div className="space-y-4">
                     <select
                       className={`w-full border rounded px-2 py-1${showHotelModal ? ' hidden' : ''}`}
@@ -209,7 +268,7 @@ function Package() {
                     </select>
                     <div className="flex justify-end mt-2">
                       <Button
-                        className="text-sm px-4 py-2 rounded shadow bg-[#FFA62B] text-[#003194] font-bold hover:scale-105 transition-all duration-200"
+                        className="w-full text-sm px-4 py-2 rounded shadow font-bold hover:scale-101 transition-all duration-200"
                         onClick={openHotelModal}
                       >
                         Ver detalhes do hotel
@@ -239,7 +298,7 @@ function Package() {
                         {/* Informações do hotel */}
                         <div className="p-6 pt-8">
                           <Button
-                            className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" style={{ backgroundColor: '#FFA62B', color: '#003194'}}
+                            className="w-full text-white font-bold py-4 text-lg shadow-lg hover:scale-105 transition-all duration-200" 
                           >
                             Ver no mapa
                           </Button>
@@ -249,19 +308,19 @@ function Package() {
                     {/* Quarto */}
                     <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                     <div className="space-y-3 w-full">
-                      <select
-                        className="w-full border rounded px-2 py-1"
-                        value={roomTypeIndex}
-                        onChange={e => setRoomTypeIndex(Number(e.target.value))}
-                      >
-                        {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
-                          <option key={idx} value={idx}>{tipo}</option>
-                        ))}
-                      </select>
+                        <select
+                          className="w-full border rounded px-2 py-1"
+                          value={roomTypeIndex}
+                          onChange={e => setRoomTypeIndex(Number(e.target.value))}
+                        >
+                          {getRoomTypesByNumPessoas(currentPackage.roomTypes[hotelImageIndex], numPessoas).map((tipo, idx) => (
+                            <option key={idx} value={idx}>{tipo}</option>
+                          ))}
+                        </select>
                       <div className="justify-center mt-2">
                         <ul className="space-y-1">
-                          {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
-                            <li key={idx} className="text-gray-600 text-xs">{item}</li>
+                          {roomIncludes.map((item) => (
+                            <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
                           ))}
                         </ul>
                       </div>
@@ -273,7 +332,9 @@ function Package() {
             </div>
             <div className="p-6 pt-8">
               <Button
-                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" 
+                onClick={() => navigate("/reservation", { state: { numPessoas } })}
+                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                style={{ backgroundColor: '#FFA62B', color: '#003194' }}
               >
                 Reservar Agora
               </Button>
@@ -283,7 +344,7 @@ function Package() {
 
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            <div className="bg-white rounded-lg p-6 max-w-xl w-full relative z-[100000]">
+            <div className="bg-white rounded-lg p-6 max-w-xl w-full relative z-[100000]" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
               <button
                 className="absolute top-2 right-2 text-gray-500 text-xl z-[100001]"
                 onClick={closeHotelModal}
@@ -297,11 +358,11 @@ function Package() {
                 className="w-full h-48 object-cover rounded mb-4"
               />
               <p className="mb-2 text-xl">{currentPackage.hotelAddresses[hotelImageIndex]}</p>
-              <ul className="mb-2">
-                {currentPackage.roomIncludes[hotelImageIndex].map((item, idx) => (
-                  <li key={idx} className="text-xl">{item}</li>
-                ))}
-              </ul>
+                <ul className="mb-2">
+                  {roomTypeAmenities.map((item) => (
+                    <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
+                  ))}
+                </ul>
                 <span className="flex items-center font-semibold text-xl">
                   Avaliação:&nbsp;
                   <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">
@@ -311,7 +372,7 @@ function Package() {
                 </span>
             <div className="p-6 pt-8">
               <Button
-                className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200" style={{ backgroundColor: '#FFA62B', color: '#003194'}}
+                className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
               >
                   Ver no mapa
               </Button>
@@ -320,6 +381,146 @@ function Package() {
           </div>
         )}
         
+      {showAvaliacoesModal && (
+      <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-8 relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+          <button
+            className="absolute top-4 right-4 text-gray-500 text-2xl font-bold"
+            onClick={closeAvaliacoesModal}
+            aria-label="Fechar"
+          >
+            &times;
+          </button>
+          <h2 className="text-2xl font-bold text-center mb-8 ">Avaliações do Pacote de Viagem</h2>
+      {/* Nota geral */}
+      <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex gap-1">
+            {[...Array(5)].map((_, idx) => (
+              <svg key={idx} className="w-5 h-5" fill={idx < 4 ? "#FFA62B" : "#E5E7EB"} viewBox="0 0 20 20">
+                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+              </svg>
+            ))}
+          </div>
+          <span className="text-gray-500 ml-2">5 estrelas</span>
+        </div>
+        <span className="text-gray-500 text-sm">Baseado em 4 avaliações</span>
+        {/* Barras de avaliação */}
+        <div className="mt-4 space-y-1">
+          {[5,4,3,2,1].map(star => (
+            <div key={star} className="flex items-center gap-2">
+              <span className="text-xs font-bold w-4">{star}★</span>
+              <div className="bg-gray-200 rounded h-2 w-32">
+                <div
+                  className={`bg-[#FFA62B] h-2 rounded`}
+                  style={{ width: star === 5 ? "50%" : star === 4 ? "50%" : "0%" }}
+                />
+              </div>
+              <span className="text-xs text-gray-500">{star === 5 || star === 4 ? 2 : 0}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Lista de avaliações */}
+      <div className="space-y-4">
+        {/* Avaliação 1 */}
+        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
+          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold"></div>
+          <div className="flex-1">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[#003194]">Maria Silva</span>
+              <span className="text-xs text-gray-500">15 de Janeiro, 2024</span>
+            </div>
+            <div className="flex items-center gap-1 mb-1">
+              {[...Array(5)].map((_, idx) => (
+                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                </svg>
+              ))}
+              <span className="text-xs text-gray-500 ml-1">(5/5)</span>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              Experiência incrível! O pacote superou todas as expectativas. Os hotéis eram excelentes e os passeios muito bem organizados. Recomendo para todos!
+            </p>
+            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
+          </div>
+        </div>
+        {/* Avaliação 2 */}
+        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
+          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">J</div>
+          <div className="flex-1">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[#003194]">João Santos</span>
+              <span className="text-xs text-gray-500">8 de Janeiro, 2024</span>
+            </div>
+            <div className="flex items-center gap-1 mb-1">
+              {[...Array(4)].map((_, idx) => (
+                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                </svg>
+              ))}
+              <svg className="w-4 h-4" fill="#E5E7EB" viewBox="0 0 20 20">
+                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+              </svg>
+              <span className="text-xs text-gray-500 ml-1">(4/5)</span>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              Muito bom! Apenas alguns pequenos atrasos nos voos, mas no geral foi uma viagem fantástica. A equipe de suporte foi muito prestativa.
+            </p>
+            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
+          </div>
+        </div>
+        {/* Avaliação 3 */}
+        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
+          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">A</div>
+          <div className="flex-1">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[#003194]">Ana Costa</span>
+              <span className="text-xs text-gray-500">2 de Janeiro, 2024</span>
+            </div>
+            <div className="flex items-center gap-1 mb-1">
+              {[...Array(5)].map((_, idx) => (
+                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                </svg>
+              ))}
+              <span className="text-xs text-gray-500 ml-1">(5/5)</span>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              Perfeito do início ao fim! Cada detalhe foi cuidadosamente planejado. As cidades visitadas eram deslumbrantes e os guias muito conhecedores.
+            </p>
+            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
+          </div>
+        </div>
+          {/* Avaliação 4 */}
+          <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
+            <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">C</div>
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-[#003194]">Carlos Oliveira</span>
+                <span className="text-xs text-gray-500">28 de Dezembro, 2023</span>
+              </div>
+              <div className="flex items-center gap-1 mb-1">
+                {[...Array(4)].map((_, idx) => (
+                  <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                  </svg>
+                ))}
+                <svg className="w-4 h-4" fill="#E5E7EB" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                </svg>
+                <span className="text-xs text-gray-500 ml-1">(4/5)</span>
+              </div>
+              <p className="text-sm text-gray-700 mb-2">
+                Boa experiência geral. Os hotéis eram confortáveis e as refeições deliciosas. Apenas senti falta de mais tempo livre para explorar por conta própria.
+              </p>
+              <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
       <Footer />
       </div>
   );
