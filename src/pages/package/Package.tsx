@@ -34,38 +34,38 @@ function Package() {
       }[];
     }
 
-  const navigate = useNavigate();
-  const [numPessoas, setNumPessoas] = useState(1);
-  const [currentPackageIndex] = useState(0);
-  const [cupomDiscountInput, setCupomDiscountInput] = useState('');
-  const [packageImageIndex, setPackageImageIndex] = useState(0);
-  const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
-  const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
-  const [hotelImageIndex, setHotelImageIndex] = useState(0);
-  const [roomTypeIndex, setRoomTypeIndex] = useState(0);
-  const [showHotelModal, setShowHotelModal] = useState(false);
-  const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
-  const openHotelModal = () => setShowHotelModal(true);
-  const closeHotelModal = () => setShowHotelModal(false);
-  const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
-  const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+    const navigate = useNavigate();
+    const [numPessoas, setNumPessoas] = useState(1);
+    const [currentPackageIndex] = useState(0);
+    const [cupomDiscountInput, setCupomDiscountInput] = useState('');
+    const [packageImageIndex, setPackageImageIndex] = useState(0);
+    const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [hotelImageIndex, setHotelImageIndex] = useState(0);
+    const [roomTypeIndex, setRoomTypeIndex] = useState(0);
+    const [showHotelModal, setShowHotelModal] = useState(false);
+    const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
+    const openHotelModal = () => setShowHotelModal(true);
+    const closeHotelModal = () => setShowHotelModal(false);
+    const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
+    const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
 
+
+      useEffect(() => {
+      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
+        .then(res => { 
+        setRoomIncludes(res.data);
+      })
+        .catch(() => setRoomIncludes([]));
+    }, [hotelImageIndex]);
 
     useEffect(() => {
-    axios.get(`http://localhost:5028/api/Amenity/Hotel`)
-      .then(res => { 
-      setRoomIncludes(res.data);
-    })
-      .catch(() => setRoomIncludes([]));
-  }, [hotelImageIndex]);
-
-  useEffect(() => {
-  if (showHotelModal) {
-    axios.get('http://localhost:5028/api/Amenity/TypeRoom')
-      .then(res => setRoomTypeAmenities(res.data))
-      .catch(() => setRoomTypeAmenities([]));
-  }
-}, [showHotelModal, roomTypeIndex]);
+    if (showHotelModal) {
+      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
+        .then(res => setRoomTypeAmenities(res.data))
+        .catch(() => setRoomTypeAmenities([]));
+    }
+  }, [showHotelModal, roomTypeIndex]);
 
   const [packageDetails] = useState([
     {
@@ -119,6 +119,25 @@ function Package() {
   const discountValue = currentPackage.discountValue[hotelImageIndex];
   const valorFinal = (price + packageTax) - discountValue;
 
+    // Função para filtrar tipos de quarto pelo número de viajantes
+  function getRoomTypesByNumPessoas(roomTypesArray: string[], numPessoas: number) {
+    // Exemplo: verifica se o texto do tipo de quarto contém a quantidade máxima de hóspedes
+    return roomTypesArray.filter(tipo => {
+      // Extrai o número máximo de hóspedes do texto (ex: "até 2 hóspedes")
+      const match = tipo.match(/até (\d+) hóspedes?/i);
+      if (match) {
+        const max = parseInt(match[1], 10);
+        return numPessoas <= max;
+      }
+      // Se não encontrar, mostra todos
+      return true;
+    });
+  }
+
+    useEffect(() => {
+    setRoomTypeIndex(0);
+  }, [numPessoas, hotelImageIndex]);
+
   return (
     <div>
         <Navbar />
@@ -168,7 +187,7 @@ function Package() {
                       </select>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-semibold">Número de pessoas</h2>
+                      <h2 className="font-semibold">Número de viajantes</h2>
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
@@ -289,15 +308,15 @@ function Package() {
                     {/* Quarto */}
                     <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                     <div className="space-y-3 w-full">
-                      <select
-                        className="w-full border rounded px-2 py-1"
-                        value={roomTypeIndex}
-                        onChange={e => setRoomTypeIndex(Number(e.target.value))}
-                      >
-                        {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
-                          <option key={idx} value={idx}>{tipo}</option>
-                        ))}
-                      </select>
+                        <select
+                          className="w-full border rounded px-2 py-1"
+                          value={roomTypeIndex}
+                          onChange={e => setRoomTypeIndex(Number(e.target.value))}
+                        >
+                          {getRoomTypesByNumPessoas(currentPackage.roomTypes[hotelImageIndex], numPessoas).map((tipo, idx) => (
+                            <option key={idx} value={idx}>{tipo}</option>
+                          ))}
+                        </select>
                       <div className="justify-center mt-2">
                         <ul className="space-y-1">
                           {roomIncludes.map((item) => (
