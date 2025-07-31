@@ -17,20 +17,16 @@ function Package() {
     id: number;
     title: string;
     description: string;
-    originAddress: {
-      city: string;
-      country: string;
-    };
-    destinationAddress: {
-      city: string;
-      country: string;
-    };
+    originCity: string;
+    originCountry: string;
+    destinationCity: string;
+    destinationCountry: string;
     vehicleType: string;
     originalPrice: number;
     price: number;
     packageTax: number;
     discountValue: number;
-    duration: string;
+    duration: string | number;
     imageUrl?: string;
     images?: string[];
     hotels?: Hotel[]; // Hotéis podem vir junto com o pacote
@@ -43,6 +39,7 @@ function Package() {
     rating: number;
     imageUrl?: string;
     roomTypes: RoomType[];
+    amenities?: Amenity[]; // amenities do hotel
   }
   // Função utilitária para formatar endereço do hotel
   const renderHotelAddress = (address: any) => {
@@ -61,15 +58,24 @@ function Package() {
   };
 
   interface RoomType {
-    id: number;
+    roomTypeId: number;
+    hotelId: number;
     name: string;
-    maxGuests: number;
-    price: number;
+    description?: string;
+    imageUrl?: string;
+    pricePerNight: number;
+    maxOccupancy: number;
+    numberOfRoomsAvailable?: number;
+    createdAt?: string;
+    isActive?: boolean;
+    deletedAt?: string | null;
+    rooms?: any[];
     amenities: Amenity[];
   }
 
   interface Amenity {
-    id: number;
+    id?: number;
+    amenityId?: number;
     name: string;
     iconName: string;
     type?: 'hotel' | 'room';
@@ -109,6 +115,18 @@ function Package() {
     const [packageImageIndex, setPackageImageIndex] = useState(0);
     const [hotelImageIndex, setHotelImageIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
+    const [roomTypeDetail, setRoomTypeDetail] = useState<RoomType | null>(null);
+  // Buscar detalhes do tipo de quarto pelo ID
+  const fetchRoomTypeById = async (roomTypeId: number) => {
+    try {
+      const response = await axios.get(`http://localhost:5028/api/roomtype/${roomTypeId}`);
+      setRoomTypeDetail(response.data);
+      console.log('🛏️ Detalhe do tipo de quarto carregado:', response.data);
+    } catch (error) {
+      setRoomTypeDetail(null);
+      console.error('❌ Erro ao buscar detalhes do tipo de quarto:', error);
+    }
+  };
     const [showHotelModal, setShowHotelModal] = useState(false);
     const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
     
@@ -220,29 +238,39 @@ function Package() {
   const valorFinal = (price + packageTax) - discountValue;
   const pacoteImages = currentPackage?.images || currentPackage?.imageUrl ? [currentPackage.imageUrl] : [italyImg];
 
-  function getRoomTypesByNumPessoas(roomTypes: RoomType[], numPessoas: number) {
-    return roomTypes.filter(roomType => {
-      return roomType.maxGuests >= numPessoas;
-    });
-  }
+
 
   // Função para obter amenities do hotel atual
   const getCurrentHotelAmenities = () => {
     if (!hotels[hotelImageIndex]) return [];
-    // Se o hotel já tem amenities da API, use-as, senão use as amenities gerais do hotel
-    return hotels[hotelImageIndex].roomTypes?.[roomTypeIndex]?.amenities || 
-           hotelAmenities.filter(amenity => amenity.type === 'hotel') || 
-           [];
+    const hotelAmenitiesArr = Array.isArray(hotels[hotelImageIndex].amenities) ? hotels[hotelImageIndex].amenities : [];
+    if (hotelAmenitiesArr.length > 0) {
+      return hotelAmenitiesArr;
+    }
+    // Se não houver amenities no hotel, retorna todas as amenities globais de hotel
+    return Array.isArray(hotelAmenities) ? hotelAmenities.filter(amenity => amenity.type === 'hotel' || !amenity.type) : [];
   };
 
   // Função para obter amenities do tipo de quarto atual
   const getCurrentRoomTypeAmenities = () => {
+    // Se buscou detalhes do tipo de quarto, prioriza as amenities vindas da API
+    if (roomTypeDetail && Array.isArray(roomTypeDetail.amenities) && roomTypeDetail.amenities.length > 0) {
+      return roomTypeDetail.amenities;
+    }
     if (!hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]) return [];
-    // Se o tipo de quarto já tem amenities da API, use-as, senão use as amenities gerais do quarto
     return hotels[hotelImageIndex].roomTypes[roomTypeIndex].amenities || 
            roomAmenities.filter(amenity => amenity.type === 'room') || 
            [];
   };
+  // Buscar detalhes do tipo de quarto ao trocar o quarto selecionado
+  useEffect(() => {
+    if (hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]) {
+      const roomTypeId = hotels[hotelImageIndex].roomTypes[roomTypeIndex].roomTypeId;
+      fetchRoomTypeById(roomTypeId);
+    } else {
+      setRoomTypeDetail(null);
+    }
+  }, [hotelImageIndex, roomTypeIndex, hotels]);
 
     useEffect(() => {
     setRoomTypeIndex(0);
@@ -446,14 +474,14 @@ function Package() {
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <span className="font-semibold ">Origem:&nbsp;</span>
-                      {currentPackage.originAddress?.city && currentPackage.originAddress?.country
-                        ? `${currentPackage.originAddress.city}, ${currentPackage.originAddress.country}`
+                      {currentPackage.originCity && currentPackage.originCountry
+                        ? `${currentPackage.originCity}, ${currentPackage.originCountry}`
                         : 'Não informado'}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <span className="font-semibold ">Destino:&nbsp;</span>
-                      {currentPackage.destinationAddress?.city && currentPackage.destinationAddress?.country
-                        ? `${currentPackage.destinationAddress.city}, ${currentPackage.destinationAddress.country}`
+                      {currentPackage.destinationCity && currentPackage.destinationCountry
+                        ? `${currentPackage.destinationCity}, ${currentPackage.destinationCountry}`
                         : 'Não informado'}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
@@ -587,26 +615,33 @@ function Package() {
                     {/* Quarto */}
                     <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                     <div className="space-y-3 w-full">
-                        <select
-                          className="w-full border rounded px-2 py-1"
-                          value={roomTypeIndex}
-                          onChange={e => setRoomTypeIndex(Number(e.target.value))}
-                        >
-                          {hotels[hotelImageIndex]?.roomTypes ? 
-                            getRoomTypesByNumPessoas(hotels[hotelImageIndex].roomTypes, numPessoas).map((roomType, idx) => (
-                              <option key={idx} value={idx}>{roomType.name} - até {roomType.maxGuests} hóspedes</option>
-                            )) :
-                            <option>Sem quartos disponíveis</option>
-                          }
-                        </select>
-                      <div className="justify-center mt-2">
-                        <h5 className="font-semibold mb-1">Amenities:</h5>
-                        <ul className="space-y-1">
-                          {getCurrentRoomTypeAmenities().map((item) => (
-                            <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
-                          ))}
-                        </ul>
-                      </div>
+                        {Array.isArray(hotels[hotelImageIndex]?.roomTypes) && hotels[hotelImageIndex].roomTypes.length > 0 ? (
+                          <>
+                            <select
+                              className="w-full border rounded px-2 py-1"
+                              value={roomTypeIndex}
+                              onChange={e => setRoomTypeIndex(Number(e.target.value))}
+                            >
+                              {hotels[hotelImageIndex].roomTypes.map((roomType, realIdx) => (
+                                <option key={roomType.roomTypeId} value={realIdx}>{roomType.name} - até {roomType.maxOccupancy} hóspedes</option>
+                              ))}
+                            </select>
+                            <div className="justify-center mt-2">
+                              <h5 className="font-semibold mb-1">Amenities:</h5>
+                              <ul className="space-y-1">
+                                {getCurrentRoomTypeAmenities().length > 0 ? (
+                                  getCurrentRoomTypeAmenities().map((item) => (
+                                    <li key={item.id ?? item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
+                                  ))
+                                ) : (
+                                  <li className="text-gray-400 text-xs">Nenhuma amenidade disponível para este quarto.</li>
+                                )}
+                              </ul>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-gray-400 text-xs">Nenhum quarto disponível para este hotel.</div>
+                        )}
                     </div>
                   </div>
                 </div>
