@@ -721,7 +721,7 @@ function Package() {
         &times;
       </button>
       
-      <h2 className="text-2xl font-bold text-center mb-8 text-[#003194]">
+      <h2 className="text-2xl font-bold text-center mb-8">
         Avaliações do Pacote
       </h2>
 
@@ -748,7 +748,7 @@ function Package() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   {renderStars(Math.round(reviewStats.averageRating), 'lg')}
-                  <span className="text-2xl font-bold text-[#003194]">
+                  <span className="text-2xl font-bold">
                     {reviewStats.averageRating.toFixed(1)}
                   </span>
                 </div>
@@ -788,14 +788,14 @@ function Package() {
               reviews.map((review) => (
                 <div key={review.id} className="bg-[#F8FAFC] rounded-lg shadow p-6 border border-gray-100">
                   <div className="flex gap-4">
-                    <div className="bg-[#003194] rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    <div className=" rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                       {review.userAvatar || review.userName.charAt(0)}
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                         <div>
-                          <h4 className="font-bold text-[#003194] text-lg">
+                          <h4 className="font-bold text-lg">
                             {review.userName}
                             {review.isVerified && (
                               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
@@ -847,7 +847,7 @@ function Package() {
           {/* Botão para adicionar avaliação */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <Button
-              className="w-full bg-[#FFA62B] text-[#003194] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
+              className="w-full bg-[#FFA62B] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
               onClick={() => {
                 // TODO: Implementar modal de nova avaliação
                 console.log('Abrir modal de nova avaliação');
