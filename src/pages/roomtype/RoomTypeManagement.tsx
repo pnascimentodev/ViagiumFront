@@ -131,8 +131,7 @@ export default function RoomTypeManagement() {
     }
 
     const handleNewRoomType = () => {
-        console.log("Navegando para cadastro de novo tipo de quarto")
-        // Aqui você implementaria a navegação para a tela de cadastro
+        navigate("/roomtype");
     }
 
     const formatCurrency = (value: number) => {

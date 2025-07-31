@@ -5,6 +5,7 @@ import {
   FaUpload,
   FaUsers,
   FaHashtag,
+  FaArrowLeft,
 } from "react-icons/fa"
 
 import {
@@ -43,6 +44,7 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { validateRequired } from "../../utils/validations"
 import { maskCurrency, unmaskCurrency } from "../../utils/masks"
+import { useNavigate } from "react-router-dom"
 
 // Interface para os adicionais vindos da API
 interface Amenity {
@@ -575,13 +577,22 @@ function RoomType() {
       });
   }
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: 'linear-gradient(to bottom, #003194, black)',
       }}>
       <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl">
-        <div className="text-center p-6">
+        <div className="text-center p-6 relative">
+          <button
+            className="absolute left-6 top-6 text-blue-600 hover:text-blue-800"
+            onClick={() => navigate("/roomtypemanagement")}
+            aria-label="Voltar para Gerenciar Tipos de Quarto"
+          >
+            <FaArrowLeft />
+          </button>
           <h1 className="text-2xl font-bold text-gray-900">Cadastrar Tipo de Quarto</h1>
           <p className="text-gray-600 mt-2">Registre um novo tipo de quarto no sistema de pacotes de viagem</p>
         </div>
@@ -1112,7 +1123,6 @@ function RoomType() {
             </div>
           )}
         </form>
-
       </div>
     </div>
   )
