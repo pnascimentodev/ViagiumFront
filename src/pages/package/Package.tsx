@@ -4,35 +4,40 @@ import veneza1Img from '../../assets/img/veneza1.jpg';
 import { Button } from '../../components/Button';
 import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
-import Footer from '../../components/Footer';
 import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import { useNavigate } from "react-router-dom";
+import Footer from '../../components/Footer';
+
 
 function Package() {
 
-      interface PackageDetails {
-      id: number;
-      title: string;
-      description: string;
-      originAddressId: number;
-      destinationAddressId: number;
-      imageUrl: string;
-      duration: number;
-      maxPeople: number;
-      vehicleType: string;
-      originalPrice: number;
-      price: number;
-      packageTax: number;
-      cupomDiscount: string;
-      discountValue: number;
-      schedules: {
-        startDate: string;
-        endDate?: string;
-        isFixed: boolean;
-        isAvailable: boolean;
-      }[];
-    }
+    interface Review {
+    id: number;
+    userId: number;
+    userName: string;
+    userAvatar?: string;
+    packageId: number;
+    packageName: string;
+    rating: number;
+    title?: string;
+    comment: string;
+    createdAt: string;
+    isVerified: boolean;
+    helpfulCount?: number;
+  }
+
+  interface ReviewStats {
+    totalReviews: number;
+    averageRating: number;
+    ratingDistribution: {
+      1: number;
+      2: number;
+      3: number;
+      4: number;
+      5: number;
+    };
+  }
 
     const navigate = useNavigate();
     const [numPessoas, setNumPessoas] = useState(1);
@@ -49,23 +54,6 @@ function Package() {
     const closeHotelModal = () => setShowHotelModal(false);
     const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
     const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
-
-
-      useEffect(() => {
-      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
-        .then(res => { 
-        setRoomIncludes(res.data);
-      })
-        .catch(() => setRoomIncludes([]));
-    }, [hotelImageIndex]);
-
-    useEffect(() => {
-    if (showHotelModal) {
-      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
-        .then(res => setRoomTypeAmenities(res.data))
-        .catch(() => setRoomTypeAmenities([]));
-    }
-  }, [showHotelModal, roomTypeIndex]);
 
   const [packageDetails] = useState([
     {
@@ -115,13 +103,10 @@ function Package() {
   const price = currentPackage.price[hotelImageIndex] * numPessoas;
   const originalPrice = currentPackage.originalPrice[hotelImageIndex] * numPessoas;
   const packageTax = currentPackage.packageTax[hotelImageIndex];
-  const cupomDiscount = currentPackage.cupomDiscount[hotelImageIndex];
   const discountValue = currentPackage.discountValue[hotelImageIndex];
   const valorFinal = (price + packageTax) - discountValue;
 
-    // Função para filtrar tipos de quarto pelo número de viajantes
   function getRoomTypesByNumPessoas(roomTypesArray: string[], numPessoas: number) {
-    // Exemplo: verifica se o texto do tipo de quarto contém a quantidade máxima de hóspedes
     return roomTypesArray.filter(tipo => {
       // Extrai o número máximo de hóspedes do texto (ex: "até 2 hóspedes")
       const match = tipo.match(/até (\d+) hóspedes?/i);
@@ -137,6 +122,160 @@ function Package() {
     useEffect(() => {
     setRoomTypeIndex(0);
   }, [numPessoas, hotelImageIndex]);
+
+    // Adicione esses estados no componente Package
+  const fetchReviews = async (packageId: number) => {
+  setLoadingReviews(true);
+  setReviewsError('');
+  
+    try {
+      const response = await axios.get(`http://localhost:5028/api/Reviews/package/${packageId}`);
+      setReviews(response.data.reviews);
+      setReviewStats(response.data.stats);
+    } catch (error) {
+      console.error('Erro ao buscar reviews:', error);
+      setReviewsError('Erro ao carregar avaliações. Tente novamente.');
+      // Dados mock para desenvolvimento
+      setReviews(mockReviews);
+      setReviewStats(mockReviewStats);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
+
+  // Dados mock para desenvolvimento
+  const mockReviews: Review[] = [
+    {
+      id: 1,
+      userId: 1,
+      userName: "Maria Silva",
+      userAvatar: "MS",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 5,
+      title: "Experiência incrível!",
+      comment: "O pacote superou todas as expectativas. Os hotéis eram excelentes e os passeios muito bem organizados. Recomendo para todos!",
+      createdAt: "2024-01-15T10:30:00Z",
+      isVerified: true,
+      helpfulCount: 12
+    },
+    {
+      id: 2,
+      userId: 2,
+      userName: "João Santos",
+      userAvatar: "JS",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 4,
+      title: "Muito bom!",
+      comment: "Apenas alguns pequenos atrasos nos voos, mas no geral foi uma viagem fantástica. A equipe de suporte foi muito prestativa.",
+      createdAt: "2024-01-08T14:22:00Z",
+      isVerified: true,
+      helpfulCount: 8
+    },
+    {
+      id: 3,
+      userId: 3,
+      userName: "Ana Costa",
+      userAvatar: "AC",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 5,
+      title: "Perfeito!",
+      comment: "Perfeito do início ao fim! Cada detalhe foi cuidadosamente planejado. As cidades visitadas eram deslumbrantes e os guias muito conhecedores.",
+      createdAt: "2024-01-02T09:15:00Z",
+      isVerified: true,
+      helpfulCount: 15
+    },
+    {
+      id: 4,
+      userId: 4,
+      userName: "Carlos Oliveira",
+      userAvatar: "CO",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 4,
+      title: "Boa experiência",
+      comment: "Boa experiência geral. Os hotéis eram confortáveis e as refeições deliciosas. Apenas senti falta de mais tempo livre para explorar por conta própria.",
+      createdAt: "2023-12-28T16:45:00Z",
+      isVerified: true,
+      helpfulCount: 6
+    }
+  ];
+
+  const mockReviewStats: ReviewStats = {
+    totalReviews: 4,
+    averageRating: 4.5,
+    ratingDistribution: {
+      5: 2,
+      4: 2,
+      3: 0,
+      2: 0,
+      1: 0
+    }
+  };
+
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  // Função para renderizar estrelas
+  const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {
+  const sizeClasses = {
+    sm: 'w-3 h-3',
+    md: 'w-4 h-4',
+    lg: 'w-5 h-5'
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, idx) => (
+        <svg 
+          key={idx} 
+          className={sizeClasses[size]} 
+          fill={idx < rating ? "#FFA62B" : "#E5E7EB"} 
+          viewBox="0 0 20 20"
+        >
+          <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+        </svg>
+      ))}
+    </div>
+  );
+};
+
+  // useEffect para carregar reviews quando o modal abrir
+  useEffect(() => {
+    if (showAvaliacoesModal) {
+      fetchReviews(1); // Replace with actual package ID
+    }
+  }, [showAvaliacoesModal]);
+
+  
+      useEffect(() => {
+      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
+        .then(res => { 
+        setRoomIncludes(res.data);
+      })
+        .catch(() => setRoomIncludes([]));
+    }, [hotelImageIndex]);
+
+    useEffect(() => {
+    if (showHotelModal) {
+      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
+        .then(res => setRoomTypeAmenities(res.data))
+        .catch(() => setRoomTypeAmenities([]));
+    }
+  }, [showHotelModal, roomTypeIndex]);
 
   return (
     <div>
@@ -329,7 +468,6 @@ function Package() {
                 </div>
               </div>
             </div>
-            </div>
             <div className="p-6 pt-8">
               <Button
                 onClick={() => navigate("/reservation", { state: { numPessoas } })}
@@ -341,6 +479,7 @@ function Package() {
             </div>
           </div>
         </div>
+        
 
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -381,148 +520,161 @@ function Package() {
           </div>
         )}
         
-      {showAvaliacoesModal && (
-      <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
-        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-8 relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-          <button
-            className="absolute top-4 right-4 text-gray-500 text-2xl font-bold"
-            onClick={closeAvaliacoesModal}
-            aria-label="Fechar"
+{showAvaliacoesModal && (
+  <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
+    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+      <button
+        className="absolute top-4 right-4 text-gray-500 text-2xl font-bold hover:text-gray-700"
+        onClick={closeAvaliacoesModal}
+        aria-label="Fechar"
+      >
+        &times;
+      </button>
+      
+      <h2 className="text-2xl font-bold text-center mb-8 text-[#003194]">
+        Avaliações do Pacote
+      </h2>
+
+      {loadingReviews ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFA62B]"></div>
+          <span className="ml-2 text-gray-600">Carregando avaliações...</span>
+        </div>
+      ) : reviewsError ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-700 text-center">{reviewsError}</p>
+          <button 
+            onClick={() => fetchReviews(1)}
+            className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto"
           >
-            &times;
+            Tentar novamente
           </button>
-          <h2 className="text-2xl font-bold text-center mb-8 ">Avaliações do Pacote de Viagem</h2>
-      {/* Nota geral */}
-      <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex gap-1">
-            {[...Array(5)].map((_, idx) => (
-              <svg key={idx} className="w-5 h-5" fill={idx < 4 ? "#FFA62B" : "#E5E7EB"} viewBox="0 0 20 20">
-                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-              </svg>
-            ))}
-          </div>
-          <span className="text-gray-500 ml-2">5 estrelas</span>
         </div>
-        <span className="text-gray-500 text-sm">Baseado em 4 avaliações</span>
-        {/* Barras de avaliação */}
-        <div className="mt-4 space-y-1">
-          {[5,4,3,2,1].map(star => (
-            <div key={star} className="flex items-center gap-2">
-              <span className="text-xs font-bold w-4">{star}★</span>
-              <div className="bg-gray-200 rounded h-2 w-32">
-                <div
-                  className={`bg-[#FFA62B] h-2 rounded`}
-                  style={{ width: star === 5 ? "50%" : star === 4 ? "50%" : "0%" }}
-                />
+      ) : (
+        <>
+          {/* Estatísticas gerais */}
+          {reviewStats && (
+            <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  {renderStars(Math.round(reviewStats.averageRating), 'lg')}
+                  <span className="text-2xl font-bold text-[#003194]">
+                    {reviewStats.averageRating.toFixed(1)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">
+                    Baseado em {reviewStats.totalReviews} avaliações
+                  </div>
+                </div>
               </div>
-              <span className="text-xs text-gray-500">{star === 5 || star === 4 ? 2 : 0}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Lista de avaliações */}
-      <div className="space-y-4">
-        {/* Avaliação 1 */}
-        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
-          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold"></div>
-          <div className="flex-1">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#003194]">Maria Silva</span>
-              <span className="text-xs text-gray-500">15 de Janeiro, 2024</span>
-            </div>
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(5)].map((_, idx) => (
-                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                </svg>
-              ))}
-              <span className="text-xs text-gray-500 ml-1">(5/5)</span>
-            </div>
-            <p className="text-sm text-gray-700 mb-2">
-              Experiência incrível! O pacote superou todas as expectativas. Os hotéis eram excelentes e os passeios muito bem organizados. Recomendo para todos!
-            </p>
-            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
-          </div>
-        </div>
-        {/* Avaliação 2 */}
-        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
-          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold ">J</div>
-          <div className="flex-1">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#003194]">João Santos</span>
-              <span className="text-xs text-gray-500">8 de Janeiro, 2024</span>
-            </div>
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(4)].map((_, idx) => (
-                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                </svg>
-              ))}
-              <svg className="w-4 h-4" fill="#E5E7EB" viewBox="0 0 20 20">
-                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-              </svg>
-              <span className="text-xs text-gray-500 ml-1">(4/5)</span>
-            </div>
-            <p className="text-sm text-gray-700 mb-2">
-              Muito bom! Apenas alguns pequenos atrasos nos voos, mas no geral foi uma viagem fantástica. A equipe de suporte foi muito prestativa.
-            </p>
-            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
-          </div>
-        </div>
-        {/* Avaliação 3 */}
-        <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
-          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">A</div>
-          <div className="flex-1">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-[#003194]">Ana Costa</span>
-              <span className="text-xs text-gray-500">2 de Janeiro, 2024</span>
-            </div>
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(5)].map((_, idx) => (
-                <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                </svg>
-              ))}
-              <span className="text-xs text-gray-500 ml-1">(5/5)</span>
-            </div>
-            <p className="text-sm text-gray-700 mb-2">
-              Perfeito do início ao fim! Cada detalhe foi cuidadosamente planejado. As cidades visitadas eram deslumbrantes e os guias muito conhecedores.
-            </p>
-            <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
-          </div>
-        </div>
-          {/* Avaliação 4 */}
-          <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
-            <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">C</div>
-            <div className="flex-1">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-[#003194]">Carlos Oliveira</span>
-                <span className="text-xs text-gray-500">28 de Dezembro, 2023</span>
+              
+              {/* Distribuição de avaliações */}
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map(star => {
+                  const count = reviewStats.ratingDistribution[star as keyof typeof reviewStats.ratingDistribution];
+                  const percentage = reviewStats.totalReviews > 0 ? (count / reviewStats.totalReviews) * 100 : 0;
+                  
+                  return (
+                    <div key={star} className="flex items-center gap-3">
+                      <span className="text-sm font-medium w-8">{star}★</span>
+                      <div className="bg-gray-200 rounded-full h-2 flex-1">
+                        <div
+                          className="bg-[#FFA62B] h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-500 w-8 text-right">{count}</span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex items-center gap-1 mb-1">
-                {[...Array(4)].map((_, idx) => (
-                  <svg key={idx} className="w-4 h-4" fill="#FFA62B" viewBox="0 0 20 20">
-                    <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                  </svg>
-                ))}
-                <svg className="w-4 h-4" fill="#E5E7EB" viewBox="0 0 20 20">
-                  <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                </svg>
-                <span className="text-xs text-gray-500 ml-1">(4/5)</span>
-              </div>
-              <p className="text-sm text-gray-700 mb-2">
-                Boa experiência geral. Os hotéis eram confortáveis e as refeições deliciosas. Apenas senti falta de mais tempo livre para explorar por conta própria.
-              </p>
-              <span className="bg-[#E5E7EB] text-xs px-2 py-1 rounded">Pacote Europa Clássica - 15 dias</span>
             </div>
+          )}
+
+          {/* Lista de avaliações */}
+          <div className="space-y-6">
+            {reviews.length > 0 ? (
+              reviews.map((review) => (
+                <div key={review.id} className="bg-[#F8FAFC] rounded-lg shadow p-6 border border-gray-100">
+                  <div className="flex gap-4">
+                    <div className="bg-[#003194] rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      {review.userAvatar || review.userName.charAt(0)}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                        <div>
+                          <h4 className="font-bold text-[#003194] text-lg">
+                            {review.userName}
+                            {review.isVerified && (
+                              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                ✓ Verificado
+                              </span>
+                            )}
+                          </h4>
+                          {review.title && (
+                            <h5 className="font-semibold text-gray-800 mt-1">{review.title}</h5>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-500 whitespace-nowrap">
+                          {formatDate(review.createdAt)}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        {renderStars(review.rating)}
+                        <span className="text-sm text-gray-600">({review.rating}/5)</span>
+                      </div>
+                      
+                      <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                        {review.comment}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">
+                          {review.packageName}
+                        </span>
+                        
+                        {review.helpfulCount !== undefined && (
+                          <button className="text-sm text-gray-500 hover:text-[#FFA62B] flex items-center gap-1">
+                            👍 {review.helpfulCount} acharam útil
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">Nenhuma avaliação encontrada.</p>
+                <p className="text-gray-400 text-sm mt-2">Seja o primeiro a avaliar este pacote!</p>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+
+          {/* Botão para adicionar avaliação */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <Button
+              className="w-full bg-[#FFA62B] text-[#003194] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
+              onClick={() => {
+                // TODO: Implementar modal de nova avaliação
+                console.log('Abrir modal de nova avaliação');
+              }}
+            >
+              Escrever uma avaliação
+            </Button>
+          </div>
+        </>
+      )}
     </div>
-  )}
-      <Footer />
+  </div>
+)}
+
       </div>
+      <Footer />
+    </div>
   );
 }
 
