@@ -1,150 +1,32 @@
-import { useState, useMemo } from "react"
-import TravelPackageCard from "../../components/TravelPackageCard"
-import Navbar from "../../components/Navbar"
-import Footer from "../../components/Footer"
-import { FaCalendarAlt, FaChevronDown, FaSearch } from "react-icons/fa"
-import { ImCross } from "react-icons/im"
+import { useState, useMemo } from "react";
+import TravelPackageCard from "../../components/TravelPackageCard";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import { FaCalendarAlt, FaChevronDown, FaSearch } from "react-icons/fa";
+import { FaStar } from "react-icons/fa6";
+import { ImCross } from "react-icons/im";
+import Slider from '@mui/material/Slider';
+import { travelPackages } from "../../mocks/travelPackagesMock";
+import { validateArrivalAfterDeparture } from "../../utils/validations";
 
-const travelPackages = [
-  {
-    id: 1,
-    title: "Paraíso Tropical",
-    description: "Viva praias paradisíacas, águas cristalinas e resorts de luxo nesta escapada inesquecível.",
-    price: 1299,
-    originalPrice: 1499,
-    duration: 7,
-    image: "https://images.pexels.com/photos/1320684/pexels-photo-1320684.jpeg",
-    rating: 4.8,
-    reviews: 324,
-    qtySalesLimit: 20,
-    qtySold: 8,
-    originAddress: { country: "Brasil", city: "São Paulo" },
-    destinationAddress: { country: "Maldivas", city: "Malé" },
-  },
-  {
-    id: 2,
-    title: "Descoberta Cultural Europeia",
-    description: "Explore cidades históricas, museus renomados e culinária autêntica em três capitais europeias.",
-    price: 2199,
-    originalPrice: 2399,
-    duration: 14,
-    image: "https://images.pexels.com/photos/2574631/pexels-photo-2574631.jpeg",
-    rating: 4.6,
-    reviews: 189,
-    qtySalesLimit: 30,
-    qtySold: 15,
-    originAddress: { country: "Brasil", city: "Rio de Janeiro" },
-    destinationAddress: { country: "França", city: "Paris" },
-  },
-  {
-    id: 3,
-    title: "Trilha de Aventura nas Montanhas",
-    description: "Desafie-se em trilhas de tirar o fôlego, vistas incríveis e experiências de acampamento ao ar livre.",
-    price: 899,
-    originalPrice: 999,
-    duration: 5,
-    image: "https://images.pexels.com/photos/1036660/pexels-photo-1036660.jpeg",
-    rating: 4.9,
-    reviews: 156,
-    qtySalesLimit: 10,
-    qtySold: 7,
-    originAddress: { country: "Brasil", city: "Belo Horizonte" },
-    destinationAddress: { country: "Estados Unidos", city: "Rocky Mountains" },
-  },
-  {
-    id: 4,
-    title: "Experiência de Safári",
-    description: "Veja os Big Five em seu habitat natural com guias especialistas e lodges de luxo.",
-    price: 3299,
-    originalPrice: 3499,
-    duration: 10,
-    image: "https://images.pexels.com/photos/11760865/pexels-photo-11760865.jpeg",
-    rating: 4.7,
-    reviews: 278,
-    qtySalesLimit: 15,
-    qtySold: 10,
-    originAddress: { country: "Brasil", city: "Brasília" },
-    destinationAddress: { country: "Quênia", city: "Nairobi" },
-  },
-  {
-    id: 5,
-    title: "Jornada Gastronômica Asiática",
-    description: "Descubra sabores autênticos, aulas de culinária e tours de comida de rua em cidades vibrantes da Ásia.",
-    price: 1799,
-    originalPrice: 1999,
-    duration: 12,
-    image: "https://images.pexels.com/photos/1510595/pexels-photo-1510595.jpeg",
-    rating: 4.5,
-    reviews: 203,
-    qtySalesLimit: 25,
-    qtySold: 12,
-    originAddress: { country: "Brasil", city: "Curitiba" },
-    destinationAddress: { country: "Japão", city: "Tóquio" },
-  },
-  {
-    id: 6,
-    title: "Aventura Aurora Boreal",
-    description: "Persiga a aurora boreal com passeios de trenó, hotéis de gelo e natureza ártica.",
-    price: 2799,
-    originalPrice: 2999,
-    duration: 8,
-    image: "https://images.pexels.com/photos/2602543/pexels-photo-2602543.jpeg",
-    rating: 4.8,
-    reviews: 142,
-    qtySalesLimit: 18,
-    qtySold: 9,
-    originAddress: { country: "Brasil", city: "Manaus" },
-    destinationAddress: { country: "Islândia", city: "Keflavík" },
-  },
-  {
-    id: 7,
-    title: "Cruzeiro Mediterrâneo",
-    description: "Navegue por águas azuis visitando cidades costeiras charmosas e portos históricos.",
-    price: 1599,
-    originalPrice: 1799,
-    duration: 9,
-    image: "https://images.pexels.com/photos/772689/pexels-photo-772689.jpeg",
-    rating: 4.4,
-    reviews: 367,
-    qtySalesLimit: 40,
-    qtySold: 20,
-    originAddress: { country: "Brasil", city: "Recife" },
-    destinationAddress: { country: "Grécia", city: "Atenas" },
-  },
-  {
-    id: 8,
-    title: "Expedição Amazônica",
-    description: "Explore a maior floresta do mundo com trilhas guiadas e passeios de barco.",
-    price: 2299,
-    originalPrice: 2499,
-    duration: 11,
-    image: "https://images.pexels.com/photos/29759408/pexels-photo-29759408.jpeg",
-    rating: 4.6,
-    reviews: 98,
-    qtySalesLimit: 12,
-    qtySold: 5,
-    originAddress: { country: "Brasil", city: "Porto Alegre" },
-    destinationAddress: { country: "Brasil", city: "Manaus" },
-  },
-]
-
-const durations = ["All", "1-5 days", "6-10 days", "11+ days"]
+const durations = ["Todos", "1-5 dias", "6-10 dias", "11+ dias"]
 
 // Extract unique origins and destinations
-const origins = ["All", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originAddress.city))).sort()]
-const destinations = ["All", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationAddress.city))).sort()]
+const origins = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originAddress.city))).sort()]
+const destinations = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationAddress.city))).sort()]
 
 export default function PackagesPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedOrigin, setSelectedOrigin] = useState("All")
-  const [selectedDestination, setSelectedDestination] = useState("All")
-  const [selectedDuration, setSelectedDuration] = useState("All")
+  const [selectedOrigin, setSelectedOrigin] = useState("Todos")
+  const [selectedDestination, setSelectedDestination] = useState("Todos")
+  const [selectedDuration, setSelectedDuration] = useState("Todos")
   const [departureDate, setDepartureDate] = useState("")
   const [arrivalDate, setArrivalDate] = useState("")
-  const [minPrice, setMinPrice] = useState(0)
-  const [maxPrice, setMaxPrice] = useState(5000)
+  const maxPackagePrice = Math.max(...travelPackages.map(pkg => pkg.price))
+  const [priceRange, setPriceRange] = useState([0, maxPackagePrice]);
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("featured")
+  const isArrivalValid = validateArrivalAfterDeparture(departureDate, arrivalDate);
 
   const filteredPackages = useMemo(() => {
     const filtered = travelPackages.filter((pkg) => {
@@ -158,19 +40,43 @@ export default function PackagesPage() {
         return String(value).toLowerCase().includes(searchTerm.toLowerCase());
       });
 
-      const matchesOrigin = selectedOrigin === "All" || pkg.originAddress.city === selectedOrigin
-      const matchesDestination = selectedDestination === "All" || pkg.destinationAddress.city === selectedDestination
-      const matchesPrice = pkg.price >= minPrice && pkg.price <= maxPrice
+      const matchesOrigin = selectedOrigin === "Todos" || pkg.originAddress.city === selectedOrigin
+      const matchesDestination = selectedDestination === "Todos" || pkg.destinationAddress.city === selectedDestination
+      const matchesPrice = pkg.price >= priceRange[0] && pkg.price <= priceRange[1]
       const matchesRating = pkg.rating >= minRating
 
       let matchesDuration = true
-      if (selectedDuration !== "All") {
-        if (selectedDuration === "1-5 days") matchesDuration = pkg.duration <= 5
-        else if (selectedDuration === "6-10 days") matchesDuration = pkg.duration >= 6 && pkg.duration <= 10
-        else if (selectedDuration === "11+ days") matchesDuration = pkg.duration >= 11
+      if (selectedDuration !== "Todos") {
+        if (selectedDuration === "1-5 dias") matchesDuration = pkg.duration <= 5
+        else if (selectedDuration === "6-10 dias") matchesDuration = pkg.duration >= 6 && pkg.duration <= 10
+        else if (selectedDuration === "11+ dias") matchesDuration = pkg.duration >= 11
       }
 
-      return matchesSearch && matchesOrigin && matchesDestination && matchesPrice && matchesRating && matchesDuration
+      // Filtro de datas (adicionar aqui)
+      let matchesDates = true;
+      if (departureDate || arrivalDate) {
+        matchesDates = pkg.schedules.some(schedule => {
+          const start = new Date(schedule.startDate);
+          const end = new Date(start);
+          end.setDate(end.getDate() + pkg.duration);
+
+          const depDate = departureDate ? new Date(departureDate) : null;
+          const arrDate = arrivalDate ? new Date(arrivalDate) : null;
+
+          if (depDate && arrDate) {
+            return start >= depDate && end <= arrDate;
+          }
+          if (depDate) {
+            return start >= depDate;
+          }
+          if (arrDate) {
+            return end <= arrDate;
+          }
+          return true;
+        });
+      }
+
+      return matchesSearch && matchesOrigin && matchesDestination && matchesPrice && matchesRating && matchesDuration && matchesDates;
     })
 
     // Sort packages
@@ -192,17 +98,26 @@ export default function PackagesPage() {
     }
 
     return filtered
-  }, [searchTerm, selectedOrigin, selectedDestination, selectedDuration, minPrice, maxPrice, minRating, sortBy])
+  }, [
+    searchTerm,
+    selectedOrigin,
+    selectedDestination,
+    selectedDuration,
+    priceRange,
+    minRating,
+    sortBy,
+    departureDate,
+    arrivalDate
+  ])
 
   const clearFilters = () => {
     setSearchTerm("")
-    setSelectedOrigin("All")
-    setSelectedDestination("All")
-    setSelectedDuration("All")
+    setSelectedOrigin("Todos")
+    setSelectedDestination("Todos")
+    setSelectedDuration("Todos")
     setDepartureDate("")
     setArrivalDate("")
-    setMinPrice(0)
-    setMaxPrice(5000)
+    setPriceRange([0, maxPackagePrice])
     setMinRating(0)
     setSortBy("featured")
   }
@@ -214,9 +129,13 @@ export default function PackagesPage() {
         <Navbar />
       </div>
 
-      <div className="flex flex-col container mx-auto px-4 py-8 gap-2 mt-30 mb-20">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Pacotes de Viagem</h1>
-        <p className="text-gray-600">Descubra destinos incríveis e crie memórias inesquecíveis</p>
+      <div className="flex flex-col container mx-auto px-4 py-8 gap-2 mt-21 mb-20">
+
+        <div className="mt-5">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Pacotes de Viagem</h1>
+          <p className="text-gray-600">Descubra destinos incríveis e crie memórias inesquecíveis</p>
+        </div>
+
 
         {/* Filter Bar */}
         <div className="mb-8">
@@ -226,14 +145,14 @@ export default function PackagesPage() {
                 {/* Search */}
                 <div className="lg:col-span-2">
                   <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-2">
-                    Search
+                    Pesquisa
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"><FaSearch /></span>
                     <input
                       id="search-input"
                       type="text"
-                      placeholder="Search packages..."
+                      placeholder="Procure por pacotes..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 pl-10 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -244,7 +163,7 @@ export default function PackagesPage() {
                 {/* Origin */}
                 <div>
                   <label htmlFor="origin-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Or
+                    Origem
                   </label>
                   <div className="relative">
                     <select
@@ -268,7 +187,7 @@ export default function PackagesPage() {
                 {/* Destination */}
                 <div>
                   <label htmlFor="destination-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Destination
+                    Destino
                   </label>
                   <div className="relative">
                     <select
@@ -313,20 +232,33 @@ export default function PackagesPage() {
                   </div>
                 </div>
 
-                {/* Clear Filters */}
+                {/* Rating */}
                 <div>
-                  <button
-                    onClick={clearFilters}
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent hover:bg-gray-100 hover:text-gray-900 h-10 px-4 py-2 w-full"
-                  >
-                    <span className="mr-2"><ImCross /></span>
-                    Limpar filtros
-                  </button>
+                  <label htmlFor="min-rating-select" className="block text-sm font-medium text-gray-700 mb-2">
+                    Avaliações
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="min-rating-select"
+                      value={minRating.toString()}
+                      onChange={(e) => setMinRating(Number.parseFloat(e.target.value))}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    >
+                      <option value="0">Todas as avaliações</option>
+                      <option value="3">3+ ⭐</option>
+                      <option value="3.5">3.5+ ⭐</option>
+                      <option value="4">4+ ⭐</option>
+                      <option value="4.5">4.5+ ⭐</option>
+                    </select>
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-50 pointer-events-none">
+                      <FaChevronDown />
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Second Row - Dates, Price, Rating, Sort */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-6 border-t border-gray-200 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-6 pt-6 border-t border-gray-200 items-start">
                 {/* Departure Date */}
                 <div>
                   <label htmlFor="departure-date" className="block text-sm font-medium text-gray-700 mb-2">
@@ -359,57 +291,32 @@ export default function PackagesPage() {
                       className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 pl-10 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
+                  {!isArrivalValid && (
+                    <span className="text-red-500 text-sm">A data de chegada deve ser igual ou posterior à partida.</span>
+                  )}
                 </div>
 
                 {/* Price Range (using two inputs) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Faixa de preço</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(Number(e.target.value))}
-                      className="flex h-10 w-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  <div className="px-2">
+                    <Slider
+                      value={priceRange}
+                      onChange={(_, newValue) => setPriceRange(newValue as number[])}
+                      min={0}
+                      max={maxPackagePrice}
+                      step={100}
+                      valueLabelDisplay="auto"
+                      sx={{ width: '100%' }}
                     />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="flex h-10 w-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
 
-                {/* Rating */}
-                <div>
-                  <label htmlFor="min-rating-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Avaliações
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="min-rating-select"
-                      value={minRating.toString()}
-                      onChange={(e) => setMinRating(Number.parseFloat(e.target.value))}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
-                    >
-                      <option value="0">Todas as avaliações</option>
-                      <option value="3">3+ ⭐</option>
-                      <option value="3.5">3.5+ ⭐</option>
-                      <option value="4">4+ ⭐</option>
-                      <option value="4.5">4.5+ ⭐</option>
-                    </select>
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-50 pointer-events-none">
-                      <FaChevronDown />
-                    </span>
                   </div>
                 </div>
 
                 {/* Sort */}
                 <div>
                   <label htmlFor="sort-by-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort by
+                    Ordenar por
                   </label>
                   <div className="relative">
                     <select
@@ -428,6 +335,16 @@ export default function PackagesPage() {
                       <FaChevronDown />
                     </span>
                   </div>
+                </div>
+                {/* Clear Filters */}
+                <div>
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-transparent hover:bg-gray-100 hover:text-gray-900 h-10 px-4 py-2 mt-[28px] w-full"
+                  >
+                    <span className="mr-2"><ImCross /></span>
+                    Limpar filtros
+                  </button>
                 </div>
               </div>
             </div>
