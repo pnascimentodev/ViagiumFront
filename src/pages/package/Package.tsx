@@ -133,8 +133,7 @@ function Package() {
     // Estados para dados da API
     const [currentPackage, setCurrentPackage] = useState<TravelPackage | null>(null);
     const [hotels, setHotels] = useState<Hotel[]>([]);
-    const [hotelAmenities, setHotelAmenities] = useState<Amenity[]>([]);
-    const [roomAmenities, setRoomAmenities] = useState<Amenity[]>([]);
+    // Removido: hotelAmenities, roomAmenities - agora tudo vem de currentPackage
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -186,27 +185,8 @@ function Package() {
 };
 
 
-  const fetchHotelAmenities = async () => {
-    try {
-      console.log('🔄 Buscando amenities do hotel...');
-      const response = await axios.get('http://localhost:5028/api/Amenity/Hotel');
-      console.log('✅ Amenities do hotel carregadas:', response.data);
-      setHotelAmenities(response.data);
-    } catch (error: unknown) {
-      console.error('❌ Erro ao buscar amenities do hotel:', error);
-    }
-  };
-
-  const fetchRoomAmenities = async () => {
-    try {
-      console.log('🔄 Buscando amenities do quarto...');
-      const response = await axios.get('http://localhost:5028/api/Amenity/TypeRoom');
-      console.log('✅ Amenities do quarto carregadas:', response.data);
-      setRoomAmenities(response.data);
-    } catch (error: unknown) {
-      console.error('❌ Erro ao buscar amenities do quarto:', error);
-    }
-  };
+  // As amenities e roomTypes agora virão diretamente do objeto travelPackage (currentPackage)
+  // Portanto, não é mais necessário buscar via endpoints separados.
 
   // useEffect para carregar dados quando o componente monta
     useEffect(() => {
@@ -215,8 +195,7 @@ function Package() {
     console.log('📦 URL do packageId:', packageId);
     
     fetchTravelPackage(id);
-    fetchHotelAmenities();
-    fetchRoomAmenities();
+    // Não buscar mais amenities separadamente
   }, [packageId]);
 
   useEffect(() => {
@@ -240,27 +219,22 @@ function Package() {
 
 
 
-  // Função para obter amenities do hotel atual
+  // Função para obter amenities do hotel atual (agora só do objeto hotel)
   const getCurrentHotelAmenities = () => {
     if (!hotels[hotelImageIndex]) return [];
     const hotelAmenitiesArr = Array.isArray(hotels[hotelImageIndex].amenities) ? hotels[hotelImageIndex].amenities : [];
-    if (hotelAmenitiesArr.length > 0) {
-      return hotelAmenitiesArr;
-    }
-    // Se não houver amenities no hotel, retorna todas as amenities globais de hotel
-    return Array.isArray(hotelAmenities) ? hotelAmenities.filter(amenity => amenity.type === 'hotel' || !amenity.type) : [];
+    return hotelAmenitiesArr;
   };
 
-  // Função para obter amenities do tipo de quarto atual
+  // Função para obter amenities do tipo de quarto atual (agora só do objeto roomType)
   const getCurrentRoomTypeAmenities = () => {
-    // Se buscou detalhes do tipo de quarto, prioriza as amenities vindas da API
     if (roomTypeDetail && Array.isArray(roomTypeDetail.amenities) && roomTypeDetail.amenities.length > 0) {
       return roomTypeDetail.amenities;
     }
-    if (!hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]) return [];
-    return hotels[hotelImageIndex].roomTypes[roomTypeIndex].amenities || 
-           roomAmenities.filter(amenity => amenity.type === 'room') || 
-           [];
+    if (hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]?.amenities) {
+      return hotels[hotelImageIndex].roomTypes[roomTypeIndex].amenities;
+    }
+    return [];
   };
   // Buscar detalhes do tipo de quarto ao trocar o quarto selecionado
   useEffect(() => {
