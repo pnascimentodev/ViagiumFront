@@ -447,7 +447,7 @@ function Package() {
         </div>
         {/* Avaliação 2 */}
         <div className="bg-[#F8FAFC] rounded-lg shadow p-4 flex gap-4 items-start mb-4">
-          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">J</div>
+          <div className="bg-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold ">J</div>
           <div className="flex-1">
             <div className="flex justify-between items-center">
               <span className="font-bold text-[#003194]">João Santos</span>
