@@ -16,6 +16,24 @@ interface PackageFormData {
     discountCoupon: string;
     selectedHotels: number[];
     isActive: boolean;
+    // Novos campos para os tipos de pacote
+    packageType: "fixed" | "seasonal" | "recurring";
+    price: string;
+    packageTax: string;
+    cupomDiscount: string;
+    discountValue: string;
+    // Campos para pacote com data fixa
+    fixedStartDate: string;
+    // Campos para pacote sazonal (2x ao ano)
+    seasonalPeriods: Array<{
+        startDate: string;
+        endDate: string;
+        isAvailable: boolean;
+    }>;
+    // Campos para pacote recorrente
+    recurrenceStartDate: string;
+    recurrenceEndDate: string;
+    intervalDays: string;
 }
 
 interface PackageFormProps {
@@ -171,29 +189,16 @@ const PackageForm: React.FC<PackageFormProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Preço Original</label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.originalPrice}
-                        onChange={(e) => handleInputChange('originalPrice', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Ex: R$ 1.200,00"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Taxa do Serviço</label>
-                    <input
-                        type="text"
-                        value={formData.packageFee}
-                        onChange={(e) => handleInputChange('packageFee', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Ex: R$ 50,00"
-                    />
-                </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Preço Original</label>
+                <input
+                    type="text"
+                    required
+                    value={formData.originalPrice}
+                    onChange={(e) => handleInputChange('originalPrice', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: R$ 1.200,00"
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
