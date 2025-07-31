@@ -105,13 +105,13 @@ function Navbar({ navType = 'default' }: NavbarProps) {
 
 
                     {/* Desktop Navigation Links */}
-                    <div className={`hidden md:flex items-center gap-5 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
+                    <div className={`hidden lg:flex items-center gap-5 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
                         {renderLinks()}
                     </div>
                 </div>
 
                 {/* Login Button */}
-                <div className="flex-shrink-0 hidden md:block">
+                <div className="flex-shrink-0 hidden lg:block">
                     <Link to={
                         navType === 'affiliatePage' ? '/affiliate' :
                             navType === 'admin' ? '/admin' :
@@ -125,7 +125,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
                 </div>
 
                 {/* Mobile Hamburger Button */}
-                <div className="md:hidden ml-auto h-full w-22 bg-white rounded-2xl flex items-center justify-center">
+                <div className="lg:hidden ml-auto h-full w-22 bg-white rounded-2xl flex items-center justify-center">
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         className=" focus:outline-none"
@@ -139,7 +139,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
             {/* Mobile Dropdown Menu */}
             {
                 menuOpen && (
-                    <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg p-6 flex flex-col gap-4 z-50 absolute left-0 right-0 top-20 mx-8">
+                    <div className="lg:hidden mt-4 bg-white rounded-lg shadow-lg p-6 flex flex-col gap-4 z-50 absolute left-0 right-0 top-20 mx-8">
                         {renderLinks()}
                         <Link to={
                             navType === 'affiliatePage' ? '/affiliate' :

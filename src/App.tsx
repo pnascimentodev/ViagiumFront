@@ -22,6 +22,7 @@ import ProfileEditor from "./pages/profile/profile-editor.tsx";
 import AdminDashboard from './pages/admindashboard/AdminDashboard.tsx'
 import Review from './pages/review/Review.tsx'
 import Payment from './pages/payment/Payment.tsx'
+import PackageSearch from './pages/package-search/packageSearch.tsx'
 import Reservation from './pages/reservation/Reservation.tsx'
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
       <Route path="/admindashboard" element={<AdminDashboard />} />
       <Route path="/review" element={<Review />} />
       <Route path="/payment" element={<Payment />} />
+      <Route path="/packagesearch" element={<PackageSearch />} />
       <Route path="/reservation" element={<Reservation />} />
     </Routes>
   )
