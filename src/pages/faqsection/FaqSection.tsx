@@ -2,6 +2,7 @@ import { useState } from "react"
 import { FaChevronDown } from "react-icons/fa"
 import Navbar from "../../components/Navbar"
 
+
 function FAQSection() {
     const faqs = [
         {
@@ -29,6 +30,11 @@ function FAQSection() {
             answer:
                 "Você pode entrar em contato através do nosso WhatsApp, e-mail (contato@viagium.com) ou pelo formulário de contato em nosso site. Nossa equipe está pronta para ajudar!",
         },
+        {
+            question: "Quais documentos preciso para viajar?",
+            answer:
+                "Para viagens nacionais, é necessário RG ou CNH com foto. Para viagens internacionais, é obrigatório o passaporte válido e, dependendo do destino, visto de entrada. Verificamos todos os requisitos específicos de cada destino para você.",
+        },
     ]
 
     const [openItem, setOpenItem] = useState<number | null>(null)
@@ -43,14 +49,14 @@ function FAQSection() {
             <section className="w-full py-12 md:py-24 lg:py-32">
                 <div className="container px-4 md:px-6">
                     <div className="mx-auto max-w-3xl text-center">
-                        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#003194]">
+                        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#003194] -mt-8 md:-mt-12 lg:-mt-16">
                             Perguntas Frequentes
                         </h2>
-                        <p className="mt-4 mb-8 text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed whitespace-nowrap">
+                        <p className="mt-12 mb-8 text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed whitespace-nowrap">
                             Encontre respostas para as perguntas mais comuns sobre os serviços da Viagium.
                         </p>
                     </div>
-                <div className="mx-auto mt-8 max-w-3xl">
+                <div className="mx-auto mt-12 max-w-3xl">
                     {faqs.map((faq, index) => (
                         <div key={index} className="border-b border-gray-200 last:border-b-0">
                             <button
