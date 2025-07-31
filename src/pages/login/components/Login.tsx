@@ -78,6 +78,11 @@ function Login({ userType, newUserOption }: LoginProps) {
         axios.post(endpoint, { email, password })
         .then(response => {
             console.log("Login bem-sucedido:", response.data);
+            // Salvar dados do affiliate no localStorage e redirecionar
+            if (userType === "affiliate") {
+                localStorage.setItem("affiliate", JSON.stringify(response.data));
+                window.location.href = "/affiliatedashboard";
+            }
             // redirecionar ou atualizar estado conforme necessário
             if (userType === "client") {
                 window.location.href = "/";

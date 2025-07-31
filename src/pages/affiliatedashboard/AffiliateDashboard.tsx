@@ -2,6 +2,7 @@ import { FaPlus, FaUser, FaStar, FaEllipsisV, FaEdit, FaPowerOff, FaBed, FaMapMa
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useState, useEffect } from 'react'
 import ModalHotel from "./components/ModalHotel"
+import axios from "axios"
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -179,6 +180,29 @@ function AffiliateDashboard() {
     };
   }, []);
 
+  const [affiliateName, setAffiliateName] = useState<string>("");
+
+  useEffect(() => {
+    // Recupera o affiliate do localStorage
+    const affiliateStr = localStorage.getItem("affiliate");
+    if (affiliateStr) {
+      try {
+        const affiliate = JSON.parse(affiliateStr);
+        if (affiliate && affiliate.id) {
+          axios.get(`http://localhost:5028/api/Affiliate/${affiliate.id}`)
+            .then(res => {
+              if (res.data && res.data.name) {
+                setAffiliateName(res.data.name);
+              }
+            })
+            .catch(() => setAffiliateName(""));
+        }
+      } catch {
+        setAffiliateName("");
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b to-white p-6"
       style={{
@@ -213,7 +237,7 @@ function AffiliateDashboard() {
             />
 
             <div className="flex items-center gap-2 text-gray-600">
-              <span className="text-sm">Bem vindo</span>
+              <span className="text-sm">Bem vindo{affiliateName ? ` ${affiliateName}` : ""}</span>
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <FaUser className="w-4 h-4" />
               </div>
