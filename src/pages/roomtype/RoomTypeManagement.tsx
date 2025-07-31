@@ -13,7 +13,9 @@ import {
     FaDollarSign,
     FaHashtag,
     FaPlay,
+    FaArrowLeft,
 } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
 
 // Interface para os tipos de quarto
 interface RoomType {
@@ -92,6 +94,7 @@ export default function RoomTypeManagement() {
     const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
     const [searchTerm, setSearchTerm] = useState("")
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
+    const navigate = useNavigate();
 
     // Filtrar tipos de quarto baseado no status e termo de busca
     useEffect(() => {
@@ -159,11 +162,20 @@ export default function RoomTypeManagement() {
         <div className="min-h-screen p-6" style={{ background: "linear-gradient(to bottom, #003194, white)" }}>
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="bg-white rounded-2xl p-5 shadow-lg">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Gerenciar Tipos de Quarto</h1>
-                            <p className="text-gray-600 mt-1">Gerencie os tipos de quarto do seu hotel</p>
+                        <div className="flex items-center mb-3">
+                            <button
+                                className="mr-2 text-blue-600 hover:text-blue-800"
+                                onClick={() => navigate("/affiliatedashboard")}
+                                aria-label="Voltar para Dashboard do Afiliado"
+                            >
+                                <FaArrowLeft size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900 ">Gerenciar Tipos de Quarto</h1>
+                                <p className="text-sm text-gray-500 mt-1">Gerencie os tipos de quarto do seu hotel</p>
+                            </div>
                         </div>
                         <button
                             onClick={handleNewRoomType}
