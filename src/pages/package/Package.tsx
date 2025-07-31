@@ -4,7 +4,6 @@ import veneza1Img from '../../assets/img/veneza1.jpg';
 import { Button } from '../../components/Button';
 import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
-import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import { useNavigate } from "react-router-dom";
 import Footer from '../../components/Footer';
@@ -44,8 +43,6 @@ function Package() {
     const [currentPackageIndex] = useState(0);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
     const [packageImageIndex, setPackageImageIndex] = useState(0);
-    const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
-    const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
     const [hotelImageIndex, setHotelImageIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
     const [showHotelModal, setShowHotelModal] = useState(false);
@@ -124,31 +121,7 @@ function Package() {
   }, [numPessoas, hotelImageIndex]);
 
     // Adicione esses estados no componente Package
-  const fetchReviews = async (packageId: number) => {
-  setLoadingReviews(true);
-  setReviewsError('');
-  
-    try {
-      const response = await axios.get(`http://localhost:5028/api/Reviews/package/${packageId}`);
-      setReviews(response.data.reviews);
-      setReviewStats(response.data.stats);
-    } catch (error) {
-      console.error('Erro ao buscar reviews:', error);
-      setReviewsError('Erro ao carregar avaliações. Tente novamente.');
-      // Dados mock para desenvolvimento
-      setReviews(mockReviews);
-      setReviewStats(mockReviewStats);
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
-  const [loadingReviews, setLoadingReviews] = useState(false);
-  const [reviewsError, setReviewsError] = useState('');
-
-  // Dados mock para desenvolvimento
-  const mockReviews: Review[] = [
+  const [reviews] = useState<Review[]>([
     {
       id: 1,
       userId: 1,
@@ -204,20 +177,69 @@ function Package() {
       createdAt: "2023-12-28T16:45:00Z",
       isVerified: true,
       helpfulCount: 6
+    },
+    {
+      id: 5,
+      userId: 5,
+      userName: "Fernanda Lima",
+      userAvatar: "FL",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 5,
+      title: "Simplesmente mágico!",
+      comment: "Veneza é realmente mágica! O passeio de gôndola foi inesquecível. A organização do pacote foi impecável e todos os detalhes foram cuidados.",
+      createdAt: "2024-01-20T11:15:00Z",
+      isVerified: true,
+      helpfulCount: 9
+    },
+    {
+      id: 6,
+      userId: 6,
+      userName: "Roberto Mendes",
+      userAvatar: "RM",
+      packageId: 1,
+      packageName: "Pacote Veneza Mágica",
+      rating: 4,
+      title: "Muito satisfeito",
+      comment: "Excelente custo-benefício. Os hotéis tinham boa localização e o atendimento foi sempre cordial. Voltaria a viajar com esta empresa.",
+      createdAt: "2024-01-12T15:45:00Z",
+      isVerified: true,
+      helpfulCount: 7
     }
-  ];
+  ]);
 
-  const mockReviewStats: ReviewStats = {
-    totalReviews: 4,
+  const [reviewStats] = useState<ReviewStats>({
+    totalReviews: 6,
     averageRating: 4.5,
     ratingDistribution: {
-      5: 2,
-      4: 2,
+      5: 3,
+      4: 3,
       3: 0,
       2: 0,
       1: 0
     }
-  };
+  });
+
+  const [loadingReviews] = useState(false);
+  const [reviewsError] = useState('');
+
+  // Mock data para amenidades do hotel
+  const [roomIncludes] = useState([
+    { amenityId: 1, name: "Wi-Fi gratuito", iconName: "wifi" },
+    { amenityId: 2, name: "Ar condicionado", iconName: "ac" },
+    { amenityId: 3, name: "TV a cabo", iconName: "tv" },
+    { amenityId: 4, name: "Frigobar", iconName: "fridge" },
+    { amenityId: 5, name: "Room service 24h", iconName: "service" }
+  ]);
+
+  // Mock data para amenidades do tipo de quarto
+  const [roomTypeAmenities] = useState([
+    { amenityId: 1, name: "Cama king size", iconName: "bed" },
+    { amenityId: 2, name: "Vista para o canal", iconName: "view" },
+    { amenityId: 3, name: "Banheira hidromassagem", iconName: "bath" },
+    { amenityId: 4, name: "Varanda privativa", iconName: "balcony" },
+    { amenityId: 5, name: "Produtos de banho premium", iconName: "amenities" }
+  ]);
 
   // Função para formatar data
   const formatDate = (dateString: string) => {
@@ -253,29 +275,13 @@ function Package() {
   );
 };
 
-  // useEffect para carregar reviews quando o modal abrir
+  // useEffect para carregar reviews quando o modal abrir - agora usa dados mockados
   useEffect(() => {
     if (showAvaliacoesModal) {
-      fetchReviews(1); // Replace with actual package ID
+      // Simula carregamento, mas usa dados já mockados
+      console.log('Modal de avaliações aberto - usando dados mockados');
     }
   }, [showAvaliacoesModal]);
-
-  
-      useEffect(() => {
-      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
-        .then(res => { 
-        setRoomIncludes(res.data);
-      })
-        .catch(() => setRoomIncludes([]));
-    }, [hotelImageIndex]);
-
-    useEffect(() => {
-    if (showHotelModal) {
-      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
-        .then(res => setRoomTypeAmenities(res.data))
-        .catch(() => setRoomTypeAmenities([]));
-    }
-  }, [showHotelModal, roomTypeIndex]);
 
   return (
     <div>
@@ -544,7 +550,7 @@ function Package() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-red-700 text-center">{reviewsError}</p>
           <button 
-            onClick={() => fetchReviews(1)}
+            onClick={() => console.log('Tentar novamente - usando dados mockados')}
             className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto"
           >
             Tentar novamente
