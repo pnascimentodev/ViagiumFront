@@ -4,14 +4,78 @@ import veneza1Img from '../../assets/img/veneza1.jpg';
 import { Button } from '../../components/Button';
 import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
+import axios from 'axios';
 import Navbar from '../../components/Navbar';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Footer from '../../components/Footer';
 
 
 function Package() {
 
-    interface Review {
+  // Interfaces para dados da API
+  interface TravelPackage {
+    id: number;
+    title: string;
+    description: string;
+    originAddress: {
+      city: string;
+      country: string;
+    };
+    destinationAddress: {
+      city: string;
+      country: string;
+    };
+    vehicleType: string;
+    originalPrice: number;
+    price: number;
+    packageTax: number;
+    discountValue: number;
+    duration: string;
+    imageUrl?: string;
+    images?: string[];
+    hotels?: Hotel[]; // Hotéis podem vir junto com o pacote
+  }
+
+  interface Hotel {
+    id: number;
+    name: string;
+    address: any; // pode ser string ou objeto
+    rating: number;
+    imageUrl?: string;
+    roomTypes: RoomType[];
+  }
+  // Função utilitária para formatar endereço do hotel
+  const renderHotelAddress = (address: any) => {
+    if (!address) return 'Endereço não disponível';
+    if (typeof address === 'string') return address;
+    // Se for objeto, monta string
+    return [
+      address.streetName,
+      address.addressNumber,
+      address.neighborhood,
+      address.city,
+      address.state,
+      address.zipCode,
+      address.country
+    ].filter(Boolean).join(', ');
+  };
+
+  interface RoomType {
+    id: number;
+    name: string;
+    maxGuests: number;
+    price: number;
+    amenities: Amenity[];
+  }
+
+  interface Amenity {
+    id: number;
+    name: string;
+    iconName: string;
+    type?: 'hotel' | 'room';
+  }
+
+  interface Review {
     id: number;
     userId: number;
     userName: string;
@@ -39,82 +103,146 @@ function Package() {
   }
 
     const navigate = useNavigate();
+    const { packageId } = useParams<{ packageId: string }>();
     const [numPessoas, setNumPessoas] = useState(1);
-    const [currentPackageIndex] = useState(0);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
     const [packageImageIndex, setPackageImageIndex] = useState(0);
     const [hotelImageIndex, setHotelImageIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
     const [showHotelModal, setShowHotelModal] = useState(false);
     const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
+    
+    // Estados para dados da API
+    const [currentPackage, setCurrentPackage] = useState<TravelPackage | null>(null);
+    const [hotels, setHotels] = useState<Hotel[]>([]);
+    const [hotelAmenities, setHotelAmenities] = useState<Amenity[]>([]);
+    const [roomAmenities, setRoomAmenities] = useState<Amenity[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    
     const openHotelModal = () => setShowHotelModal(true);
     const closeHotelModal = () => setShowHotelModal(false);
     const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
     const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
 
-  const [packageDetails] = useState([
-    {
-      title: "Pacote Veneza Mágica – 5 dias de encanto!",
-      description: "Explore os canais e a cultura de Veneza com este pacote que inclui passeios de gôndola, visitas a museus e muito mais.",
-      images: [italyImg],
-      originAddress: {city:"Recife", country: 'Brasil'},
-      destinationAddress: {city:"Veneza", country: 'Itália'},
-      vehicleType: "Avião",
-      originalPrice: [5524, 6000],
-      price: [5504, 4000],
-      packageTax: [1300, 1300],
-      cupomDiscount: ["Avanade10%", "Veneza20"],
-      discountValue: [550, 800],
-      duration: [
-        "01/06/2025 - 05/06/2025",
-        "10/07/2025 - 14/07/2025"
-      ],
-      hotelNames: [
-        "Hotel Danieli",
-        "Hotel Gritti Palace"
-      ],
-      hotelRatings: [4.8, 4.6],
-      hotelAddresses: [
-        "Riva degli Schiavoni, 4196, 30122 Venezia VE, Itália",
-        "Campo Santa Maria del Giglio, 2467, 30124 Venezia VE, Itália"
-      ],
-      roomTypes: [
-        ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"],
-        ["Standard - até 2 hóspedes", "Deluxe - até 3 hóspedes", "Suite - até 4 hóspedes"]
-      ],
-    },
-  ]);
+  // Funções para buscar dados da API
+  const fetchTravelPackage = async (packageId: number) => {
+  setLoading(true);
+  setError('');
+  
+  console.log('🔄 Iniciando busca do pacote ID:', packageId);
+  
+  try {
+    const response = await axios.get(`http://localhost:5028/api/TravelPackage/getById/${packageId}`, {
+      headers: {
+        'accept': '*/*'
+      }
+    });
+    
+    console.log('✅ Resposta da API do pacote:', response.data);
+    
+    if (response.data) {
+      setCurrentPackage(response.data);
+      
+      // Se o pacote incluir hotéis, configure-os
+      if (response.data.hotels && response.data.hotels.length > 0) {
+        setHotels(response.data.hotels);
+        console.log('🏨 Hotéis carregados do pacote:', response.data.hotels.length);
+      } else {
+        console.log('📦 Pacote não inclui hotéis');
+        setHotels([]); // Limpa hotéis se não houver
+      }
+      
+      console.log('📦 Pacote carregado com sucesso:', response.data.title);
+    }
+  } catch (error: unknown) {
+    console.error('❌ Erro ao buscar pacote:', error);
+    if (axios.isAxiosError(error)) {
+      console.log('🔍 Status do erro:', error.response?.status);
+      console.log('🔍 Dados do erro:', error.response?.data);
+    }
+    setError('Erro ao carregar dados do pacote. Verifique se a API está rodando.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const fetchHotelAmenities = async () => {
+    try {
+      console.log('🔄 Buscando amenities do hotel...');
+      const response = await axios.get('http://localhost:5028/api/Amenity/Hotel');
+      console.log('✅ Amenities do hotel carregadas:', response.data);
+      setHotelAmenities(response.data);
+    } catch (error: unknown) {
+      console.error('❌ Erro ao buscar amenities do hotel:', error);
+    }
+  };
+
+  const fetchRoomAmenities = async () => {
+    try {
+      console.log('🔄 Buscando amenities do quarto...');
+      const response = await axios.get('http://localhost:5028/api/Amenity/TypeRoom');
+      console.log('✅ Amenities do quarto carregadas:', response.data);
+      setRoomAmenities(response.data);
+    } catch (error: unknown) {
+      console.error('❌ Erro ao buscar amenities do quarto:', error);
+    }
+  };
+
+  // useEffect para carregar dados quando o componente monta
+    useEffect(() => {
+    const id = packageId ? parseInt(packageId) : 1;
+    console.log('🚀 Package ID obtido:', id);
+    console.log('📦 URL do packageId:', packageId);
+    
+    fetchTravelPackage(id);
+    fetchHotelAmenities();
+    fetchRoomAmenities();
+  }, [packageId]);
 
   useEffect(() => {
     setPackageImageIndex(0);
     setHotelImageIndex(0);
     setRoomTypeIndex(0);
-  }, [currentPackageIndex]);
+  }, [currentPackage]);
 
   useEffect(() => {
     setRoomTypeIndex(0);
   }, [hotelImageIndex]);
 
-  const currentPackage = packageDetails[currentPackageIndex];
-  const pacoteImages = currentPackage.images;
-  const price = currentPackage.price[hotelImageIndex] * numPessoas;
-  const originalPrice = currentPackage.originalPrice[hotelImageIndex] * numPessoas;
-  const packageTax = currentPackage.packageTax[hotelImageIndex];
-  const discountValue = currentPackage.discountValue[hotelImageIndex];
-  const valorFinal = (price + packageTax) - discountValue;
+  // Calcular valores baseados nos dados da API
 
-  function getRoomTypesByNumPessoas(roomTypesArray: string[], numPessoas: number) {
-    return roomTypesArray.filter(tipo => {
-      // Extrai o número máximo de hóspedes do texto (ex: "até 2 hóspedes")
-      const match = tipo.match(/até (\d+) hóspedes?/i);
-      if (match) {
-        const max = parseInt(match[1], 10);
-        return numPessoas <= max;
-      }
-      // Se não encontrar, mostra todos
-      return true;
+  const price = currentPackage ? currentPackage.price * numPessoas : 0;
+  const originalPrice = currentPackage ? currentPackage.originalPrice * numPessoas : 0;
+  const packageTax = currentPackage ? currentPackage.packageTax : 0;
+  const discountValue = currentPackage ? currentPackage.discountValue : 0;
+  const valorFinal = (price + packageTax) - discountValue;
+  const pacoteImages = currentPackage?.images || currentPackage?.imageUrl ? [currentPackage.imageUrl] : [italyImg];
+
+  function getRoomTypesByNumPessoas(roomTypes: RoomType[], numPessoas: number) {
+    return roomTypes.filter(roomType => {
+      return roomType.maxGuests >= numPessoas;
     });
   }
+
+  // Função para obter amenities do hotel atual
+  const getCurrentHotelAmenities = () => {
+    if (!hotels[hotelImageIndex]) return [];
+    // Se o hotel já tem amenities da API, use-as, senão use as amenities gerais do hotel
+    return hotels[hotelImageIndex].roomTypes?.[roomTypeIndex]?.amenities || 
+           hotelAmenities.filter(amenity => amenity.type === 'hotel') || 
+           [];
+  };
+
+  // Função para obter amenities do tipo de quarto atual
+  const getCurrentRoomTypeAmenities = () => {
+    if (!hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]) return [];
+    // Se o tipo de quarto já tem amenities da API, use-as, senão use as amenities gerais do quarto
+    return hotels[hotelImageIndex].roomTypes[roomTypeIndex].amenities || 
+           roomAmenities.filter(amenity => amenity.type === 'room') || 
+           [];
+  };
 
     useEffect(() => {
     setRoomTypeIndex(0);
@@ -223,24 +351,6 @@ function Package() {
   const [loadingReviews] = useState(false);
   const [reviewsError] = useState('');
 
-  // Mock data para amenidades do hotel
-  const [roomIncludes] = useState([
-    { amenityId: 1, name: "Wi-Fi gratuito", iconName: "wifi" },
-    { amenityId: 2, name: "Ar condicionado", iconName: "ac" },
-    { amenityId: 3, name: "TV a cabo", iconName: "tv" },
-    { amenityId: 4, name: "Frigobar", iconName: "fridge" },
-    { amenityId: 5, name: "Room service 24h", iconName: "service" }
-  ]);
-
-  // Mock data para amenidades do tipo de quarto
-  const [roomTypeAmenities] = useState([
-    { amenityId: 1, name: "Cama king size", iconName: "bed" },
-    { amenityId: 2, name: "Vista para o canal", iconName: "view" },
-    { amenityId: 3, name: "Banheira hidromassagem", iconName: "bath" },
-    { amenityId: 4, name: "Varanda privativa", iconName: "balcony" },
-    { amenityId: 5, name: "Produtos de banho premium", iconName: "amenities" }
-  ]);
-
   // Função para formatar data
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -285,8 +395,28 @@ function Package() {
 
   return (
     <div>
-        <Navbar />
+      <Navbar />
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFA62B]"></div>
+            <span className="ml-2 text-gray-600">Carregando pacote...</span>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+            <p className="text-red-700 text-center">{error}</p>
+            <button 
+              onClick={() => fetchTravelPackage(1)}
+              className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : !currentPackage ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500 text-lg">Pacote não encontrado</p>
+          </div>
+        ) : (
         <div className="max-w-2xl w-full bg-white mt-20 mb-20 rounded-xl shadow-2xl p-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
             {currentPackage.title}
@@ -315,21 +445,25 @@ function Package() {
                       <span>{currentPackage.vehicleType}</span>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.originAddress.city}, {currentPackage.originAddress.country}
+                      <span className="font-semibold ">Origem:&nbsp;</span>
+                      {currentPackage.originAddress?.city && currentPackage.originAddress?.country
+                        ? `${currentPackage.originAddress.city}, ${currentPackage.originAddress.country}`
+                        : 'Não informado'}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="font-semibold ">Destino:&nbsp;</span>{currentPackage.destinationAddress.city}, {currentPackage.destinationAddress.country}
+                      <span className="font-semibold ">Destino:&nbsp;</span>
+                      {currentPackage.destinationAddress?.city && currentPackage.destinationAddress?.country
+                        ? `${currentPackage.destinationAddress.city}, ${currentPackage.destinationAddress.country}`
+                        : 'Não informado'}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <h2 className="font-semibold">Duração</h2>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <FaRegCalendarAlt className=" text-xl" />
-                      <select className="w-full border rounded px-2 py-1">
-                        {currentPackage.duration.map((duracao, idx) => (
-                          <option key={idx}>{duracao}</option>
-                        ))}
-                      </select>
+                      <div className="w-full border rounded px-2 py-1">
+                        {currentPackage.duration}
+                      </div>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
                       <h2 className="font-semibold">Número de viajantes</h2>
@@ -407,8 +541,8 @@ function Package() {
                       value={hotelImageIndex}
                       onChange={e => setHotelImageIndex(Number(e.target.value))}
                     >
-                      {currentPackage.hotelNames.map((hotel, index) => (
-                        <option key={index} value={index}>{hotel}</option>
+                      {hotels.map((hotel, index) => (
+                        <option key={index} value={index}>{hotel.name}</option>
                       ))}
                     </select>
                     <div className="flex justify-end mt-2">
@@ -421,24 +555,24 @@ function Package() {
                     </div>
                     <div className="rounded-xl p-2">
                       <div className="flex flex-col items-center">
-                        <h4 className="font-semibold">{currentPackage.hotelNames[hotelImageIndex]}</h4>
+                        <h4 className="font-semibold">{hotels[hotelImageIndex]?.name || 'Hotel não encontrado'}</h4>
                         <div className="flex items-center space-x-1 mb-1">
                           <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                           </svg>
-                          <span className="text-sm font-medium">{currentPackage.hotelRatings[hotelImageIndex]}</span>
+                          <span className="text-sm font-medium">{hotels[hotelImageIndex]?.rating || 'N/A'}</span>
                         </div>
                         {/* Imagem do hotel */}
                         <div className="relative rounded-lg overflow-hidden mb-6">
                           <img
-                            src={veneza1Img}
+                            src={hotels[hotelImageIndex]?.imageUrl || veneza1Img}
                             alt="Imagem do hotel"
                             className="w-full h-64 object-cover"
                           />
                         </div>
                         {/* Endereço */}
                         <p className="text-sm text-gray-600 text-center mb-2">
-                          {currentPackage.hotelAddresses[hotelImageIndex]}
+                          {renderHotelAddress(hotels[hotelImageIndex]?.address)}
                         </p>
                         {/* Informações do hotel */}
                         <div className="p-6 pt-8">
@@ -458,14 +592,18 @@ function Package() {
                           value={roomTypeIndex}
                           onChange={e => setRoomTypeIndex(Number(e.target.value))}
                         >
-                          {getRoomTypesByNumPessoas(currentPackage.roomTypes[hotelImageIndex], numPessoas).map((tipo, idx) => (
-                            <option key={idx} value={idx}>{tipo}</option>
-                          ))}
+                          {hotels[hotelImageIndex]?.roomTypes ? 
+                            getRoomTypesByNumPessoas(hotels[hotelImageIndex].roomTypes, numPessoas).map((roomType, idx) => (
+                              <option key={idx} value={idx}>{roomType.name} - até {roomType.maxGuests} hóspedes</option>
+                            )) :
+                            <option>Sem quartos disponíveis</option>
+                          }
                         </select>
                       <div className="justify-center mt-2">
+                        <h5 className="font-semibold mb-1">Amenities:</h5>
                         <ul className="space-y-1">
-                          {roomIncludes.map((item) => (
-                            <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
+                          {getCurrentRoomTypeAmenities().map((item) => (
+                            <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
                           ))}
                         </ul>
                       </div>
@@ -485,7 +623,7 @@ function Package() {
             </div>
           </div>
         </div>
-        
+        )}
 
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -496,24 +634,35 @@ function Package() {
               >
                 &times;
               </button>
-              <h2 className="text-xl font-bold mb-2">{currentPackage.hotelNames[hotelImageIndex]}</h2>
+              <h2 className="text-xl font-bold mb-2">{hotels[hotelImageIndex]?.name || 'Hotel não encontrado'}</h2>
               <img
-                src={veneza1Img}
+                src={hotels[hotelImageIndex]?.imageUrl || veneza1Img}
                 alt="Imagem do hotel"
                 className="w-full h-48 object-cover rounded mb-4"
               />
-              <p className="mb-2 text-xl">{currentPackage.hotelAddresses[hotelImageIndex]}</p>
-                <ul className="mb-2">
-                  {roomTypeAmenities.map((item) => (
-                    <li key={item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
-                  ))}
-                </ul>
+              <p className="mb-2 text-xl">{renderHotelAddress(hotels[hotelImageIndex]?.address)}</p>
+                <div className="mb-4">
+                  <h4 className="font-semibold text-lg mb-2">Amenities do Hotel:</h4>
+                  <ul className="mb-2">
+                    {getCurrentHotelAmenities().map((item) => (
+                      <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mb-4">
+                  <h4 className="font-semibold text-lg mb-2">Amenities do Quarto:</h4>
+                  <ul className="mb-2">
+                    {getCurrentRoomTypeAmenities().map((item) => (
+                      <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
+                    ))}
+                  </ul>
+                </div>
                 <span className="flex items-center font-semibold text-xl">
                   Avaliação:&nbsp;
                   <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                   </svg>
-                  <span className="font-medium">{currentPackage.hotelRatings[hotelImageIndex]}</span>
+                  <span className="font-medium">{hotels[hotelImageIndex]?.rating || 'N/A'}</span>
                 </span>
             <div className="p-6 pt-8">
               <Button
