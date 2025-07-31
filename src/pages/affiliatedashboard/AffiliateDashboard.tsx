@@ -140,9 +140,19 @@ function AffiliateDashboard() {
     setActiveDropdown(null);
   };
 
-  const handleDeactivateHotel = (hotel: typeof yourHotels[0]) => {
-    console.log('Desativando hotel:', hotel.name);
-    setActiveDropdown(null);
+  const handleDeactivateHotel = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+    axios.delete(`http://localhost:5028/api/Hotel/${hotel.id}/desactivate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Inativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch(() => {
+        alert("Erro ao desativar hotel.");
+        setActiveDropdown(null);
+      });
   };
 
   // Fecha o dropdown ao clicar fora
@@ -401,7 +411,12 @@ function AffiliateDashboard() {
 
                                       <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600"
-                                        onClick={() => handleDeactivateHotel(hotel)}
+                                        onClick={() => {
+                                          console.log('Desativar hotel clicado', hotel);
+                                          handleDeactivateHotel(hotel);
+                                          setActiveDropdown(null);
+                                        }}
+                                        type="button"
                                       >
                                         <FaPowerOff className="text-red-600" />
                                         <span>Desativar hotel</span>
