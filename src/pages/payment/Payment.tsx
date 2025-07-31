@@ -39,12 +39,16 @@ export default function Payment() {
     ? FaBarcode
     : FaMoneyCheckAlt;
 
-    const [packageDetails] = useState({
-    nome: "Pacote Viagem Rio",
-    destino: "Rio de Janeiro",
-    duracao: "10/09/2025",
-    pessoas: 2,
-    preco: 3200.00,
+    interface Reservation {
+      id: number;
+      startDate: Date;
+      totalPrice: string;
+    }
+
+    const [reservationDetails] = useState<Reservation>({
+      id: 1,
+      startDate: new Date("2025-09-10"),
+      totalPrice: "R$ 3.200,00",
     });
 
     function handleCardInputChange(field: string, value: string) {
@@ -92,6 +96,20 @@ export default function Payment() {
         }, 2000);
     }
 
+    const paymentPayload = {
+    reservationId: reservationDetails.id,
+    paymentMethod: selectedMethod, // "pix", "boleto", "credito", "debito"
+    card: selectedMethod === "credito" || selectedMethod === "debito"
+      ? {
+          cardholderName: cardForm.cardholderName,
+          cardNumber: cardForm.cardNumber,
+          expirationDate: cardForm.expirationDate,
+          cvv: cardForm.cvv,
+        }
+      : undefined
+    // outros campos se necessário
+  };
+
   return (
     <div>
       <Navbar />
@@ -108,11 +126,8 @@ export default function Payment() {
             <h2 className="text-xl font-bold mb-2">Detalhes do Pacote</h2>
         </div>
         <div className="space-y-1 ml-6">
-          <div><span className="font-semibold text-gray-700">Nome:</span> {packageDetails.nome}</div>
-          <div><span className="font-semibold text-gray-700">Destino:</span> {packageDetails.destino}</div>
-          <div><span className="font-semibold text-gray-700">Duração:</span> {packageDetails.duracao}</div>
-          <div><span className="font-semibold text-gray-700">Pessoas:</span> {packageDetails.pessoas}</div>
-          <div className="mb-6"><span className="font-semibold text-gray-700">Preço:</span> R$ {packageDetails.preco.toFixed(2)}</div>
+          <div><span className="font-semibold text-gray-700">Nome:</span> {reservationDetails.startDate.toLocaleDateString()}</div>
+          <div><span className="font-semibold text-gray-700">Destino:</span> {reservationDetails.totalPrice}</div>
         </div>
         <hr className="w-full mb-2 mt-2" />
         <form onSubmit={handleSubmit} className="space-y-6">

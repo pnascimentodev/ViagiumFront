@@ -11,37 +11,61 @@ import { useNavigate } from "react-router-dom";
 
 function Package() {
 
-  const navigate = useNavigate();
-  const [numPessoas, setNumPessoas] = useState(1);
-  const [currentPackageIndex] = useState(0);
-  const [packageImageIndex, setPackageImageIndex] = useState(0);
-  const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
-  const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
-  const [hotelImageIndex, setHotelImageIndex] = useState(0);
-  const [roomTypeIndex, setRoomTypeIndex] = useState(0);
-  const [showHotelModal, setShowHotelModal] = useState(false);
-  const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
-  const openHotelModal = () => setShowHotelModal(true);
-  const closeHotelModal = () => setShowHotelModal(false);
-  const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
-  const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+      interface PackageDetails {
+      id: number;
+      title: string;
+      description: string;
+      originAddressId: number;
+      destinationAddressId: number;
+      imageUrl: string;
+      duration: number;
+      maxPeople: number;
+      vehicleType: string;
+      originalPrice: number;
+      price: number;
+      packageTax: number;
+      cupomDiscount: string;
+      discountValue: number;
+      schedules: {
+        startDate: string;
+        endDate?: string;
+        isFixed: boolean;
+        isAvailable: boolean;
+      }[];
+    }
 
+    const navigate = useNavigate();
+    const [numPessoas, setNumPessoas] = useState(1);
+    const [currentPackageIndex] = useState(0);
+    const [cupomDiscountInput, setCupomDiscountInput] = useState('');
+    const [packageImageIndex, setPackageImageIndex] = useState(0);
+    const [roomIncludes, setRoomIncludes] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [roomTypeAmenities, setRoomTypeAmenities] = useState<{ amenityId: number; name: string; iconName: string }[]>([]);
+    const [hotelImageIndex, setHotelImageIndex] = useState(0);
+    const [roomTypeIndex, setRoomTypeIndex] = useState(0);
+    const [showHotelModal, setShowHotelModal] = useState(false);
+    const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
+    const openHotelModal = () => setShowHotelModal(true);
+    const closeHotelModal = () => setShowHotelModal(false);
+    const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
+    const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+
+
+      useEffect(() => {
+      axios.get(`http://localhost:5028/api/Amenity/Hotel`)
+        .then(res => { 
+        setRoomIncludes(res.data);
+      })
+        .catch(() => setRoomIncludes([]));
+    }, [hotelImageIndex]);
 
     useEffect(() => {
-    axios.get(`http://localhost:5028/api/Amenity/Hotel`)
-      .then(res => { 
-      setRoomIncludes(res.data);
-    })
-      .catch(() => setRoomIncludes([]));
-  }, [hotelImageIndex]);
-
-  useEffect(() => {
-  if (showHotelModal) {
-    axios.get('http://localhost:5028/api/Amenity/TypeRoom')
-      .then(res => setRoomTypeAmenities(res.data))
-      .catch(() => setRoomTypeAmenities([]));
-  }
-}, [showHotelModal, roomTypeIndex]);
+    if (showHotelModal) {
+      axios.get('http://localhost:5028/api/Amenity/TypeRoom')
+        .then(res => setRoomTypeAmenities(res.data))
+        .catch(() => setRoomTypeAmenities([]));
+    }
+  }, [showHotelModal, roomTypeIndex]);
 
   const [packageDetails] = useState([
     {
@@ -51,9 +75,11 @@ function Package() {
       originAddress: {city:"Recife", country: 'Brasil'},
       destinationAddress: {city:"Veneza", country: 'Itália'},
       vehicleType: "Avião",
-      pacoteehospedagem: [5524, 6000],
-      encargos: [1300, 1300],
-      desconto: [600, 650],
+      originalPrice: [5524, 6000],
+      price: [5504, 4000],
+      packageTax: [1300, 1300],
+      cupomDiscount: ["Avanade10%", "Veneza20"],
+      discountValue: [550, 800],
       duration: [
         "01/06/2025 - 05/06/2025",
         "10/07/2025 - 14/07/2025"
@@ -63,7 +89,6 @@ function Package() {
         "Hotel Gritti Palace"
       ],
       hotelRatings: [4.8, 4.6],
-      prices: [5600, 8700],
       hotelAddresses: [
         "Riva degli Schiavoni, 4196, 30122 Venezia VE, Itália",
         "Campo Santa Maria del Giglio, 2467, 30124 Venezia VE, Itália"
@@ -87,10 +112,31 @@ function Package() {
 
   const currentPackage = packageDetails[currentPackageIndex];
   const pacoteImages = currentPackage.images;
-  const pacoteehospedagem = currentPackage.pacoteehospedagem[hotelImageIndex] * numPessoas;
-  const encargos = currentPackage.encargos[hotelImageIndex];
-  const desconto = currentPackage.desconto[hotelImageIndex];
-  const valorTotal = (pacoteehospedagem + encargos) - desconto;
+  const price = currentPackage.price[hotelImageIndex] * numPessoas;
+  const originalPrice = currentPackage.originalPrice[hotelImageIndex] * numPessoas;
+  const packageTax = currentPackage.packageTax[hotelImageIndex];
+  const cupomDiscount = currentPackage.cupomDiscount[hotelImageIndex];
+  const discountValue = currentPackage.discountValue[hotelImageIndex];
+  const valorFinal = (price + packageTax) - discountValue;
+
+    // Função para filtrar tipos de quarto pelo número de viajantes
+  function getRoomTypesByNumPessoas(roomTypesArray: string[], numPessoas: number) {
+    // Exemplo: verifica se o texto do tipo de quarto contém a quantidade máxima de hóspedes
+    return roomTypesArray.filter(tipo => {
+      // Extrai o número máximo de hóspedes do texto (ex: "até 2 hóspedes")
+      const match = tipo.match(/até (\d+) hóspedes?/i);
+      if (match) {
+        const max = parseInt(match[1], 10);
+        return numPessoas <= max;
+      }
+      // Se não encontrar, mostra todos
+      return true;
+    });
+  }
+
+    useEffect(() => {
+    setRoomTypeIndex(0);
+  }, [numPessoas, hotelImageIndex]);
 
   return (
     <div>
@@ -120,6 +166,10 @@ function Package() {
                   <h3 className="text-lg font-semibold mb-4">Informações</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 mb-2">
+                      <span className="font-semibold">Tipo de veículo:&nbsp;</span>
+                      <span>{currentPackage.vehicleType}</span>
+                    </div>
+                    <div className="flex items-center space-x-3 mb-2">
                       <span className="font-semibold ">Origem:&nbsp;</span>{currentPackage.originAddress.city}, {currentPackage.originAddress.country}
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
@@ -137,7 +187,7 @@ function Package() {
                       </select>
                     </div>
                     <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-semibold">Número de pessoas</h2>
+                      <h2 className="font-semibold">Número de viajantes</h2>
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
@@ -159,22 +209,33 @@ function Package() {
                     <h3 className="text-lg font-semibold">Resumo</h3>
                   </div>
                   <div className="p-4">
+                    <div className="flex items-center space-x-3">
+                        <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
+                        <input
+                          id="cupom"
+                          type="text"
+                          className="w-full border rounded px-2 py-1"
+                          value={cupomDiscountInput}
+                          onChange={e => setCupomDiscountInput(e.target.value)}
+                          placeholder="Insira seu cupom"
+                        />
+                  </div>
                     <div className="flex justify-between text-sm">
-                      <span>Pacote + transporte</span>
-                      <span className="font-semibold">{`R$ ${pacoteehospedagem.toLocaleString('pt-BR')},00`}</span>
+                      <span className="line-through color-red text-red-600 font-bold">Preço Original</span>
+                      <span className="font-bold line-through text-red-600">{`R$ ${originalPrice.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Desconto</span>
-                      <span className="font-semibold">{`R$ ${desconto.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Pacote + Hospedagem</span>
+                      <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Impostos e encargos:</span>
-                      <span className="font-semibold">{`R$ ${encargos.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Impostos e encargos:</span>
+                      <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <hr className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
-                      <span>Valor total</span>
-                      <span>{`R$ ${valorTotal.toLocaleString('pt-BR')},00`}</span>
+                      <span>Valor Final</span>
+                      <span>{`R$ ${valorFinal.toLocaleString('pt-BR')},00`}</span>
                     </div>
                   </div>
                 </div>
@@ -247,15 +308,15 @@ function Package() {
                     {/* Quarto */}
                     <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                     <div className="space-y-3 w-full">
-                      <select
-                        className="w-full border rounded px-2 py-1"
-                        value={roomTypeIndex}
-                        onChange={e => setRoomTypeIndex(Number(e.target.value))}
-                      >
-                        {currentPackage.roomTypes[hotelImageIndex].map((tipo, idx) => (
-                          <option key={idx} value={idx}>{tipo}</option>
-                        ))}
-                      </select>
+                        <select
+                          className="w-full border rounded px-2 py-1"
+                          value={roomTypeIndex}
+                          onChange={e => setRoomTypeIndex(Number(e.target.value))}
+                        >
+                          {getRoomTypesByNumPessoas(currentPackage.roomTypes[hotelImageIndex], numPessoas).map((tipo, idx) => (
+                            <option key={idx} value={idx}>{tipo}</option>
+                          ))}
+                        </select>
                       <div className="justify-center mt-2">
                         <ul className="space-y-1">
                           {roomIncludes.map((item) => (
