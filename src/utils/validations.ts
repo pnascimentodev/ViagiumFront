@@ -119,3 +119,9 @@ export function validateFutureDate(dateStr: string): boolean {
 export function validateTerms(checked: boolean): boolean {
     return checked;
 }
+
+// Validação de data de chegada
+export function validateArrivalAfterDeparture(departure: string, arrival: string): boolean {
+    if (!departure || !arrival) return true;
+    return new Date(arrival) >= new Date(departure);
+}
