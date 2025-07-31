@@ -53,6 +53,7 @@ const hotels = hotelsData.map(hotel => ({
 function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   // Modal Hotel Handle Abrir e fechar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +64,17 @@ function AffiliateDashboard() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    // Aqui você pode adicionar a lógica de logout
+    // Por exemplo: limpar localStorage, redirecionar para login, etc.
+    localStorage.clear();
+    window.location.href = '/login/affiliate';
+  };
+
+  const toggleUserDropdown = () => {
+    setIsUserDropdownOpen(!isUserDropdownOpen);
   };
 
   const [yourHotels, setYourHotels] = useState<any[]>([]);
@@ -159,6 +171,7 @@ function AffiliateDashboard() {
   useEffect(() => {
     const handleClickOutside = () => {
       setActiveDropdown(null);
+      setIsUserDropdownOpen(false);
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -241,11 +254,29 @@ function AffiliateDashboard() {
               onClose={handleCloseModal}
             />
 
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-gray-600 relative">
               <span className="text-sm">Bem vindo{affiliateName ? ` ${affiliateName}` : ""}</span>
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+              <button 
+                onClick={toggleUserDropdown}
+                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+              >
                 <FaUser className="w-4 h-4" />
-              </div>
+              </button>
+              
+              {/* Dropdown do usuário */}
+              {isUserDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="py-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                    >
+                      <FaPowerOff className="w-4 h-4" />
+                      Sair
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
