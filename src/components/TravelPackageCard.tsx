@@ -1,31 +1,23 @@
 import Badge from "./Badge";
-
-export type Address = {
-    country: string;
-    city: string;
-};
-
-export type TravelPackage = {
-    id: number;
-    title: string;
-    description: string;
-    price: number;
-    originalPrice: number;
-    duration: number;
-    image: string;
-    rating: number;
-    reviews: number;
-    qtySalesLimit: number;
-    qtySold: number;
-    originAddress: Address;
-    destinationAddress: Address;
-};
+import type { TravelPackage } from "../types/travelPackageTypes";
+import { LuCalendarDays } from "react-icons/lu";
 
 type TravelPackageCardProps = {
     pkg: TravelPackage;
 };
 
-const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
+const getNextSchedule = (pkg: TravelPackage) => {
+    if (!pkg.schedules || pkg.schedules.length === 0) return null;
+    const now = new Date();
+    return pkg.schedules
+        .filter(s => s.startDate > now)
+        .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] || null;
+};
+
+const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => {
+    const nextSchedule = getNextSchedule(pkg);
+
+    return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group">
         <div className="relative overflow-hidden">
             <img
@@ -36,10 +28,10 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
 
-            {pkg.qtySalesLimit && pkg.qtySalesLimit - pkg.qtySold <= 10 && (
+            {nextSchedule && nextSchedule.salesLeft < 10 && (
                 <div className="absolute bottom-3 left-3">
                     <Badge variant="red">
-                        Faltam {pkg.qtySalesLimit - pkg.qtySold} vagas 🔥
+                        Restam {nextSchedule.salesLeft} vagas para a próxima partida 🔥
                     </Badge>
                 </div>
             )}
@@ -60,8 +52,8 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
             <h4 className="text-lg font-bold text-blue-600 ">{pkg.title}</h4>
             <p className="text-gray-600 text-sm line-clamp-2">{pkg.description}</p>
             <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1 text-gray-500">
-                    <span className="inline-block">🕒</span>
+                <div className="flex items-center space-x-1 text-gray-500 gap-1">
+                    <span className="inline-block"><LuCalendarDays /></span>
                     <span className="text-sm">{pkg.duration} dias</span>
                 </div>
                 <span className="text-xs text-gray-500">{pkg.reviews} reviews</span>
@@ -79,6 +71,6 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => (
             </div>
         </div>
     </div>
-);
+)};
 
 export default TravelPackageCard;
