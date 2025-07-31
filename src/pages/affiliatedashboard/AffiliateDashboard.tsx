@@ -2,6 +2,7 @@ import { FaPlus, FaUser, FaStar, FaEllipsisV, FaEdit, FaPowerOff, FaBed, FaMapMa
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useState, useEffect } from 'react'
 import ModalHotel from "./components/ModalHotel"
+import axios from "axios"
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -52,6 +53,7 @@ const hotels = hotelsData.map(hotel => ({
 function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   // Modal Hotel Handle Abrir e fechar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,40 +66,18 @@ function AffiliateDashboard() {
     setIsModalOpen(false);
   };
 
-  const yourHotels = [
-    {
-      name: "Grand Plaza Hotel",
-      rooms: "118/355 disponível",
-      location: "Rio de Janeiro, RJ",
-      rating: 4.8,
-      status: "Ativo",
-      image: "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg"
-    },
-    {
-      name: "Blue Ocean Resort",
-      rooms: "85/250 disponível",
-      location: "Salvador, BA",
-      rating: 4.5,
-      status: "Ativo",
-      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg"
-    },
-    {
-      name: "Mountain View",
-      rooms: "45/150 disponível",
-      location: "Gramado, RS",
-      rating: 4.7,
-      status: "Inativo",
-      image: "https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg"
-    },
-    {
-      name: "City Center Hotel",
-      rooms: "92/200 disponível",
-      location: "São Paulo, SP",
-      rating: 4.6,
-      status: "Ativo",
-      image: "https://images.pexels.com/photos/53464/sheraton-palace-hotel-lobby-architecture-san-francisco-53464.jpeg"
-    },
-  ]
+  const handleLogout = () => {
+    // Aqui você pode adicionar a lógica de logout
+    // Por exemplo: limpar localStorage, redirecionar para login, etc.
+    localStorage.clear();
+    window.location.href = '/login/affiliate';
+  };
+
+  const toggleUserDropdown = () => {
+    setIsUserDropdownOpen(!isUserDropdownOpen);
+  };
+
+  const [yourHotels, setYourHotels] = useState<any[]>([]);
 
   const reservations = [
     {
@@ -147,9 +127,19 @@ function AffiliateDashboard() {
     setActiveDropdown(activeDropdown === filteredIndex ? null : filteredIndex);
   };
 
-  const handleActivateHotel = (hotel: typeof yourHotels[0]) => {
-    console.log('Ativando hotel:', hotel.name);
-    setActiveDropdown(null);
+  const handleActivateHotel = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+    axios.put(`http://localhost:5028/api/Hotel/${hotel.id}/activate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Ativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch(() => {
+        alert("Erro ao ativar hotel.");
+        setActiveDropdown(null);
+      });
   };
 
   const handleEditHotel = (hotel: typeof yourHotels[0]) => {
@@ -162,21 +152,73 @@ function AffiliateDashboard() {
     setActiveDropdown(null);
   };
 
-  const handleDeactivateHotel = (hotel: typeof yourHotels[0]) => {
-    console.log('Desativando hotel:', hotel.name);
-    setActiveDropdown(null);
+  const handleDeactivateHotel = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+    axios.delete(`http://localhost:5028/api/Hotel/${hotel.id}/desactivate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Inativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch(() => {
+        alert("Erro ao desativar hotel.");
+        setActiveDropdown(null);
+      });
   };
 
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
     const handleClickOutside = () => {
       setActiveDropdown(null);
+      setIsUserDropdownOpen(false);
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
+  }, []);
+
+  const [affiliateName, setAffiliateName] = useState<string>("");
+
+  useEffect(() => {
+    // Recupera o affiliate do localStorage
+    const affiliateStr = localStorage.getItem("affiliate");
+    if (affiliateStr) {
+      try {
+        const affiliate = JSON.parse(affiliateStr);
+        if (affiliate && affiliate.id) {
+          axios.get(`http://localhost:5028/api/Affiliate/${affiliate.id}`)
+            .then(res => {
+              if (res.data) {
+                // Nome do afiliado
+                if (res.data.name) setAffiliateName(res.data.name);
+                // Monta o array de hotéis
+                if (res.data.hotels && Array.isArray(res.data.hotels)) {
+                  const hotelsMapped = res.data.hotels.map((hotel: any) => ({
+                    id: hotel.hotelId, // Garante que o id seja preenchido
+                    name: hotel.name || "",
+                    location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
+                    status: hotel.isActive ? "Ativo" : "Inativo",
+                    image: hotel.imageUrl || ""
+                  }));
+                  setYourHotels(hotelsMapped);
+                } else {
+                  setYourHotels([]);
+                }
+              }
+            })
+            .catch(() => {
+              setAffiliateName("");
+              setYourHotels([]);
+            });
+        }
+      } catch {
+        setAffiliateName("");
+        setYourHotels([]);
+      }
+    }
   }, []);
 
   return (
@@ -212,11 +254,29 @@ function AffiliateDashboard() {
               onClose={handleCloseModal}
             />
 
-            <div className="flex items-center gap-2 text-gray-600">
-              <span className="text-sm">Bem vindo</span>
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-2 text-gray-600 relative">
+              <span className="text-sm">Bem vindo{affiliateName ? ` ${affiliateName}` : ""}</span>
+              <button 
+                onClick={toggleUserDropdown}
+                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+              >
                 <FaUser className="w-4 h-4" />
-              </div>
+              </button>
+              
+              {/* Dropdown do usuário */}
+              {isUserDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="py-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                    >
+                      <FaPowerOff className="w-4 h-4" />
+                      Sair
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -346,7 +406,6 @@ function AffiliateDashboard() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-bold text-blue-800 truncate">{hotel.name}</h3>
-                            <p className="text-sm text-blue-800">{hotel.rooms}</p>
                             <p className="text-sm text-blue-800">{hotel.location}</p>
                           </div>
 
@@ -355,6 +414,7 @@ function AffiliateDashboard() {
                             <button
                               onClick={(e) => handleDropdownClick(filteredIndex, e)}
                               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              type="button"
                             >
                               <FaEllipsisV className="text-gray-600 w-4 h-4" />
                             </button>
@@ -382,7 +442,12 @@ function AffiliateDashboard() {
 
                                       <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600"
-                                        onClick={() => handleDeactivateHotel(hotel)}
+                                        onClick={() => {
+                                          console.log('Desativar hotel clicado', hotel);
+                                          handleDeactivateHotel(hotel);
+                                          setActiveDropdown(null);
+                                        }}
+                                        type="button"
                                       >
                                         <FaPowerOff className="text-red-600" />
                                         <span>Desativar hotel</span>
@@ -391,7 +456,12 @@ function AffiliateDashboard() {
                                   ) : (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 text-green-600"
-                                      onClick={() => handleActivateHotel(hotel)}
+                                      onClick={() => {
+                                        console.log('Ativar hotel clicado', hotel);
+                                        handleActivateHotel(hotel);
+                                        setActiveDropdown(null);
+                                      }}
+                                      type="button"
                                     >
                                       <FaPowerOff className="text-green-600" />
                                       <span>Ativar hotel</span>
@@ -405,7 +475,8 @@ function AffiliateDashboard() {
                         <div className="flex items-center gap-2 mt-1">
                           <div className="flex items-center gap-1">
                             <FaStar className="w-3 h-3 text-yellow-400 fill-current" />
-                            <span className="text-sm font-medium">{hotel.rating}</span>
+                            {/* <span className="text-sm font-medium">{hotel.rating}</span> */}
+
                           </div>
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${hotel.status === "Ativo"

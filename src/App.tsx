@@ -25,6 +25,7 @@ import Review from './pages/review/Review.tsx'
 import Payment from './pages/payment/Payment.tsx'
 import PackageSearch from './pages/package-search/packageSearch.tsx'
 import Reservation from './pages/reservation/Reservation.tsx'
+import TravelHistoryPage from './pages/travelhistory/TravelHistoryPage.tsx'  
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
       <Route path="/payment" element={<Payment />} />
       <Route path="/packagesearch" element={<PackageSearch />} />
       <Route path="/reservation" element={<Reservation />} />
+      <Route path="/travelhistory" element={<TravelHistoryPage />} />
     </Routes>
   )
 }
