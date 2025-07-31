@@ -1,16 +1,26 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
+import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { MdWifi, MdPool, MdLocalParking, MdFitnessCenter, MdRestaurant, MdPets, MdAccessible, MdRoomService, MdAcUnit, MdSpa, MdRestaurantMenu, MdLocalBar, MdRectangle } from "react-icons/md";
 
-interface ModalHotelProps {
+interface Hotel {
+    id: string;
+    name: string;
+    location: string;
+    status: string;
+    image: string;
+}
+
+interface ModalEditHotelProps {
     isOpen: boolean;
     onClose: () => void;
+    hotel: Hotel | null;
+    onSave: (updatedHotel: Hotel) => void;
 }
 
 interface Amenity {
@@ -19,7 +29,7 @@ interface Amenity {
     iconName: string;
 }
 
-function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
+function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps) {
     // Mapeamento dos nomes dos ícones para componentes do react-icons/md
     const getIconComponent = (iconName: string) => {
         const iconMap: { [key: string]: React.ComponentType<any> } = {
@@ -66,7 +76,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         inscricaoEstadual: "",
         numeroCadastur: "",
         dataExpiracao: "",
-        termos: false,
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [amenities, setAmenities] = useState<Amenity[]>([]);
@@ -152,12 +161,22 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         }
     };
 
-    // Carrega amenities quando o modal abre
+    // Carrega amenities quando o modal abre e preenche os dados do hotel
     useEffect(() => {
         if (isOpen) {
             fetchAmenities();
+            if (hotel) {
+                // Aqui você pode fazer uma chamada para a API para buscar os dados completos do hotel
+                // Por enquanto, vamos usar os dados básicos do hotel
+                setForm(prev => ({
+                    ...prev,
+                    nomeHospedagem: hotel.name,
+                    imagemHotel: hotel.image,
+                    // Preencher outros campos quando dados completos estiverem disponíveis
+                }));
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, hotel]);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         const target = e.target as HTMLInputElement | HTMLTextAreaElement;
@@ -177,9 +196,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                 break;
             case "inscricaoEstadual":
                 newValue = maskInscricaoEstadual(value);
-                break;
-            case "numeroCadastur":
-                newValue = maskCadasturNumber(value);
                 break;
             case "cpfPassaporte": {
                 const onlyNumbers = value.replace(/\D/g, "");
@@ -240,9 +256,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             case "cnpj":
                 if (!validateCNPJ(value)) error = "CNPJ inválido.";
                 break;
-            case "numeroCadastur":
-                if (!validateCadasturNumber(value)) error = "Apenas números.";
-                break;
             case "dataExpiracao":
                 if (value && !validateFutureDate(value)) error = "Data inválida.";
                 break;
@@ -278,13 +291,19 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         if (!validateRequired(form.descricao)) newErrors.descricao = "Campo obrigatório.";
         if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
         if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
-        if (!validateCadasturNumber(form.numeroCadastur)) newErrors.numeroCadastur = "Apenas números.";
-        if (!validateFutureDate(form.dataExpiracao)) newErrors.dataExpiracao = "Data inválida.";
-        if (!validateTerms(form.termos)) newErrors.termos = "Você deve aceitar os termos.";
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
-        alert("Cadastro realizado com sucesso!");
-        // Aqui -> enviar os dados para a API
+        
+        // Se chegou até aqui, salva as alterações
+        if (hotel) {
+            const updatedHotel: Hotel = {
+                ...hotel,
+                name: form.nomeHospedagem,
+                image: form.imagemHotel
+            };
+            onSave(updatedHotel);
+        }
+        alert("Hotel atualizado com sucesso!");
         onClose(); // Fecha o modal após sucesso
     }
 
@@ -298,7 +317,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         }
     }
 
-    if (!isOpen) return null;
+    if (!isOpen || !hotel) return null;
 
     return (
         <div
@@ -308,14 +327,12 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
                 {/* Header do Modal */}
                 <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center rounded-t-lg">
-                    <h2 className="text-3xl font-bold text-[#003194]">Cadastro de Hotel</h2>
+                    <h2 className="text-3xl font-bold text-[#003194]">Editar Hotel</h2>
                     <IoClose
                         type="button"
                         onClick={handleCloseModal}
-                        className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                    >
-                        ×
-                    </IoClose >
+                        className="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer"
+                    />
                 </div>
 
                 {/* Conteúdo do Modal */}
@@ -673,88 +690,86 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             </div>
                         </div>
 
-                        {/* Cadastur */}
-                        <div className="pt-6 border-t border-gray-200">
-                            {/* Com Icone de Interrogaçao - O é o Cadastur? */}
-                            <h3 className="text-xl font-semibold text-[#003194] mb-6 flex items-center gap-2">
-                                Cadastur
-                                <div className="relative inline-block">
-                                    <a
-                                        href="#"
-                                        onClick={e => {
-                                            e.preventDefault();
-                                            setShowCadasturInfo(true);
-                                            setTimeout(() => setShowCadasturInfo(false), 5000);
-                                        }}
-                                        className="inline-flex items-center"
-                                        title="O que é Cadastur?"
-                                    >
-                                        <HiQuestionMarkCircle className="text-[#003194]" size={22} />
-                                    </a>
-                                    {showCadasturInfo && (
-                                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-white border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 shadow z-10 w-64">
-                                            O Cadastur é o sistema de cadastro de pessoas físicas e jurídicas que atuam no setor de turismo. Para mais informações, acesse o site oficial do Cadastur.
-                                        </span>
-                                    )}
+                        {/* Seção Cadastur */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <h3 className="text-xl font-bold text-[#003194]">Cadastur</h3>
+                                <HiQuestionMarkCircle
+                                    className="text-gray-400 cursor-pointer hover:text-gray-600"
+                                    size={20}
+                                    title="Informações sobre o sistema Cadastur"
+                                />
+                                <label className="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={showCadasturInfo}
+                                        onChange={(e) => setShowCadasturInfo(e.target.checked)}
+                                        className="sr-only"
+                                    />
+                                    <span className="text-sm text-[#003194] hover:underline">
+                                        {showCadasturInfo ? "Ocultar informações" : "Mostrar informações"}
+                                    </span>
+                                </label>
+                            </div>
+
+                            {showCadasturInfo && (
+                                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-[#003194] mb-2">
+                                        <strong>O que é o Cadastur?</strong>
+                                    </p>
+                                    <p className="text-xs text-gray-600 mb-3">
+                                        O Cadastur (Cadastro de Prestadores de Serviços Turísticos) é um sistema do Ministério do Turismo que registra pessoas físicas e jurídicas que atuam no setor de turismo no Brasil.
+                                    </p>
+                                    <p className="text-sm text-[#003194] mb-2">
+                                        <strong>Informações importantes:</strong>
+                                    </p>
+                                    <ul className="text-xs text-gray-600 list-disc list-inside space-y-1">
+                                        <li>O registro no Cadastur é obrigatório para prestadores de serviços turísticos</li>
+                                        <li>O número Cadastur deve estar sempre atualizado</li>
+                                        <li>A validade do registro deve ser renovada periodicamente</li>
+                                        <li>Mantenha seus dados sempre atualizados no sistema</li>
+                                    </ul>
                                 </div>
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label htmlFor="numeroCadastur" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Insira o número
+                                    <label className="block text-sm font-medium text-[#003194] mb-2">
+                                        Número Cadastur
                                     </label>
                                     <input
                                         type="text"
-                                        id="numeroCadastur"
                                         name="numeroCadastur"
-                                        placeholder="Ex: 1234"
                                         value={form.numeroCadastur}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        className={`w-full px-3 py-2 border ${errors.numeroCadastur ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] bg-gray-100 cursor-not-allowed"
+                                        disabled
                                     />
-                                    {errors.numeroCadastur && <div style={{ color: "red", fontWeight: 500 }}>{errors.numeroCadastur}</div>}
                                 </div>
                                 <div>
-                                    <label htmlFor="dataExpiracao" className="block text-sm font-medium text-[#003194] mb-2">
+                                    <label className="block text-sm font-medium text-[#003194] mb-2">
                                         Data de Expiração
                                     </label>
                                     <input
                                         type="date"
-                                        id="dataExpiracao"
                                         name="dataExpiracao"
                                         value={form.dataExpiracao}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
-                                        className={`w-full px-3 py-2 border ${errors.dataExpiracao ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] ${
+                                            errors.dataExpiracao ? "border-red-500" : "border-gray-300"
+                                        }`}
                                     />
-                                    {errors.dataExpiracao && <div style={{ color: "red", fontWeight: 500 }}>{errors.dataExpiracao}</div>}
+                                    {errors.dataExpiracao && (
+                                        <div style={{ color: "red", fontWeight: 500 }}>{errors.dataExpiracao}</div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Termos e Condições */}
-                        <div className="pt-6 border-t border-gray-200">
-                            <div className="flex items-start space-x-3 mb-6 gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="termos"
-                                    name="termos"
-                                    checked={form.termos}
-                                    onChange={handleChange}
-                                    className="mt-1 h-4 w-4 text-[#003194] focus:ring-[#003194] border-gray-300 rounded"
-                                />
 
-                                <label htmlFor="termos" className="text-lg text-[#003194] leading-relaxed">
-                                    Autorizo a Viagium e suas entidades relacionadas a utilizar os meus dados e/ou os de titular para obter informações financeiras comerciais, de crédito e realizar consultas sobre bases de dados necessárias aos serviços solicitados, conforme <a href="#" className="font-bold no-underline hover:text-orange-500" target="_blank">Política de Privacidade da Viagium</a>.
-                                </label>
-                            </div>
-
-                            {errors.termos && <div style={{ color: "red", fontWeight: 500 }}>{errors.termos}</div>}
-                        </div>
 
                         {/* Botões de ação */}
-                        <div className="pt-6 flex justify-center gap-4">
+                        <div className="pt-10 flex justify-center gap-4">
                             <button
                                 type="button"
                                 onClick={handleCloseModal}
@@ -766,12 +781,14 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 type="submit"
                                 className="px-6 py-3 bg-[#003194] text-white rounded-md font-semibold text-lg hover:bg-[#002a7a] transition-colors duration-200"
                             >
-                                REGISTRAR HOTEL
+                                SALVAR ALTERAÇÕES
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    )
-}; export default ModalHotel;
+    );
+}
+
+export default ModalEditHotel;

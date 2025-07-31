@@ -2,6 +2,7 @@ import { FaPlus, FaUser, FaStar, FaEllipsisV, FaEdit, FaPowerOff, FaBed, FaMapMa
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useState, useEffect } from 'react'
 import ModalHotel from "./components/ModalHotel"
+import ModalEditHotel from "./components/ModalEditHotel"
 import axios from "axios"
 
 // Dados para os gráficos
@@ -57,6 +58,10 @@ function AffiliateDashboard() {
 
   // Modal Hotel Handle Abrir e fechar
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Modal Edit Hotel Handle Abrir e fechar
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<any>(null);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -64,6 +69,22 @@ function AffiliateDashboard() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleOpenEditModal = (hotel: any) => {
+    setSelectedHotel(hotel);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedHotel(null);
+  };
+
+  const handleSaveHotel = (updatedHotel: any) => {
+    setYourHotels(prevHotels => 
+      prevHotels.map(h => h.id === updatedHotel.id ? updatedHotel : h)
+    );
   };
 
   const handleLogout = () => {
@@ -144,6 +165,7 @@ function AffiliateDashboard() {
 
   const handleEditHotel = (hotel: typeof yourHotels[0]) => {
     console.log('Editando hotel:', hotel.name);
+    handleOpenEditModal(hotel);
     setActiveDropdown(null);
   };
 
@@ -252,6 +274,14 @@ function AffiliateDashboard() {
               <ModalHotel
                   isOpen={isModalOpen}
                   onClose={handleCloseModal}
+              />
+              
+              {/* Chamada do Modal de edição Hotel */}
+              <ModalEditHotel
+                  isOpen={isEditModalOpen}
+                  onClose={handleCloseEditModal}
+                  hotel={selectedHotel}
+                  onSave={handleSaveHotel}
               />
 
               <div className="flex items-center gap-2 text-gray-600 relative">
