@@ -37,7 +37,7 @@ const HotelCarousel = () => {
     });
 
     useEffect(() => {
-        fetch("https://localhost:7259/api/Hotel")
+        fetch("http://localhost:5028/api/Hotel")
             .then(res => res.json())
             .then(data => setHotels(data))
             .catch(() => setHotels([]))
