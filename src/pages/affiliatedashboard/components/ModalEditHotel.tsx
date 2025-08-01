@@ -30,8 +30,10 @@ interface HotelData {
     typeHosting: string;
     isActive: boolean;
     cnpj: string;
+    inscricaoEstadual: string;
     cadastur: string;
     cadasturExpiration: string;
+    star: number;
     imageUrl: string;
     address: {
         streetName: string;
@@ -42,8 +44,9 @@ interface HotelData {
         zipCode: string;
         country: string;
         createdAt: string;
-        addressId: number;
+        addressId: number | null;
     };
+    amenities: Amenity[];
 }
 
 interface ModalEditHotelProps {
@@ -254,9 +257,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 state: hotelData.address?.state || "",
                 zipCode: hotelData.address?.zipCode || "",
                 country: hotelData.address?.country || "",
-                diferenciais: [],
-                inscricaoEstadual: "",
-                estrelas: "",
+                diferenciais: hotelData.amenities ? hotelData.amenities.map(amenity => amenity.amenityId.toString()) : [],
+                inscricaoEstadual: hotelData.inscricaoEstadual || "",
+                estrelas: hotelData.star ? hotelData.star.toString() : "",
             });
         } catch (error) {
             console.error('Erro ao buscar dados do hotel:', error);
