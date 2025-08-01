@@ -114,18 +114,7 @@ function Package() {
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
     const [hotelIndex, setHotelIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
-    const [roomTypeDetail, setRoomTypeDetail] = useState<RoomType | null>(null);
-  // Buscar detalhes do tipo de quarto pelo ID
-  const fetchRoomTypeById = async (roomTypeId: number) => {
-    try {
-      const response = await axios.get(`http://localhost:5028/api/roomtype/${roomTypeId}`);
-      setRoomTypeDetail(response.data);
-      console.log('🛏️ Detalhe do tipo de quarto carregado:', response.data);
-    } catch (error) {
-      setRoomTypeDetail(null);
-      console.error('Erro ao buscar detalhes do tipo de quarto:', error);
-    }
-  };
+    // Removido roomTypeDetail e fetchRoomTypeById, pois os dados já vêm do pacote
     const [showHotelModal, setShowHotelModal] = useState(false);
     const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
     
@@ -248,25 +237,14 @@ function Package() {
     return hotelAmenitiesArr;
   };
 
-  // Função para obter amenities do tipo de quarto atual (agora só do objeto roomType)
+  // Função para obter amenities do tipo de quarto atual diretamente do objeto roomType
   const getCurrentRoomTypeAmenities = () => {
-    if (roomTypeDetail && Array.isArray(roomTypeDetail.amenities) && roomTypeDetail.amenities.length > 0) {
-      return roomTypeDetail.amenities;
-    }
     if (hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.amenities) {
       return hotels[hotelIndex].roomTypes[roomTypeIndex].amenities;
     }
     return [];
   };
-  // Buscar detalhes do tipo de quarto ao trocar o quarto selecionado
-  useEffect(() => {
-    if (hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]) {
-      const roomTypeId = hotels[hotelIndex].roomTypes[roomTypeIndex].roomTypeId;
-      fetchRoomTypeById(roomTypeId);
-    } else {
-      setRoomTypeDetail(null);
-    }
-  }, [hotelIndex, roomTypeIndex, hotels]);
+  // Não é mais necessário buscar detalhes do tipo de quarto ao trocar o quarto selecionado
 
     useEffect(() => {
     setRoomTypeIndex(0);
