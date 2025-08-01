@@ -1,7 +1,6 @@
 import type React from "react"
-import { useState } from "react"
-import {FaChartBar,FaBox,FaUsers,FaUserTie,FaHotel,FaPlus,FaEdit,FaDollarSign,FaMoneyBill,FaBolt,FaShoppingCart,FaTimes,FaToggleOn,FaToggleOff,FaEye} from "react-icons/fa"
-import type { PackageFormData } from "./components/PackageForm"
+import { useEffect, useState } from "react"
+import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, /*FaToggleOn, FaToggleOff,*/ FaEye } from "react-icons/fa"
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 
@@ -64,6 +63,38 @@ interface HotelFormData {
     isActive: boolean
 }
 
+interface PackageFormData {
+    title: string;
+    description: string;
+    originAddress: { city: string; country: string };
+    destinationAddress: { city: string; country: string };
+    image: File | null;
+    duration: string;
+    maxPeople: string;
+    vehicleType: string;
+    originalPrice: string;
+    packageFee: string;
+    discountCoupon: string;
+    isActive: boolean;
+    // Novos campos para os tipos de pacote
+    packageType: "fixed" | "seasonal" | "recurring";
+    packageTax: string;
+    cupomDiscount: string;
+    discountValue: string;
+    // Campos para pacote com data fixa
+    fixedStartDate: string;
+    // Campos para pacote sazonal (2x ao ano)
+    seasonalPeriods: Array<{
+        startDate: string;
+        endDate: string;
+        isAvailable: boolean;
+    }>;
+    // Campos para pacote recorrente
+    recurrenceStartDate: string;
+    recurrenceEndDate: string;
+    intervalDays: string;
+}
+
 interface ClientFormData {
     firstName: string
     lastName: string
@@ -79,6 +110,7 @@ const PRIMARY_COLOR = "#003194";
 const MODAL_OVERLAY_GRADIENT = `linear-gradient(135deg, rgba(0, 49, 148, 0.9), rgba(247, 126, 40, 0.9))`;
 
 function AdminDashboard() {
+    const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
@@ -87,10 +119,8 @@ function AdminDashboard() {
     const [packageForm, setPackageForm] = useState<PackageFormData>({
         title: "",
         description: "",
-        originCity: "",
-        originCountry: "",
-        destinationCity: "",
-        destinationCountry: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
         image: null,
         duration: "",
         maxPeople: "",
@@ -98,11 +128,9 @@ function AdminDashboard() {
         originalPrice: "",
         packageFee: "",
         discountCoupon: "",
-        selectedHotels: [],
         isActive: true,
         // Novos campos
         packageType: "fixed",
-        price: "",
         packageTax: "",
         cupomDiscount: "",
         discountValue: "",
@@ -133,15 +161,13 @@ function AdminDashboard() {
     // Adicione um novo estado para controlar o modal de edição
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
-    
+
     // Estado para o formulário de edição
     const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
         title: "",
         description: "",
-        originCity: "",
-        originCountry: "",
-        destinationCity: "",
-        destinationCountry: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
         image: null,
         duration: "",
         maxPeople: "",
@@ -149,11 +175,9 @@ function AdminDashboard() {
         originalPrice: "",
         packageFee: "",
         discountCoupon: "",
-        selectedHotels: [],
         isActive: true,
         // Novos campos
         packageType: "fixed",
-        price: "",
         packageTax: "",
         cupomDiscount: "",
         discountValue: "",
@@ -246,34 +270,33 @@ function AdminDashboard() {
     ]
 
     // Estado para os dados das tabelas
-    const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
-        pacotes: [
-            { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
-            { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
-            { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
-        ],
-        afiliados: [
-            { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
-            { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
-            { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
-        ],
-        hoteis: [
-            { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
-            { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
-            { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
-        ],
-        clientes: [
-            { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
-            { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
-            { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
-        ],
-        usuarios: [
-            { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
-            { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
-            { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
-        ],
-    });
-
+    // const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
+    //     pacotes: [
+    //         { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
+    //         { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
+    //         { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
+    //     ],
+    //     afiliados: [
+    //         { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
+    //         { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
+    //         { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
+    //     ],
+    //     hoteis: [
+    //         { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
+    //         { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
+    //         { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
+    //     ],
+    //     clientes: [
+    //         { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
+    //         { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
+    //         { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
+    //     ],
+    //     usuarios: [
+    //         { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
+    //         { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
+    //         { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
+    //     ],
+    // });
 
     const vehicleTypes = [
         "Ônibus",
@@ -288,10 +311,8 @@ function AdminDashboard() {
             setPackageForm({
                 title: "",
                 description: "",
-                originCity: "",
-                originCountry: "",
-                destinationCity: "",
-                destinationCountry: "",
+                originAddress: { city: "", country: "" },
+                destinationAddress: { city: "", country: "" },
                 image: null,
                 duration: "",
                 maxPeople: "",
@@ -299,11 +320,9 @@ function AdminDashboard() {
                 originalPrice: "",
                 packageFee: "",
                 discountCoupon: "",
-                selectedHotels: [],
                 isActive: true,
                 // Novos campos
                 packageType: "fixed",
-                price: "",
                 packageTax: "",
                 cupomDiscount: "",
                 discountValue: "",
@@ -338,26 +357,22 @@ function AdminDashboard() {
         setModalType(null)
     }
 
-    const handlePackageSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-
+    const handlePackageSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         // Validações básicas
         if (!packageForm.title.trim()) {
             alert("Por favor, insira um título para o pacote");
             return;
         }
-
         if (!packageForm.description.trim()) {
             alert("Por favor, insira uma descrição para o pacote");
             return;
         }
-
         // Validação baseada no tipo de pacote
         if (packageForm.packageType === "fixed" && !packageForm.fixedStartDate) {
             alert("Por favor, defina a data de início para o pacote de data fixa");
             return;
         }
-
         if (packageForm.packageType === "seasonal") {
             const period1Valid = packageForm.seasonalPeriods[0]?.startDate && packageForm.seasonalPeriods[0]?.endDate;
             const period2Valid = packageForm.seasonalPeriods[1]?.startDate && packageForm.seasonalPeriods[1]?.endDate;
@@ -366,7 +381,6 @@ function AdminDashboard() {
                 return;
             }
         }
-
         if (packageForm.packageType === "recurring") {
             if (!packageForm.recurrenceStartDate || !packageForm.recurrenceEndDate || !packageForm.intervalDays) {
                 alert("Por favor, defina o período e intervalo para o pacote recorrente");
@@ -374,57 +388,72 @@ function AdminDashboard() {
             }
         }
 
-        // Construir dados do pacote baseado no tipo
-        let packageData: any = {
-            title: packageForm.title.trim(),
-            description: packageForm.description.trim(),
-            originAddressId: 1, // Simulado - você pode mapear isso baseado na cidade/país
-            destinationAddressId: 2, // Simulado
-            imageUrl: packageForm.image ? URL.createObjectURL(packageForm.image) : "",
-            duration: parseInt(packageForm.duration) || 1,
-            maxPeople: parseInt(packageForm.maxPeople),
-            vehicleType: packageForm.vehicleType,
-            originalPrice: parseFloat(packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
-            price: parseFloat(packageForm.price.replace(/[^\d.,]/g, '').replace(',', '.')),
-            packageTax: parseFloat(packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.')),
-            cupomDiscount: packageForm.cupomDiscount.trim(),
-            discountValue: parseInt(packageForm.discountValue) || 0,
-            createdBy: 1, // Simulado - ID do usuário atual
-            isActive: packageForm.isActive,
-        };
-
-        // Adicionar campos específicos do tipo de pacote
+        // Montar o objeto conforme esperado pela API
+        let packageSchedule: any = {};
         if (packageForm.packageType === "fixed") {
-            packageData.schedules = [{
+            packageSchedule = {
                 startDate: packageForm.fixedStartDate,
                 isFixed: true,
                 isAvailable: true
-            }];
+            };
         } else if (packageForm.packageType === "seasonal") {
-            packageData.schedules = packageForm.seasonalPeriods.map(period => ({
-                startDate: period.startDate,
-                endDate: period.endDate,
+            // Envia o primeiro período como exemplo
+            packageSchedule = {
+                startDate: packageForm.seasonalPeriods[0].startDate,
+                endDate: packageForm.seasonalPeriods[0].endDate,
                 isFixed: false,
-                isAvailable: period.isAvailable
-            }));
+                isAvailable: packageForm.seasonalPeriods[0].isAvailable
+            };
         } else if (packageForm.packageType === "recurring") {
-            packageData.recurrence = {
+            packageSchedule = {
                 startDate: packageForm.recurrenceStartDate,
                 endDate: packageForm.recurrenceEndDate,
-                intervalDays: parseInt(packageForm.intervalDays)
+                isFixed: false,
+                isAvailable: true
             };
         }
 
-        console.log("=== DADOS DO PACOTE PARA ENVIO ===");
-        console.log("Tipo de pacote:", packageForm.packageType);
-        console.log("Dados completos:", packageData);
-        console.log("Hotéis selecionados:", packageForm.selectedHotels);
-        
-        // Aqui você faria a chamada para a API
-        // Por exemplo: await createPackage(packageData)
-        
-        alert(`Pacote "${packageForm.title}" criado com sucesso!\nTipo: ${packageForm.packageType}\nVerifique o console para ver todos os dados.`);
-        closeModal()
+
+        const formData = new FormData();
+        formData.append("title", packageForm.title.trim());
+        formData.append("description", packageForm.description.trim());
+        if (packageForm.image) {
+            formData.append("image", packageForm.image); // arquivo real
+        }
+        formData.append("vehicleType", packageForm.vehicleType);
+        formData.append("duration", packageForm.duration);
+        formData.append("maxPeople", packageForm.maxPeople);
+        formData.append("originalPrice", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("price", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("packageTax", packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
+        formData.append("discountValue", packageForm.discountValue);
+        formData.append("manualDiscountValue", "0");
+        formData.append("originAddress.City", packageForm.originAddress.city);
+        formData.append("originAddress.Country", packageForm.originAddress.country);
+        formData.append("destinationAddress.City", packageForm.destinationAddress.city);
+        formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
+        formData.append("userId", "2");
+
+        formData.append("packageSchedule", JSON.stringify(packageSchedule));
+
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            alert(`Pacote "${packageForm.title}" criado com sucesso!`);
+            closeModal();
+        } catch (error: any) {
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
+            alert("Erro ao criar pacote. Verifique os dados e tente novamente.");
+            console.error(error);
+        }
     }
 
     const handleUserSubmit = (e: React.FormEvent) => {
@@ -435,16 +464,20 @@ function AdminDashboard() {
 
     const handleEditPackage = (packageItem: TableData) => {
         setEditingPackage(packageItem);
-        
+
         // Pré-preencher o formulário com os dados do pacote selecionado
         // Como os dados da tabela são limitados, vamos simular dados mais completos
         setEditPackageForm({
             title: packageItem.name,
             description: `Descrição do ${packageItem.name}`,
-            originCity: "São Paulo",
-            originCountry: "Brasil",
-            destinationCity: "Rio de Janeiro",
-            destinationCountry: "Brasil",
+            originAddress: {
+                city: "São Paulo",
+                country: "Brasil"
+            },
+            destinationAddress: {
+                city: "Rio de Janeiro",
+                country: "Brasil"
+            },
             image: null,
             duration: "3 dias",
             maxPeople: "4",
@@ -452,11 +485,9 @@ function AdminDashboard() {
             originalPrice: packageItem.value || "R$ 0,00",
             packageFee: "R$ 50,00",
             discountCoupon: "0",
-            selectedHotels: [1, 3], // Hotéis já selecionados como exemplo
             isActive: packageItem.status === "Ativo",
             // Novos campos
             packageType: "fixed",
-            price: "R$ 1.799,99",
             packageTax: "R$ 150,00",
             cupomDiscount: "PROMO10",
             discountValue: "10",
@@ -472,18 +503,18 @@ function AdminDashboard() {
             recurrenceEndDate: "2025-12-31",
             intervalDays: "15"
         });
-        
+
         setIsEditModalOpen(true);
     };
 
     const handleEditUser = (userItem: TableData) => {
         setEditingUser(userItem);
-        
+
         // Pré-preencher o formulário com os dados do usuário selecionado
         // Como os dados da tabela são limitados, vamos simular dados mais completos
         const [firstName, ...lastNameParts] = userItem.name.split(' ');
         const lastName = lastNameParts.join(' ');
-        
+
         setEditUserForm({
             firstName: firstName || "",
             lastName: lastName || "",
@@ -494,17 +525,17 @@ function AdminDashboard() {
             role: "",
             isActive: userItem.status === "Ativo",
         });
-        
+
         setIsEditUserModalOpen(true);
     };
 
     // Funções de visualização (somente leitura) para afiliados e hotéis
     const handleViewAffiliate = (affiliateItem: TableData) => {
         setEditingAffiliate(affiliateItem);
-        
+
         // Pré-preencher o formulário com os dados do afiliado selecionado para visualização
         const tradeName = affiliateItem.name.replace(/\s+(Ltda|Eireli|S\.A\.|ME|EPP)$/i, '').trim();
-        
+
         setEditAffiliateForm({
             corporateName: affiliateItem.name,
             tradeName: tradeName,
@@ -522,13 +553,13 @@ function AdminDashboard() {
             country: "Brasil",
             isActive: affiliateItem.status === "Ativo",
         });
-        
+
         setIsEditAffiliateModalOpen(true);
     };
 
     const handleViewHotel = (hotelItem: TableData) => {
         setEditingHotel(hotelItem);
-        
+
         setEditHotelForm({
             name: hotelItem.name,
             description: `Descrição do ${hotelItem.name}`,
@@ -543,17 +574,17 @@ function AdminDashboard() {
             email: `contato@${hotelItem.name.toLowerCase().replace(/\s+/g, '')}.com`,
             isActive: hotelItem.status === "Ativo",
         });
-        
+
         setIsEditHotelModalOpen(true);
     };
 
     const handleViewClient = (clientItem: TableData) => {
         setEditingClient(clientItem);
-        
+
         // Pré-preencher o formulário com os dados do cliente selecionado para visualização
         const [firstName, ...lastNameParts] = clientItem.name.split(' ');
         const lastName = lastNameParts.join(' ');
-        
+
         setEditClientForm({
             firstName: firstName || "",
             lastName: lastName || "",
@@ -563,7 +594,7 @@ function AdminDashboard() {
             birthDate: "1990-01-01",
             isActive: clientItem.status === "Ativo",
         });
-        
+
         setIsEditClientModalOpen(true);
     };
 
@@ -574,10 +605,8 @@ function AdminDashboard() {
         setEditPackageForm({
             title: "",
             description: "",
-            originCity: "",
-            originCountry: "",
-            destinationCity: "",
-            destinationCountry: "",
+            originAddress: { city: "", country: "" },
+            destinationAddress: { city: "", country: "" },
             image: null,
             duration: "",
             maxPeople: "",
@@ -585,11 +614,9 @@ function AdminDashboard() {
             originalPrice: "",
             packageFee: "",
             discountCoupon: "",
-            selectedHotels: [],
             isActive: true,
             // Novos campos
             packageType: "fixed",
-            price: "",
             packageTax: "",
             cupomDiscount: "",
             discountValue: "",
@@ -685,7 +712,7 @@ function AdminDashboard() {
     const handleToggleItemStatus = (item: TableData, tabId: string) => {
         // Determinar o novo status baseado no status atual e tipo de entidade
         let newStatus: string;
-        
+
         // Lógica específica para cada tipo de entidade
         switch (tabId) {
             case "pacotes":
@@ -694,7 +721,7 @@ function AdminDashboard() {
                 // Para pacotes, usuários e clientes: Ativo <-> Inativo
                 newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
                 break;
-                
+
             case "afiliados":
                 // Para afiliados: Ativo <-> Inativo (Pendente vira Ativo)
                 if (item.status === "Ativo") {
@@ -703,7 +730,7 @@ function AdminDashboard() {
                     newStatus = "Ativo"; // Pendente ou Inativo vira Ativo
                 }
                 break;
-                
+
             case "hoteis":
                 // Para hotéis: Ativo <-> Inativo (Manutenção vira Ativo)
                 if (item.status === "Ativo") {
@@ -712,31 +739,21 @@ function AdminDashboard() {
                     newStatus = "Ativo"; // Manutenção ou Inativo vira Ativo
                 }
                 break;
-                
+
             default:
                 // Padrão para qualquer outro tipo
                 newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
         }
-        
-        // Atualizar o estado local
-        setSampleData(prevData => ({
-            ...prevData,
-            [tabId]: prevData[tabId].map((dataItem: TableData) => 
-                dataItem.id === item.id 
-                    ? { ...dataItem, status: newStatus }
-                    : dataItem
-            )
-        }));
 
         // Log para debug com informações mais detalhadas
         const entityName = {
             pacotes: "pacote",
-            usuarios: "usuário", 
+            usuarios: "usuário",
             clientes: "cliente",
             afiliados: "afiliado",
             hoteis: "hotel"
         }[tabId] || "item";
-        
+
         console.log(`Alterando status do ${entityName} "${item.name}" (ID: ${item.id}) de "${item.status}" para "${newStatus}"`);
     }
 
@@ -804,8 +821,8 @@ function AdminDashboard() {
                                     <select
                                         required
                                         value={packageForm.packageType}
-                                        onChange={(e) => setPackageForm({ 
-                                            ...packageForm, 
+                                        onChange={(e) => setPackageForm({
+                                            ...packageForm,
                                             packageType: e.target.value as "fixed" | "seasonal" | "recurring"
                                         })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -870,7 +887,7 @@ function AdminDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">2º Período</label>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -957,8 +974,8 @@ function AdminDashboard() {
                                         <input
                                             type="text"
                                             required
-                                            value={packageForm.originCity}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originCity: e.target.value })}
+                                            value={packageForm.originAddress.city}
+                                            onChange={(e) => setPackageForm({ ...packageForm, originAddress: { ...packageForm.originAddress, city: e.target.value } })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: São Paulo"
                                         />
@@ -969,8 +986,8 @@ function AdminDashboard() {
                                         <input
                                             type="text"
                                             required
-                                            value={packageForm.originCountry}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originCountry: e.target.value })}
+                                            value={packageForm.originAddress.country}
+                                            onChange={(e) => setPackageForm({ ...packageForm, originAddress: { ...packageForm.originAddress, country: e.target.value } })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: Brasil"
                                         />
@@ -983,10 +1000,10 @@ function AdminDashboard() {
                                         <input
                                             type="text"
                                             required
-                                            value={packageForm.destinationCity}
+                                            value={packageForm.destinationAddress.city}
                                             onChange={(e) => {
                                                 const newValue = e.target.value;
-                                                setPackageForm({ ...packageForm, destinationCity: newValue });
+                                                setPackageForm({ ...packageForm, destinationAddress: { ...packageForm.destinationAddress, city: newValue } });
                                             }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: Rio de Janeiro"
@@ -998,10 +1015,10 @@ function AdminDashboard() {
                                         <input
                                             type="text"
                                             required
-                                            value={packageForm.destinationCountry}
+                                            value={packageForm.destinationAddress.country}
                                             onChange={(e) => {
                                                 const newValue = e.target.value;
-                                                setPackageForm({ ...packageForm, destinationCountry: newValue });
+                                                setPackageForm({ ...packageForm, destinationAddress: { ...packageForm.destinationAddress, country: newValue } });
                                             }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: Brasil"
@@ -1114,7 +1131,7 @@ function AdminDashboard() {
                                                 <option value="50">50%</option>
                                             </select>
                                         </div>
-                                        
+
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
                                             <input
@@ -1352,8 +1369,8 @@ function AdminDashboard() {
                                     <input
                                         type="text"
                                         required
-                                        value={editPackageForm.originCity}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originCity: e.target.value })}
+                                        value={editPackageForm.originAddress.city}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originAddress: { ...editPackageForm.originAddress, city: e.target.value } })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: São Paulo"
                                     />
@@ -1364,8 +1381,8 @@ function AdminDashboard() {
                                     <input
                                         type="text"
                                         required
-                                        value={editPackageForm.originCountry}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originCountry: e.target.value })}
+                                        value={editPackageForm.originAddress.country}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originAddress: { ...editPackageForm.originAddress, country: e.target.value } })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: Brasil"
                                     />
@@ -1378,10 +1395,10 @@ function AdminDashboard() {
                                     <input
                                         type="text"
                                         required
-                                        value={editPackageForm.destinationCity}
+                                        value={editPackageForm.destinationAddress.city}
                                         onChange={(e) => {
                                             const newValue = e.target.value;
-                                            setEditPackageForm({ ...editPackageForm, destinationCity: newValue });
+                                            setEditPackageForm({ ...editPackageForm, destinationAddress: { ...editPackageForm.destinationAddress, city: newValue } });
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: Rio de Janeiro"
@@ -1393,10 +1410,10 @@ function AdminDashboard() {
                                     <input
                                         type="text"
                                         required
-                                        value={editPackageForm.destinationCountry}
+                                        value={editPackageForm.destinationAddress.country}
                                         onChange={(e) => {
                                             const newValue = e.target.value;
-                                            setEditPackageForm({ ...editPackageForm, destinationCountry: newValue });
+                                            setEditPackageForm({ ...editPackageForm, destinationAddress: { ...editPackageForm.destinationAddress, country: newValue } });
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: Brasil"
@@ -1912,11 +1929,10 @@ function AdminDashboard() {
                             <div className="flex items-center gap-2 mt-6">
                                 <div className="flex items-center">
                                     <span className="text-sm font-medium text-gray-700">Status: </span>
-                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                                        editAffiliateForm.isActive 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${editAffiliateForm.isActive
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}>
                                         {editAffiliateForm.isActive ? 'Ativo' : 'Inativo'}
                                     </span>
                                 </div>
@@ -2108,11 +2124,10 @@ function AdminDashboard() {
                             <div className="flex items-center gap-2 mt-6">
                                 <div className="flex items-center">
                                     <span className="text-sm font-medium text-gray-700">Status: </span>
-                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                                        editHotelForm.isActive 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${editHotelForm.isActive
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}>
                                         {editHotelForm.isActive ? 'Ativo' : 'Inativo'}
                                     </span>
                                 </div>
@@ -2244,11 +2259,10 @@ function AdminDashboard() {
 
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-gray-700">Status:</label>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    editClientForm.isActive 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${editClientForm.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
                                     {editClientForm.isActive ? 'Ativo' : 'Inativo'}
                                 </span>
                             </div>
@@ -2359,11 +2373,11 @@ function AdminDashboard() {
                             {/* Grid lines for better visualization */}
                             <defs>
                                 <pattern id="grid" width="16.67" height="20" patternUnits="userSpaceOnUse">
-                                    <path d="M 16.67 0 L 0 0 0 20" fill="none" stroke="#f3f4f6" strokeWidth="0.5"/>
+                                    <path d="M 16.67 0 L 0 0 0 20" fill="none" stroke="#f3f4f6" strokeWidth="0.5" />
                                 </pattern>
                             </defs>
                             <rect width="100" height="100" fill="url(#grid)" />
-                            
+
                             {/* Line connecting all points */}
                             <polyline
                                 fill="none"
@@ -2373,7 +2387,7 @@ function AdminDashboard() {
                                 points="8.33,74 25,59 41.67,69 58.33,49 75,54 91.67,39"
                             />
                         </svg>
-                        
+
                         {/* Data points positioned responsively */}
                         {[
                             { x: 8.33, y: 74, value: "R$ 15.2k", month: "Jan" },
@@ -2398,7 +2412,7 @@ function AdminDashboard() {
                                 </div>
                             </div>
                         ))}
-                        
+
                         {/* Month labels at bottom */}
                         <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2">
                             {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"].map((month) => (
@@ -2443,15 +2457,15 @@ function AdminDashboard() {
                         <div className="relative w-32 h-32">
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                                 {/* Base circle (cinza) */}
-                                <circle 
-                                    cx="50" 
-                                    cy="50" 
-                                    r="40" 
-                                    fill="none" 
-                                    stroke="#E5E7EB" 
-                                    strokeWidth="8" 
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke="#E5E7EB"
+                                    strokeWidth="8"
                                 />
-                                
+
                                 {/* Confirmadas (verde) - 56.25% */}
                                 <circle
                                     cx="50"
@@ -2463,7 +2477,7 @@ function AdminDashboard() {
                                     strokeDasharray="251.2"
                                     strokeDashoffset="0"
                                 />
-                                
+
                                 {/* Pendentes (laranja) - 28.75% */}
                                 <circle
                                     cx="50"
@@ -2475,7 +2489,7 @@ function AdminDashboard() {
                                     strokeDasharray="251.2"
                                     strokeDashoffset="-141.3"  // 251.2 * 0.5625 (offset do verde)
                                 />
-                                
+
                                 {/* Canceladas (vermelho) - 15% */}
                                 <circle
                                     cx="50"
@@ -2519,7 +2533,26 @@ function AdminDashboard() {
     )
 
     const renderTable = (tabId: string) => {
-        const data = sampleData[tabId] || []
+        if (isLoading) {
+            return (
+                <div className="flex justify-center items-center h-64">
+                    <span className="text-lg font-medium text-gray-700">Carregando dados...</span>
+                </div>
+            );
+        }
+
+        const data =
+            tabId === "pacotes"
+                ? backendPackages
+                : tabId === "afiliados"
+                    ? backendAffiliates
+                    : tabId === "hoteis"
+                        ? backendHotels
+                        : tabId === "clientes"
+                            ? backendClients
+                            : tabId === "usuarios"
+                                ? backendAdmins
+                                : [];
         const tabLabels: Record<string, string> = {
             pacotes: "Pacotes",
             afiliados: "Afiliados",
@@ -2528,7 +2561,7 @@ function AdminDashboard() {
             usuarios: "Usuários",
         }
         const tabsWithCreateButton = ["pacotes", "usuarios"]
-        
+
         // Definir colunas específicas para cada tipo de tabela
         const getTableHeaders = () => {
             if (tabId === "pacotes") {
@@ -2560,7 +2593,7 @@ function AdminDashboard() {
                         <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
                         <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Afiliado</th>
                         <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                    </tr>     
+                    </tr>
                 );
             } else if (tabId === "clientes") {
                 return (
@@ -2593,7 +2626,7 @@ function AdminDashboard() {
                     </tr>
                 );
             }
-        };        const getTableRow = (item: TableData) => {
+        }; const getTableRow = (item: TableData) => {
             if (tabId === "pacotes") {
                 return (
                     <tr key={item.id} className="hover:bg-gray-50">
@@ -2625,17 +2658,16 @@ function AdminDashboard() {
                             >
                                 <FaEdit />
                             </button>
-                            <button 
+                            {/* <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${
-                                    item.status === "Ativo" 
-                                    ? "text-red-600 hover:bg-red-50" 
+                                className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
+                                    ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
-                                }`}
+                                    }`}
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
-                            </button>
+                            </button> */}
                         </td>
                     </tr>
                 );
@@ -2678,23 +2710,22 @@ function AdminDashboard() {
                             >
                                 {(tabId === "afiliados" || tabId === "hoteis" || tabId === "clientes") ? <FaEye /> : <FaEdit />}
                             </button>
-                            <button 
+                            {/* <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${
-                                    item.status === "Ativo" 
-                                    ? "text-red-600 hover:bg-red-50" 
+                                className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
+                                    ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
-                                }`}
+                                    }`}
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
-                            </button>
+                            </button> */}
                         </td>
                     </tr>
                 );
             }
         };
-        
+
         return (
             <div className="space-y-6">
                 <div className="flex justify-between items-center mb-4">
@@ -2726,67 +2757,191 @@ function AdminDashboard() {
     }
 
     // Função para lidar com o envio do formulário de edição
-    const handleEditSubmit = (e: React.FormEvent) => {
+    const handleEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!editingPackage) return;
 
-        // Aqui você implementaria a lógica para salvar as alterações do pacote
+        // Monta o objeto conforme esperado pela API
         const updatedPackageData = {
-            id: editingPackage.id,
-            Title: editPackageForm.title,
-            Description: editPackageForm.description,
-            OriginCity: editPackageForm.originCity,
-            OriginCountry: editPackageForm.originCountry,
-            DestinationCity: editPackageForm.destinationCity,
-            DestinationCountry: editPackageForm.destinationCountry,
-            Image: editPackageForm.image,
-            Duration: editPackageForm.duration,
-            MaxPeople: parseInt(editPackageForm.maxPeople),
-            VehicleType: editPackageForm.vehicleType,
-            OriginalPrice: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
-            PackageFee: editPackageForm.packageFee ? parseFloat(editPackageForm.packageFee.replace(/[^\d.,]/g, '').replace(',', '.')) : null,
-            DiscountCoupon: editPackageForm.discountCoupon,
-            SelectedHotels: editPackageForm.selectedHotels,
-            IsActive: editPackageForm.isActive,
+            travelPackageId: editingPackage.id,
+            title: editPackageForm.title,
+            description: editPackageForm.description,
+            imageUrl: "", /* editPackageForm.image,*/
+            vehicleType: editPackageForm.vehicleType,
+            duration: parseInt(editPackageForm.duration) || 0,
+            maxPeople: parseInt(editPackageForm.maxPeople) || 0,
+            originalPrice: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+            price: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+            packageTax: parseFloat(editPackageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+            cupomDiscount: editPackageForm.cupomDiscount,
+            discountValue: parseInt(editPackageForm.discountValue) || 0,
+            manualDiscountValue: 0,
+            originCity: editPackageForm.originAddress.city,
+            originCountry: editPackageForm.originAddress.country,
+            destinationCity: editPackageForm.destinationAddress.city,
+            destinationCountry: editPackageForm.destinationAddress.country,
+            packageSchedule: {
+                startDate: editPackageForm.fixedStartDate,
+                endDate: null,
+                duration: 0,
+                isFixed: true,
+                isAvailable: editPackageForm.isActive
+            }
         };
 
-        console.log('Salvando alterações do pacote:', updatedPackageData);
-        console.log('Hotéis selecionados:', editPackageForm.selectedHotels);
-        
-        // Após salvar, feche o modal e limpe o estado
-        closeEditModal();
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put("http://localhost:5028/api/TravelPackage/update", updatedPackageData);
+            alert("Pacote atualizado com sucesso!");
+            closeEditModal();
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao atualizar pacote.");
+            console.error(error);
+        }
     };
 
     // Função para lidar com o envio do formulário de edição de usuários
-    const handleEditUserSubmit = (e: React.FormEvent) => {
+    const handleEditUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!editingUser) return;
 
         // Aqui você implementaria a lógica para salvar as alterações do usuário
         const updatedUserData = {
-            id: editingUser.id,
-            FirstName: editUserForm.firstName,
-            LastName: editUserForm.lastName,
-            Email: editUserForm.email,
-            Phone: editUserForm.phone,
-            DocumentNumber: editUserForm.documentNumber,
-            BirthDate: editUserForm.birthDate,
-            Role: editUserForm.role,
-            IsActive: editUserForm.isActive,
+            userId: editingUser.id,
+            email: editUserForm.email,
+            firstName: editUserForm.firstName,
+            lastName: editUserForm.lastName,
+            birthDate: editUserForm.birthDate,
+            password: "string" // Se não for alterar, envie um valor padrão ou o atual
         };
 
-        console.log('Salvando alterações do usuário:', updatedUserData);
-        
-        // Após salvar, feche o modal e limpe o estado
-        closeEditUserModal();
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
+            alert("Usuário atualizado com sucesso!");
+            closeEditUserModal();
+            fetchClients(); // Atualiza a tabela de clientes após edição
+        } catch (error) {
+            alert("Erro ao atualizar usuário.");
+            console.error(error);
+        }
     };
+
+    const [backendPackages, setBackendPackages] = useState<TableData[]>([]);
+    async function fetchPackages() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/TravelPackage/list");
+            const mapped = response.data.map((pkg: any) => ({
+                id: pkg.travelPackageId,
+                name: pkg.title,
+                status: pkg.packageSchedule.isAvailable ? "Ativo" : "Inativo",
+                date: pkg.packageSchedule.startDate ? pkg.packageSchedule.startDate.split("T")[0] : "",
+                value: `R$ ${pkg.price || pkg.originalPrice}`,
+                remainingSlots: pkg.maxPeople
+            }));
+            setBackendPackages(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar pacotes:", err);
+        }
+    }
+
+    const [backendAffiliates, setBackendAffiliates] = useState<TableData[]>([]);
+    async function fetchAffiliates() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/Affiliate");
+            const mapped = response.data.map((aff: any) => ({
+                id: aff.affiliateId,
+                name: aff.companyName || aff.name,
+                // status: aff.isActive ? "Ativo" : "Inativo",
+                status: "Ativo",
+                date: aff.createdAt ? aff.createdAt.split("T")[0] : "",
+                value: aff.cnpj
+            }));
+            setBackendAffiliates(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar afiliados:", err);
+        }
+    }
+
+    const [backendHotels, setBackendHotels] = useState<TableData[]>([]);
+    async function fetchHotels() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/Hotel");
+            const mapped = response.data.map((hotel: any) => ({
+                id: hotel.hotelId,
+                name: hotel.name,
+                status: hotel.isActive ? "Ativo" : "Inativo",
+                date: hotel.address?.createdAt ? hotel.address.createdAt.split("T")[0] : "",
+                value: hotel.affiliateId ? `Afiliado #${hotel.affiliateId}` : "",
+            }));
+            setBackendHotels(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar hotéis:", err);
+        }
+    }
+
+    const [backendClients, setBackendClients] = useState<TableData[]>([]);
+    async function fetchClients() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/User");
+            const mapped = response.data.map((user: any) => ({
+                id: user.userId,
+                name: `${user.firstName} ${user.lastName}`,
+                status: user.isActive ? "Ativo" : "Inativo",
+                date: user.birthDate ? user.birthDate.split("T")[0] : "",
+                value: user.email
+            }));
+            setBackendClients(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar clientes:", err);
+        }
+    }
+
+    const [backendAdmins, setBackendAdmins] = useState<TableData[]>([]);
+
+    async function fetchAdmins() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/admin");
+            const mapped = response.data.map((user: any) => ({
+                id: user.userId,
+                name: `${user.firstName} ${user.lastName}`,
+                status: user.isActive ? "Ativo" : "Inativo",
+                date: user.birthDate ? user.birthDate.split("T")[0] : "",
+                value: user.role === 2 ? "Administrador" : user.role === 3 ? "Suporte" : "Cliente"
+            }));
+            setBackendAdmins(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar usuários administrativos:", err);
+        }
+    }
+
+    useEffect(() => {
+        async function fetchAll() {
+            setIsLoading(true);
+            await Promise.all([
+                fetchPackages(),
+                fetchAffiliates(),
+                fetchHotels(),
+                fetchClients(),
+                fetchAdmins()
+            ]);
+            setIsLoading(false);
+        }
+        fetchAll();
+    }, []);
 
     return (
         <div className="flex h-screen bg-gray-100">
             {/* Sidebar */}
-            <Sidebar 
+            <Sidebar
                 menuItems={menuItems}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
@@ -2796,7 +2951,7 @@ function AdminDashboard() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
                 <Header activeTab={activeTab} />
-                
+
                 {/* Content */}
                 <main
                     className="flex-1 overflow-auto p-10"
