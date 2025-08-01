@@ -194,15 +194,25 @@ function Package() {
   // Calcular valores baseados nos dados da API
 
   const price = currentPackage ? currentPackage.price * numPessoas : 0;
+
   const packageTax = currentPackage ? currentPackage.packageTax : 0;
-  const discountValue = currentPackage ? currentPackage.discountValue : 0; 
+
+  const discountPercent = currentPackage ? currentPackage.discountValue : 0; 
+
   const [cupomError, setCupomError] = useState('');
+
   const [cupomAplicado, setCupomAplicado] = useState(false);
+
   const pricePerNight = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
+
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
-  
+
   const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
-  const valorFinal = price + packageTax + acomodationTotal - (cupomAplicado ? discountValue : 0);
+
+  const valorBase = price + packageTax + acomodationTotal;
+  
+  const valorDesconto = cupomAplicado && discountPercent > 0 ? (valorBase * (discountPercent / 100)) : 0;
+  const valorFinal = valorBase - valorDesconto;
   console.log('Valor final calculado:', valorFinal);
 
   // Nova lógica de cupom
@@ -532,10 +542,10 @@ function Package() {
                       <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     {/* Exibe desconto do cupom apenas se aplicado */}
-                    {cupomAplicado && discountValue > 0 && (
+                    {cupomAplicado && valorDesconto > 0 && (
                       <div className="flex justify-between text-sm text-green-700">
                         <span className="font-bold">Desconto do cupom:</span>
-                        <span className="font-bold">- R$ {discountValue.toLocaleString('pt-BR')},00</span>
+                        <span className="font-bold">- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     )}
                     <hr className="my-2" />
