@@ -10,6 +10,8 @@ import Footer from '../../components/Footer';
 
 function Package() {
 
+  localStorage.setItem("userId", "1");
+
   // Interfaces para dados da API
   interface TravelPackage {
     id: number;
@@ -33,7 +35,8 @@ function Package() {
   }
 
   interface Hotel {
-    id: number;
+    id?: number;
+    hotelId?: number;
     name: string;
     address: any; // pode ser string ou objeto
     rating: number;
@@ -109,7 +112,6 @@ function Package() {
   }
 
     const navigate = useNavigate();
-    const userId = Number(localStorage.getItem("userId")) || 0;
     const { packageId } = useParams<{ packageId: string }>();
     const [numPessoas, setNumPessoas] = useState(1);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
@@ -647,15 +649,41 @@ function Package() {
           </div>
           <div className="p-6 pt-8">
                 <Button
-                  onClick={() => navigate("/reservation", {
-                    state: {
-                      travelPackageId: currentPackage?.travelPackageId ?? currentPackage?.id ?? 0,
-                      hotelId: hotels[hotelIndex]?.id ?? 0,
-                      roomTypeId: hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0,
-                      startDate: new Date().toISOString().slice(0, 10),
-                      numPessoas
-                    }
-                  })}
+                      onClick={async () => {
+                        const selectedHotel = hotels[hotelIndex];
+                        const selectedHotelId = selectedHotel?.hotelId ?? selectedHotel?.id;
+                        const roomTypeId = selectedHotel?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0;
+                        const travelPackageId = currentPackage?.travelPackageId ?? currentPackage?.id ?? 0;
+                        const startDate = new Date().toISOString().slice(0, 10);
+                        const userId = Number(localStorage.getItem("userId")) || 0;
+                        const numPessoasReserva = numPessoas;
+                        try {
+                          const response = await axios.post("http://localhost:5028/api/Reservation", {
+                            travelPackageId,
+                            hotelId: selectedHotelId,
+                            roomTypeId,
+                            startDate,
+                            numPessoas: numPessoasReserva,
+                            userId
+                          });
+                          const reserva = response.data;
+                          console.log("Reserva criada:", reserva);
+                          navigate("/reservation", {
+                            state: {
+                              reservationId: reserva.id,
+                              travelPackageId,
+                              hotelId: selectedHotelId,
+                              roomTypeId,
+                              startDate,
+                              numPessoas: numPessoasReserva,
+                              userId
+                            }
+                          });
+                        } catch (error) {
+                          console.error("Erro ao criar reserva:", error);
+                          alert("Erro ao criar reserva. Tente novamente.");
+                        }
+                      }}
                   className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
                   style={{ backgroundColor: '#FFA62B', color: '#003194' }}
                 >
