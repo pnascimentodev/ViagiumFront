@@ -605,8 +605,8 @@ function Package() {
                         <div className="flex items-center space-x-1 mb-1">
                           {/* <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                          </svg> */}
-                          <span className="text-sm font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
+                          </svg> 
+                          <span className="text-sm font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>*/}
                         </div>
                         {/* Imagem do hotel */}
                         <div className="relative rounded-lg overflow-hidden mb-6">
