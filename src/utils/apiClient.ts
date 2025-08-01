@@ -4,7 +4,6 @@ import { AuthService } from './auth';
 // Configuração base do axios
 const apiClient = axios.create({
   baseURL: 'http://localhost:5028/api',
-  timeout: 10000,
 });
 
 // Interceptor para incluir automaticamente o token Bearer nas requisições

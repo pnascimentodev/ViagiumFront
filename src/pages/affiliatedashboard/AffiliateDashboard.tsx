@@ -288,7 +288,7 @@ function AffiliateDashboard() {
             <div className="flex items-center gap-3">
               <div className="flex items-center flex-shrink-0">
                 <img
-                    src="/../src/assets/img/logo.svg"
+                    src="/src/assets/img/logo.svg"
                     alt="Viagium Logo"
                     className="h-12"
                 />

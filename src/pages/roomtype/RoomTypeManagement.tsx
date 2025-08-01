@@ -62,7 +62,7 @@ export default function RoomTypeManagement() {
 
             // Verifica se está autenticado
             if (!AuthService.isAffiliateAuthenticated()) {
-                navigate('/loginaffiliate');
+                navigate('/affiliate');
                 return;
             }
 
@@ -95,7 +95,7 @@ export default function RoomTypeManagement() {
             // Se der erro de autenticação, redireciona
             if ((error as any)?.response?.status === 401) {
                 AuthService.clearAffiliateAuth();
-                navigate('/loginaffiliate');
+                navigate('/affiliate');
             }
         } finally {
             setLoading(false);
