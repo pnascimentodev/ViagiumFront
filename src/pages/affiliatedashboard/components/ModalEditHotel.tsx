@@ -687,11 +687,13 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                             type="text"
                                             id="cadastur"
                                             name="cadastur"
-                                            placeholder="Número do Cadastur"
+                                            placeholder="Ex: ABC123 ou 123456"
                                             value={form.cadastur}
-                                            disabled
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent bg-gray-100 cursor-not-allowed text-gray-600"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={`w-full px-3 py-2 border ${errors.cadastur ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                                         />
+                                        {errors.cadastur && <div style={{ color: "red", fontWeight: 500 }}>{errors.cadastur}</div>}
                                     </div>
 
                                     <div>

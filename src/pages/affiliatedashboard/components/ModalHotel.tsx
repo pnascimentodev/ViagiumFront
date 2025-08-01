@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateCadasturNumber, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCadasturNumber, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
+import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
-import { MdWifi, MdPool, MdLocalParking, MdFitnessCenter, MdRestaurant, MdPets, MdAccessible, MdRoomService, MdAcUnit, MdSpa, MdRestaurantMenu, MdLocalBar, MdRectangle } from "react-icons/md";
+import { MdCheck } from "react-icons/md";
+import * as MdIcons from "react-icons/md";
+import { AuthService } from "../../../utils/auth.ts";
 
 interface ModalHotelProps {
     isOpen: boolean;
@@ -22,22 +24,9 @@ interface Amenity {
 function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
     // Mapeamento dos nomes dos ícones para componentes do react-icons/md
     const getIconComponent = (iconName: string) => {
-        const iconMap: { [key: string]: React.ComponentType<any> } = {
-            'wifi': MdWifi,
-            'pool': MdPool,
-            'local_parking': MdLocalParking,
-            'fitness_center': MdFitnessCenter,
-            'restaurant': MdRestaurant,
-            'pets': MdPets,
-            'accessible': MdAccessible,
-            'room_service': MdRoomService,
-            'ac_unit': MdAcUnit,
-            'spa': MdSpa,
-            'restaurant_menu': MdRestaurantMenu,
-            'local_bar': MdLocalBar
-        };
-
-        return iconMap[iconName] || MdRectangle; // fallback para um ícone padrão
+        // Acesso direto aos ícones através do objeto MdIcons
+        const IconComponent = (MdIcons as any)[iconName] || MdIcons.MdRectangle;
+        return IconComponent;
     };
 
     // Form state
@@ -55,7 +44,9 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         tipo: "",
         cep: "",
         rua: "",
+        numero: 0,
         bairro: "",
+        cidade: "",
         estado: "",
         pais: "",
         telefoneHotel: "",
@@ -71,6 +62,8 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [amenities, setAmenities] = useState<Amenity[]>([]);
     const [loadingAmenities, setLoadingAmenities] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccessNotification, setShowSuccessNotification] = useState(false);
     //O que é Cadastur? Interrogation
     const [showCadasturInfo, setShowCadasturInfo] = useState(false);
 
@@ -78,73 +71,123 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
     const fetchAmenities = async () => {
         setLoadingAmenities(true);
         try {
-            // Chamada para a API de amenities            
-            // Exemplo: 'http://localhost:3001/api/rota'
-            const response = await axios.get('https://localhost:5028/api/Amenity/Hotel');
+            const token = AuthService.getAffiliateToken();
+
+            const response = await axios.get('http://localhost:5028/api/Amenity/Hotel', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'accept': '*/*'
+                }
+            });
             setAmenities(response.data);
         } catch (error) {
             console.error('Erro ao buscar amenities:', error);
             // Fallback para amenities estáticos em caso de erro da API
             setAmenities([
                 {
-                    amenityId: 1,
-                    name: "Wi-Fi gratuito",
-                    iconName: "wifi"
-                },
-                {
-                    amenityId: 2,
-                    name: "Piscina",
-                    iconName: "pool"
-                },
-                {
-                    amenityId: 3,
-                    name: "Estacionamento",
-                    iconName: "local_parking"
-                },
-                {
-                    amenityId: 4,
+                    amenityId: 49,
                     name: "Academia",
-                    iconName: "fitness_center"
+                    iconName: "MdFitnessCenter"
                 },
                 {
-                    amenityId: 5,
+                    amenityId: 38,
+                    name: "Acessível para PCD",
+                    iconName: "MdAccessible"
+                },
+                {
+                    amenityId: 35,
+                    name: "Assistente virtual",
+                    iconName: "MdVoiceChat"
+                },
+                {
+                    amenityId: 40,
+                    name: "Balcão virtual 24h",
+                    iconName: "MdSupportAgent"
+                },
+                {
+                    amenityId: 46,
+                    name: "Bar/lounge",
+                    iconName: "MdWineBar"
+                },
+                {
+                    amenityId: 36,
+                    name: "Berço disponível",
+                    iconName: "MdChildFriendly"
+                },
+                {
+                    amenityId: 44,
                     name: "Café da manhã incluso",
-                    iconName: "restaurant"
+                    iconName: "MdFreeBreakfast"
                 },
                 {
-                    amenityId: 6,
+                    amenityId: 37,
+                    name: "Entrada com cartão",
+                    iconName: "MdCreditCard"
+                },
+                {
+                    amenityId: 52,
+                    name: "Espaço kids",
+                    iconName: "MdChildCare"
+                },
+                {
+                    amenityId: 39,
+                    name: "Estacionamento gratuito",
+                    iconName: "MdLocalParking"
+                },
+                {
+                    amenityId: 53,
                     name: "Pet friendly",
-                    iconName: "pets"
+                    iconName: "MdPets"
                 },
                 {
-                    amenityId: 7,
-                    name: "Acessibilidade",
-                    iconName: "accessible"
+                    amenityId: 34,
+                    name: "Piscina",
+                    iconName: "MdPool"
                 },
                 {
-                    amenityId: 8,
+                    amenityId: 33,
+                    name: "Piscina privativa",
+                    iconName: "MdPool"
+                },
+                {
+                    amenityId: 43,
+                    name: "Portaria digital",
+                    iconName: "MdSensorDoor"
+                },
+                {
+                    amenityId: 45,
+                    name: "Restaurante no local",
+                    iconName: "MdRestaurant"
+                },
+                {
+                    amenityId: 48,
+                    name: "Sala de jogos",
+                    iconName: "MdSportsEsports"
+                },
+                {
+                    amenityId: 51,
+                    name: "Salas para eventos",
+                    iconName: "MdMeetingRoom"
+                },
+                {
+                    amenityId: 41,
+                    name: "Serviço de manobrista",
+                    iconName: "MdDriveEta"
+                },
+                {
+                    amenityId: 42,
                     name: "Serviço de quarto",
-                    iconName: "room_service"
+                    iconName: "MdRoomService"
                 },
                 {
-                    amenityId: 9,
-                    name: "Ar-condicionado",
-                    iconName: "ac_unit"
+                    amenityId: 50,
+                    name: "Spa e bem-estar",
+                    iconName: "MdSpa"
                 },
                 {
-                    amenityId: 10,
-                    name: "Spa",
-                    iconName: "spa"
-                },
-                {
-                    amenityId: 11,
-                    name: "Restaurante",
-                    iconName: "restaurant_menu"
-                },
-                {
-                    amenityId: 12,
-                    name: "Bar",
-                    iconName: "local_bar"
+                    amenityId: 47,
+                    name: "Teatro no hotel",
+                    iconName: "MdTheaterComedy"
                 }
             ]);
         } finally {
@@ -177,9 +220,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                 break;
             case "inscricaoEstadual":
                 newValue = maskInscricaoEstadual(value);
-                break;
-            case "numeroCadastur":
-                newValue = maskCadasturNumber(value);
                 break;
             case "cpfPassaporte": {
                 const onlyNumbers = value.replace(/\D/g, "");
@@ -241,7 +281,8 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                 if (!validateCNPJ(value)) error = "CNPJ inválido.";
                 break;
             case "numeroCadastur":
-                if (!validateCadasturNumber(value)) error = "Apenas números.";
+                // Mudando validação para aceitar texto - não apenas números
+                if (!validateRequired(value)) error = "Campo obrigatório.";
                 break;
             case "dataExpiracao":
                 if (value && !validateFutureDate(value)) error = "Data inválida.";
@@ -252,40 +293,123 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         setErrors(prev => ({ ...prev, [name]: error }));
     }
 
+    // Função para criar o hotel
+    const createHotel = async () => {
+        try {
+            const token = AuthService.getAffiliateToken();
+            if (!token) {
+                throw new Error('Token de autenticação não encontrado');
+            }
+
+            // Obter o ID do afiliado do token ou localStorage
+            const affiliateAuth = AuthService.getAffiliateAuth();
+            const affiliateId = affiliateAuth?.id || '0';
+
+            // Criar FormData para multipart/form-data
+            const formData = new FormData();
+
+            // Mapeamento dos dados do formulário para os campos da API
+            formData.append('Name', form.nomeHospedagem);
+            formData.append('TypeHosting', form.tipo);
+            formData.append('Description', form.descricao);
+            formData.append('ContactNumber', form.telefoneHotel);
+            formData.append('Cnpj', form.cnpj.replace(/\D/g, '')); // Remove formatação do CNPJ
+            formData.append('Cadastur', form.numeroCadastur);
+            formData.append('CadasturExpiration', form.dataExpiracao);
+            formData.append('AffiliateId', affiliateId);
+            formData.append('ImageUrl', ''); // Campo vazio conforme exemplo
+
+            // Dados do endereço
+            formData.append('Address.StreetName', form.rua);
+            formData.append('Address.AddressNumber', '0'); // Valor padrão
+            formData.append('Address.Neighborhood', form.bairro);
+            formData.append('Address.City', form.estado); // Usando estado como cidade
+            formData.append('Address.State', form.estado);
+            formData.append('Address.Country', form.pais);
+            formData.append('Address.ZipCode', form.cep); // Mantém a formatação do CEP (00000-000)
+            formData.append('Address.AddressId', '0'); // Valor padrão
+            formData.append('Address.CreatedAt', new Date().toISOString());
+
+            // Amenities - converter os IDs selecionados para números
+            form.diferenciais.forEach(amenityId => {
+                formData.append('Amenities', amenityId);
+            });
+
+            // Imagem do hotel
+            const fileInput = document.getElementById('imagemHotel') as HTMLInputElement;
+            if (fileInput?.files?.[0]) {
+                formData.append('Image', fileInput.files[0]);
+            } else {
+                formData.append('Image', ''); // Campo vazio se não houver arquivo
+            }
+
+            // Fazer a chamada para a API
+            const response = await axios.post('http://localhost:5028/api/Hotel/create', formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Erro ao criar hotel:', error);
+            throw error;
+        }
+    };
+
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         const newErrors: { [key: string]: string } = {};
+
         // Validação de todos os campos
-        if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
-        if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
-        if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
-        if (form.telefone2 && !validatePhone(form.telefone2)) newErrors.telefone2 = "Telefone inválido.";
-        if (!validateEmail(form.email)) newErrors.email = "Digite um e-mail válido.";
-        const emailConf = validateEmailConfirmation(form.email, form.confirmarEmail);
-        if (emailConf) newErrors.confirmarEmail = emailConf;
-        const senhaVal = validatePassword(form.senha);
-        if (senhaVal) newErrors.senha = senhaVal;
-        const senhaConf = validatePasswordConfirmation(form.senha, form.confirmarSenha);
-        if (senhaConf) newErrors.confirmarSenha = senhaConf;
         if (!validateRequired(form.nomeHospedagem)) newErrors.nomeHospedagem = "Campo obrigatório.";
         if (!validateRequired(form.tipo)) newErrors.tipo = "Campo obrigatório.";
         if (!validateCEP(form.cep)) newErrors.cep = "CEP inválido.";
         if (!validateRequired(form.rua)) newErrors.rua = "Campo obrigatório.";
+        if (!form.numero || form.numero === 0) newErrors.numero = "Campo obrigatório.";
         if (!validateRequired(form.bairro)) newErrors.bairro = "Campo obrigatório.";
+        if (!validateRequired(form.cidade)) newErrors.cidade = "Campo obrigatório.";
         if (!validateRequired(form.estado)) newErrors.estado = "Campo obrigatório.";
         if (!validateRequired(form.pais)) newErrors.pais = "Campo obrigatório.";
+        if (!validateRequired(form.telefoneHotel)) newErrors.telefoneHotel = "Campo obrigatório.";
         if (!validateRequired(form.imagemHotel)) newErrors.imagemHotel = "Campo obrigatório.";
         if (!validateRequired(form.descricao)) newErrors.descricao = "Campo obrigatório.";
         if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
         if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
-        if (!validateCadasturNumber(form.numeroCadastur)) newErrors.numeroCadastur = "Apenas números.";
+        // Alterando validação do Cadastur para aceitar texto
+        if (!validateRequired(form.numeroCadastur)) newErrors.numeroCadastur = "Campo obrigatório.";
         if (!validateFutureDate(form.dataExpiracao)) newErrors.dataExpiracao = "Data inválida.";
         if (!validateTerms(form.termos)) newErrors.termos = "Você deve aceitar os termos.";
+
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
-        alert("Cadastro realizado com sucesso!");
-        // Aqui -> enviar os dados para a API
-        onClose(); // Fecha o modal após sucesso
+
+        setIsSubmitting(true);
+
+        // Chamar a função de criação do hotel
+        createHotel()
+            .then((result) => {
+                console.log('Hotel criado com sucesso:', result);
+                setShowSuccessNotification(true);
+                setTimeout(() => {
+                    setShowSuccessNotification(false);
+                    onClose();
+                }, 3000); // Fecha o modal após 3 segundos
+            })
+            .catch((error) => {
+                console.error('Erro ao cadastrar hotel:', error);
+                if (error.response?.status === 401) {
+                    alert("Erro de autenticação. Faça login novamente.");
+                } else if (error.response?.data?.message) {
+                    alert(`Erro: ${error.response.data.message}`);
+                } else {
+                    alert("Erro ao cadastrar hotel. Tente novamente.");
+                }
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            });
     }
 
     function handleCloseModal() {
@@ -328,7 +452,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label htmlFor="nomeHospedagem" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Nome da hospedagem
+                                        Nome da hospedagem *
                                     </label>
                                     <input
                                         type="text"
@@ -346,7 +470,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 {/* Tipo */}
                                 <div>
                                     <label htmlFor="tipo" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Tipo
+                                        Tipo *
                                     </label>
                                     <select
                                         id="tipo"
@@ -366,11 +490,11 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 </div>
                             </div>
 
-                            {/* CEP */}
+                            {/* CEP e Rua */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label htmlFor="cep" className="block text-sm font-medium text-[#003194] mb-2">
-                                        CEP
+                                        CEP *
                                     </label>
                                     <input
                                         type="text"
@@ -388,7 +512,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 {/* Rua */}
                                 <div>
                                     <label htmlFor="rua" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Rua
+                                        Rua *
                                     </label>
                                     <input
                                         type="text"
@@ -404,11 +528,42 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 </div>
                             </div>
 
-                            {/* Bairro */}
+                            {/* Número, Bairro e Cidade */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
+                                    <label htmlFor="numero" className="block text-sm font-medium text-[#003194] mb-2">
+                                        Número *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numero"
+                                        name="numero"
+                                        placeholder="123"
+                                        value={form.numero || ""}
+                                        onChange={(e) => {
+                                            setForm(prev => ({ ...prev, numero: parseInt(e.target.value) || 0 }));
+                                            setErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.numero;
+                                                return newErrors;
+                                            });
+                                        }}
+                                        onBlur={(e) => {
+                                            const value = e.target.value;
+                                            let error = "";
+                                            if (!value || parseInt(value) === 0) {
+                                                error = "Campo obrigatório.";
+                                            }
+                                            setErrors(prev => ({ ...prev, numero: error }));
+                                        }}
+                                        className={`w-full px-3 py-2 border ${errors.numero ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                    />
+                                    {errors.numero && <div style={{ color: "red", fontWeight: 500 }}>{errors.numero}</div>}
+                                </div>
+
+                                <div>
                                     <label htmlFor="bairro" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Bairro
+                                        Bairro *
                                     </label>
                                     <input
                                         type="text"
@@ -423,10 +578,30 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                     {errors.bairro && <div style={{ color: "red", fontWeight: 500 }}>{errors.bairro}</div>}
                                 </div>
 
+                                <div>
+                                    <label htmlFor="cidade" className="block text-sm font-medium text-[#003194] mb-2">
+                                        Cidade *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="cidade"
+                                        name="cidade"
+                                        placeholder="Cidade"
+                                        value={form.cidade}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        className={`w-full px-3 py-2 border ${errors.cidade ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                    />
+                                    {errors.cidade && <div style={{ color: "red", fontWeight: 500 }}>{errors.cidade}</div>}
+                                </div>
+                            </div>
+
+                            {/* Estado e País */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 {/* Estado */}
                                 <div>
                                     <label htmlFor="estado" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Estado
+                                        Estado *
                                     </label>
                                     <input
                                         type="text"
@@ -444,7 +619,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 {/* Pais */}
                                 <div>
                                     <label htmlFor="pais" className="block text-sm font-medium text-[#003194] mb-2">
-                                        País
+                                        País *
                                     </label>
                                     <input
                                         type="text"
@@ -465,7 +640,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 {/* DIV Telefone */}
                                 <div className="mb-4 mt-4">
                                     <label htmlFor="telefoneHotel" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Telefone
+                                        Telefone *
                                     </label>
                                     <input
                                         type="text"
@@ -500,7 +675,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                     >
                                         <FaUpload className="text-[#003194] text-3xl mb-2" />
                                         <span className="block text-sm font-medium text-[#003194] mb-2 text-center">
-                                            Imagem do hotel
+                                            Imagem do hotel *
                                         </span>
                                         <span className="text-xs text-gray-500">
                                             Formatos: JPG, PNG, GIF, WebP, SVG or BMP
@@ -566,7 +741,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             {/* Descricao */}
                             <div className="mb-4">
                                 <label htmlFor="descricao" className="block text-sm font-medium text-[#003194] mb-2">
-                                    Descrição do hotel
+                                    Descrição do hotel *
                                 </label>
                                 {/* <textarea // a descricao aparece blurrada */}
                                 <textarea
@@ -638,7 +813,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-7">
                                 <div>
                                     <label htmlFor="cnpj" className="block text-sm font-medium text-[#003194] mb-2">
-                                        CNPJ
+                                        CNPJ *
                                     </label>
                                     <input
                                         type="text"
@@ -656,7 +831,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 {/* Inscrição Estadual */}
                                 <div>
                                     <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Inscrição Estadual
+                                        Inscrição Estadual *
                                     </label>
                                     <input
                                         type="text"
@@ -701,13 +876,13 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label htmlFor="numeroCadastur" className="block text-sm font-medium text-[#003194] mb-2">
-                                        Insira o número
+                                        Cadastur
                                     </label>
                                     <input
                                         type="text"
                                         id="numeroCadastur"
                                         name="numeroCadastur"
-                                        placeholder="Ex: 1234"
+                                        placeholder="Ex: ABC123 ou 123456"
                                         value={form.numeroCadastur}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
@@ -765,10 +940,34 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             <button
                                 type="submit"
                                 className="px-6 py-3 bg-[#003194] text-white rounded-md font-semibold text-lg hover:bg-[#002a7a] transition-colors duration-200"
+                                disabled={isSubmitting}
                             >
-                                REGISTRAR HOTEL
+                                {isSubmitting ? "ENVIANDO..." : "REGISTRAR HOTEL"}
                             </button>
                         </div>
+
+                        {/* Notificação de sucesso */}
+                        {showSuccessNotification && (
+                            <div className="fixed top-4 right-4 z-50 transform transition-all duration-500 ease-in-out animate-in slide-in-from-right-5">
+                                <div className="bg-white border border-green-200 rounded-lg shadow-lg p-4 max-w-sm">
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                <MdCheck className="h-5 w-5 text-green-600" />
+                                            </div>
+                                        </div>
+                                        <div className="ml-3">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                Hotel cadastrado com sucesso!
+                                            </p>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                O modal será fechado automaticamente.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>
