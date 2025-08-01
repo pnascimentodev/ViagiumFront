@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import italyImg from '../../assets/img/italy.jpg';
-import veneza1Img from '../../assets/img/veneza1.jpg';
 import { Button } from '../../components/Button';
 import { FaRegCalendarAlt } from 'react-icons/fa';
 import { IoPersonCircleOutline } from 'react-icons/io5';
@@ -15,6 +13,7 @@ function Package() {
   // Interfaces para dados da API
   interface TravelPackage {
     id: number;
+    travelPackageId?: number; // compatível com backend
     title: string;
     description: string;
     originCity: string;
@@ -28,8 +27,9 @@ function Package() {
     discountValue: number;
     duration: string | number;
     imageUrl?: string;
-    images?: string[];
+    images?: string;
     hotels?: Hotel[]; // Hotéis podem vir junto com o pacote
+    cupomDiscount?: string; // Nome do cupom, se houver
   }
 
   interface Hotel {
@@ -184,10 +184,6 @@ function Package() {
   }
 };
 
-
-  // As amenities e roomTypes agora virão diretamente do objeto travelPackage (currentPackage)
-  // Portanto, não é mais necessário buscar via endpoints separados.
-
   // useEffect para carregar dados quando o componente monta
     useEffect(() => {
     const id = packageId ? parseInt(packageId) : 1;
@@ -211,11 +207,48 @@ function Package() {
   // Calcular valores baseados nos dados da API
 
   const price = currentPackage ? currentPackage.price * numPessoas : 0;
-  const originalPrice = currentPackage ? currentPackage.originalPrice * numPessoas : 0;
   const packageTax = currentPackage ? currentPackage.packageTax : 0;
-  const discountValue = currentPackage ? currentPackage.discountValue : 0;
-  const valorFinal = (price + packageTax) - discountValue;
-  const pacoteImages = currentPackage?.images || currentPackage?.imageUrl ? [currentPackage.imageUrl] : [italyImg];
+  const discountValue = currentPackage ? currentPackage.discountValue : 0; 
+  const [cupomDiscountValue, setCupomDiscountValue] = useState(0);
+  const [cupomError, setCupomError] = useState('');
+
+  // Valor da hospedagem do quarto selecionado
+  const pricePerNight = hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
+  // Valor total de hospedagem: (duração - 1) * pricePerNight * numPessoas
+  const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
+  const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
+  const valorFinal = (price + packageTax + acomodationTotal) - discountValue - cupomDiscountValue;
+
+  // Nova lógica de cupom
+  const aplicarCupom = async () => {
+    setCupomError('');
+    const input = cupomDiscountInput.trim();
+    if (!input) {
+      setCupomDiscountValue(0);
+      return;
+    }
+    if (!currentPackage?.cupomDiscount) {
+      setCupomError('Este pacote não possui cupom de desconto.');
+      setCupomDiscountValue(0);
+      return;
+    }
+    if (input.toLowerCase() !== currentPackage.cupomDiscount.trim().toLowerCase()) {
+      setCupomError('Cupom inválido.');
+      setCupomDiscountValue(0);
+      return;
+    }
+    try {
+      const response = await axios.get('http://localhost:5028/api/TravelPackage/cupom-discount', {
+        params: { travelPackageId: currentPackage.travelPackageId ?? currentPackage.id, cupom: input }
+      });
+      setCupomDiscountValue(response.data.discountValue || 0);
+      setCupomError('');
+      console.log('✅ Cupom aplicado com sucesso:', response.data);
+    } catch (error) {
+      setCupomDiscountValue(0);
+      setCupomError('Erro ao validar cupom.');
+    }
+  };
 
 
 
@@ -423,10 +456,9 @@ function Package() {
           <h1 className="text-2xl md:text-3xl font-bold mb-4">
             {currentPackage.title}
           </h1>
-          {/* Carrossel de Imagens do Pacote */}
           <div className="relative rounded-lg overflow-hidden mb-6">
             <img
-              src={pacoteImages[packageImageIndex]}
+              src={currentPackage.imageUrl}
               alt="Imagem do pacote"
               className="w-full h-64 object-cover"
             />
@@ -490,7 +522,9 @@ function Package() {
                     <h3 className="text-lg font-semibold">Resumo</h3>
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center space-x-3">
+                    {/* Só exibe campo de cupom se o pacote tiver cupomDiscount */}
+                    {currentPackage?.cupomDiscount && (
+                      <div className="flex items-center space-x-3 mb-2">
                         <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
                         <input
                           id="cupom"
@@ -498,16 +532,18 @@ function Package() {
                           className="w-full border rounded px-2 py-1"
                           value={cupomDiscountInput}
                           onChange={e => setCupomDiscountInput(e.target.value)}
-                          placeholder="Insira seu cupom"
+                          onBlur={aplicarCupom}
                         />
-                  </div>
+                        {cupomError && <span className="text-red-500">{cupomError}</span>}
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
-                      <span className="line-through color-red text-red-600 font-bold">Preço Original</span>
-                      <span className="font-bold line-through text-red-600">{`R$ ${originalPrice.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Pacote + Transporte:</span>
+                      <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="font-bold">Pacote + Hospedagem</span>
-                      <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">Hospedagem:</span>
+                      <span className="font-bold">{`R$ ${acomodationTotal.toLocaleString('pt-BR')},00`}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Impostos e encargos:</span>
@@ -567,7 +603,7 @@ function Package() {
                         {/* Imagem do hotel */}
                         <div className="relative rounded-lg overflow-hidden mb-6">
                           <img
-                            src={hotels[hotelImageIndex]?.imageUrl || veneza1Img}
+                            src={hotels[hotelImageIndex]?.imageUrl || '/vite.svg'}
                             alt="Imagem do hotel"
                             className="w-full h-64 object-cover"
                           />
@@ -645,7 +681,7 @@ function Package() {
               </button>
               <h2 className="text-xl font-bold mb-2">{hotels[hotelImageIndex]?.name || 'Hotel não encontrado'}</h2>
               <img
-                src={hotels[hotelImageIndex]?.imageUrl || veneza1Img}
+                src={hotels[hotelImageIndex]?.imageUrl}
                 alt="Imagem do hotel"
                 className="w-full h-48 object-cover rounded mb-4"
               />
