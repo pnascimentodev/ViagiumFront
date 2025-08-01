@@ -1,4 +1,3 @@
-
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react"
@@ -6,6 +5,7 @@ import { FaUser, FaMapMarkerAlt, FaUsers, FaDollarSign } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import { validateCPF, validateCNPJ, validateRequired } from "../../utils/validations";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 interface Client {
   id: number
@@ -13,7 +13,7 @@ interface Client {
   lastName: string
   documentNumber: string
   phoneNumber: string
-  dateOfBirth: string 
+  dateOfBirth: string
 }
 
 interface Passenger {
@@ -42,19 +42,19 @@ interface Reservation{
 
 export default function Reservation() {
   // Mock client data
-  const [client] = useState<Client>({
+  const [mokUser] = useState<Client>({
     id: 1,
-    firstName: "Maria",
-    lastName: "Silva Santos",
-    documentNumber: "123.456.789-00",
-    phoneNumber: "(11) 99999-8888",
+    firstName: "João",
+    lastName: "Silva",
+    documentNumber: "16011683061",
+    phoneNumber: "1199999-8888",
     dateOfBirth: "1990-01-01",
   })
 
   // Mock package data
-  const [packageDetails] = useState<PackageDetails>({
-    id: 1,
-    packageName: "Pacote Viagem Rio de Janeiro",
+  const [mokTravelPackage] = useState<PackageDetails>({
+    id: 5,
+    packageName: "Roteiro Amazônia Selvagem",
     origin: "São Paulo",
     destination: "Rio de Janeiro",
     duration: "7 dias",
@@ -85,30 +85,28 @@ export default function Reservation() {
       dateOfBirth: "",
     })));
   }, [numPessoas]);
-  
+
   const reservationPayload = {
-  userId: client.id,
-  travelPackageId: packageDetails.id, // Adicione o campo id ao seu estado
-  startDate: new Date().toISOString(), // ou a data escolhida pelo usuário
-  totalPrice: parseFloat(packageDetails.totalValue.replace(/[^\d,]/g, '').replace(',', '.')), // ajuste conforme formato
-  status: "Pending",
-  isActive: true,
-  travelers: [
-    {
-      firstName: client.firstName,
-      lastName: client.lastName,
-      documentNumber: client.documentNumber,
-      dateOfBirth: client.dateOfBirth // adicione ao seu estado client
-    },
-    ...passengers.map(p => ({
-      firstName: p.firstName,
-      lastName: p.lastName,
-      documentNumber: p.documentNumber,
-      dateOfBirth: p.dateOfBirth
-    }))
-  ],
-  // Adicione reservationRooms se houver
-};
+    userId: 1, // Usando ID mockado conforme solicitado
+    travelPackageId: 5, // Usando ID mockado conforme solicitado
+    hotelId: 3, // Adicionando hotelId mockado
+    startDate: "2025-08-01", // Data no formato correto
+    roomTypeId: 3, // Adicionando roomTypeId mockado
+    travelers: [
+      {
+        firstName: mokUser.firstName,
+        lastName: mokUser.lastName,
+        documentNumber: mokUser.documentNumber,
+        dateOfBirth: mokUser.dateOfBirth
+      },
+      ...passengers.map(p => ({
+        firstName: p.firstName,
+        lastName: p.lastName,
+        documentNumber: p.documentNumber,
+        dateOfBirth: p.dateOfBirth
+      }))
+    ]
+  };
 
   const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
     setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
@@ -130,11 +128,25 @@ export default function Reservation() {
   }
     const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
 
-    function handleConfirmReservation() {
+  async function handleConfirmReservation() {
     const errors = validatePassengers();
     setPassengerErrors(errors);
     if (Object.keys(errors).length === 0) {
-      navigate("/payment");
+      try {
+        console.log("Enviando payload para API:", reservationPayload);
+        const response = await axios.post("http://localhost:5028/api/Reservation", reservationPayload);
+        console.log("Resposta da API:", response.data);
+        alert("Reserva criada com sucesso!");
+        navigate("/payment");
+      } catch (error) {
+        console.error("Erro ao criar reserva:", error);
+        if (axios.isAxiosError(error)) {
+          console.error("Detalhes do erro:", error.response?.data);
+          alert(`Erro ao criar reserva: ${error.response?.data?.message || error.message}`);
+        } else {
+          alert("Erro inesperado ao criar reserva");
+        }
+      }
     }
   }
 
@@ -160,19 +172,19 @@ export default function Reservation() {
                 <div className="space-y-3">
                   <div>
                     <span className="text-sm font-medium text-gray-700">Nome:</span>
-                    <p className="text-gray-900 font-medium">{client.firstName} {client.lastName}</p>
+                    <p className="text-gray-900 font-medium">{mokUser.firstName} {mokUser.lastName}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-700">Sobrenome:</span>
-                    <p className="text-gray-900 font-medium">{client.lastName}</p>
+                    <p className="text-gray-900 font-medium">{mokUser.lastName}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-700">CPF ou Passaporte:</span>
-                    <p className="text-gray-900">{client.documentNumber}</p>
+                    <p className="text-gray-900">{mokUser.documentNumber}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-700">Contato:</span>
-                    <p className="text-gray-900">{client.phoneNumber}</p>
+                    <p className="text-gray-900">{mokUser.phoneNumber}</p>
                   </div>
                 </div>
               </div>
@@ -187,25 +199,25 @@ export default function Reservation() {
                   <div className="space-y-3">
                     <div>
                       <span className="text-sm font-medium text-gray-700">Nome do Pacote:</span>
-                      <p className="text-gray-900 font-medium">{packageDetails.packageName}</p>
+                      <p className="text-gray-900 font-medium">{mokTravelPackage.packageName}</p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-gray-700">Origem:</span>
-                      <p className="text-gray-900">{packageDetails.origin}</p>
+                      <p className="text-gray-900">{mokTravelPackage.origin}</p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-gray-700">Destino:</span>
-                      <p className="text-gray-900">{packageDetails.destination}</p>
+                      <p className="text-gray-900">{mokTravelPackage.destination}</p>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div>
                       <span className="text-sm font-medium text-gray-700">Duração:</span>
-                      <p className="text-gray-900">{packageDetails.duration}</p>
+                      <p className="text-gray-900">{mokTravelPackage.duration}</p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-gray-700">Valor Total:</span>
-                      <p className="text-2xl font-bold text-[#FFA62B]">{packageDetails.totalValue}</p>
+                      <p className="text-2xl font-bold text-[#FFA62B]">{mokTravelPackage.totalValue}</p>
                     </div>
                   </div>
                 </div>
@@ -291,7 +303,7 @@ export default function Reservation() {
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between">
                         <span className="text-gray-700">Pacote Principal:</span>
-                        <span className="font-medium">{packageDetails.packageName}</span>
+                        <span className="font-medium">{mokTravelPackage.packageName}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700">Passageiros Adicionais:</span>
@@ -299,16 +311,16 @@ export default function Reservation() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700">Duração:</span>
-                        <span className="font-medium">{packageDetails.duration}</span>
+                        <span className="font-medium">{mokTravelPackage.duration}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700">Data de Início:</span>
-                        <span className="font-medium">{packageDetails.startDate.toLocaleDateString()}</span>
+                        <span className="font-medium">{mokTravelPackage.startDate.toLocaleDateString()}</span>
                       </div>
                       <hr className="my-3" />
                       <div className="flex justify-between text-lg">
                         <span className="font-semibold text-gray-900">Valor Total:</span>
-                        <span className="font-bold text-[#FFA62B] text-xl">{packageDetails.totalValue}</span>
+                        <span className="font-bold text-[#FFA62B] text-xl">{mokTravelPackage.totalValue}</span>
                       </div>
                     </div>
 
