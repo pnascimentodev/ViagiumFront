@@ -23,7 +23,6 @@ export type TravelPackage = {
     rating: number;
     reviews: number;
     maxPeople: number;
-    qtySold: number;
     originAddress: Address;
     destinationAddress: Address;
     isActive: boolean;
