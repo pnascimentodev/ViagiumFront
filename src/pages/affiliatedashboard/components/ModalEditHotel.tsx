@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import apiClient from "../../../utils/apiClient";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
+import { maskPhone, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import * as MdIcons from "react-icons/md";
+import axios from "axios";
 
 interface Amenity {
     amenityId: number;
@@ -290,9 +291,6 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             case "contactNumber":
                 newValue = maskPhone(value);
                 break;
-            case "zipCode":
-                newValue = maskCEP(value);
-                break;
             case "cnpj":
                 newValue = maskCNPJ(value);
                 break;
@@ -322,6 +320,15 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             delete newErrors[name];
             return newErrors;
         });
+    }
+
+    function validateCEP(cep: string){
+        if(!cep || cep.trim() === "") {
+            return false;
+        }
+        else{
+            return true;
+        }    
     }
 
     function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -379,30 +386,20 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     }
 
     function handleSubmit(e: React.FormEvent) {
+        console.log('Botão Salvar Alterações clicado!');
         e.preventDefault();
-
-        if (!hotel) return;
-
+        if (!hotel) {
+            console.log("Erro: hotel não encontrado");
+            return;
+        }
+        
+        console.log("Hotel ID:", hotel.id);
+        console.log("Hotel objeto completo:", hotel);
         setSaving(true);
 
         const newErrors: { [key: string]: string } = {};
 
-        // Validação dos campos obrigatórios
-        if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
-        if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
-        if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
-        if (!validateEmail(form.email)) newErrors.email = "Email inválido.";
-        if (!validateEmailConfirmation(form.email, form.confirmarEmail)) newErrors.confirmarEmail = "Emails não conferem.";
-        if (!validatePassword(form.senha)) newErrors.senha = "Senha inválida.";
-        if (!validatePasswordConfirmation(form.senha, form.confirmarSenha)) newErrors.confirmarSenha = "Senhas não conferem.";
-        
-        const onlyNumbers = form.cpfPassaporte.replace(/\D/g, "");
-        if (onlyNumbers.length === 11) {
-            if (!validateCPF(form.cpfPassaporte)) newErrors.cpfPassaporte = "CPF inválido.";
-        } else {
-            if (!validatePassaporte(form.cpfPassaporte)) newErrors.cpfPassaporte = "Passaporte inválido.";
-        }
-        
+        // Validação apenas dos campos que existem no formulário de edição
         if (!validateRequired(form.name)) newErrors.name = "Campo obrigatório.";
         if (!validateRequired(form.description)) newErrors.description = "Campo obrigatório.";
         if (!validateRequired(form.contactNumber)) newErrors.contactNumber = "Campo obrigatório.";
@@ -429,71 +426,80 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             newErrors.cadasturExpiration = "Data deve ser futura.";
         }
 
+        console.log("Erros encontrados:", newErrors);
         setErrors(newErrors);
 
         if (Object.keys(newErrors).length > 0) {
+            console.log("Salvamento cancelado devido a erros de validação");
             setSaving(false);
             return;
         }
 
-        // Preparar dados para envio
+        // Monte o array de amenities selecionados (apenas os IDs)
+        const selectedAmenityIds = amenities
+            .filter(a => form.diferenciais.includes(a.amenityId.toString()))
+            .map(a => a.amenityId); // Apenas o ID, não o objeto completo
+
+        // Preparar dados para envio - estrutura correta esperada pela API
         const updateData = {
-            hotelId: parseInt(hotel.id),
-            name: form.name,
-            description: form.description,
-            contactNumber: form.contactNumber,
-            typeHosting: form.typeHosting,
-            isActive: true, // Manter ativo por padrão
-            cnpj: form.cnpj,
-            cadastur: form.cadastur,
-            cadasturExpiration: form.cadasturExpiration ? `${form.cadasturExpiration}T00:00:00.000Z` : null,
-            imageUrl: form.imagemHotel,
-            address: {
-                streetName: form.streetName,
-                addressNumber: form.addressNumber,
-                neighborhood: form.neighborhood,
-                city: form.city,
-                state: form.state,
-                zipCode: form.zipCode,
-                country: form.country,
-                createdAt: new Date().toISOString(),
-                addressId: 0
+            hotelUpdateDTO: {
+                hotelId: parseInt(hotel.id),
+                name: form.name,
+                description: form.description,
+                contactNumber: form.contactNumber,
+                typeHosting: form.typeHosting,
+                isActive: true,
+                cnpj: form.cnpj,
+                inscricaoEstadual: form.inscricaoEstadual,
+                cadastur: form.cadastur,
+                cadasturExpiration: form.cadasturExpiration ? `${form.cadasturExpiration}T00:00:00.000Z` : null,
+                star: parseInt(form.estrelas) || 0,
+                imageUrl: form.imagemHotel,
+                address: {
+                    streetName: form.streetName,
+                    addressNumber: form.addressNumber,
+                    neighborhood: form.neighborhood,
+                    city: form.city,
+                    state: form.state,
+                    zipCode: form.zipCode,
+                    country: form.country,
+                    createdAt: new Date().toISOString(),
+                },
+                amenities: selectedAmenityIds, // Array de IDs apenas
             }
         };
+        
+        console.log("URL da requisição:", `http://localhost:5028/api/Hotel/${hotel.id}`);
+        console.log("Dados sendo enviados:", updateData);
 
-        // Enviar dados para a API
-        apiClient.put(`/Hotel/${hotel.id}`, updateData)
-            .then(() => {
-                // Atualizar dados locais
-                const updatedHotel: Hotel = {
-                    ...hotel,
-                    name: form.name,
-                    image: form.imagemHotel,
-                    location: `${form.city}, ${form.country}`
-                };
-                onSave(updatedHotel);
-                alert("Hotel atualizado com sucesso!");
+        axios.put(`http://localhost:5028/api/Hotel/${hotel.id}`, updateData, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then((response) => {
+                console.log("Resposta da API:", response);
+                onSave({ ...hotel, ...updateData });
                 onClose();
             })
             .catch((error) => {
-                console.error('Erro ao atualizar hotel:', error);
-                let errorMessage = 'Erro ao atualizar hotel. Tente novamente.';
-
-                if (error.response?.status === 401) {
-                    // Token expirado - o interceptor já vai redirecionar
-                    return;
-                } else if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response?.data?.error) {
-                    errorMessage = error.response.data.error;
-                }
-
-                alert(errorMessage);
+                console.error("Erro detalhado:", error);
+                console.error("Response data:", error.response?.data);
+                console.error("Response status:", error.response?.status);
+                console.error("Response headers:", error.response?.headers);
+                
+                const errorMessage = error.response?.data?.message || 
+                                   error.response?.data?.title || 
+                                   error.message || 
+                                   "Erro desconhecido";
+                                   
+                alert(`Erro ao atualizar hotel: ${errorMessage}`);
             })
             .finally(() => {
+                console.log("Finalizando requisição");
                 setSaving(false);
             });
-    }
+        }
 
     function handleCloseModal() {
         onClose();
@@ -589,7 +595,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 placeholder="00000-000"
                                                 value={form.zipCode}
                                                 onChange={(e) => {
-                                                    const maskedValue = maskCEP(e.target.value);
+                                                    const maskedValue = (e.target.value);
                                                     setForm(prev => ({ ...prev, zipCode: maskedValue }));
                                                     setErrors(prev => {
                                                         const newErrors = { ...prev };
@@ -731,8 +737,16 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 placeholder="(00) 00000-0000"
                                                 value={form.contactNumber}
                                                 onChange={(e) => {
-                                                    const maskedValue = maskPhone(e.target.value);
-                                                    setForm(prev => ({ ...prev, contactNumber: maskedValue }));
+                                                    const value = e.target.value;
+                                                    const newNumbers = value.replace(/\D/g, '');
+                                                    const oldNumbers = form.contactNumber.replace(/\D/g, '');
+                                                    if (newNumbers.length < oldNumbers.length) {
+                                                        setForm(prev => ({ ...prev, contactNumber: newNumbers }));
+                                                    } else {
+                                                        const maskedValue = value === '' ? '' : maskPhone(value);
+                                                        setForm(prev => ({ ...prev, contactNumber: maskedValue }));
+                                                    }
+                                                    
                                                     setErrors(prev => {
                                                         const newErrors = { ...prev };
                                                         delete newErrors.contactNumber;
