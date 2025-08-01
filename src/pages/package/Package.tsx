@@ -109,6 +109,7 @@ function Package() {
   }
 
     const navigate = useNavigate();
+    const userId = Number(localStorage.getItem("userId")) || 0;
     const { packageId } = useParams<{ packageId: string }>();
     const [numPessoas, setNumPessoas] = useState(1);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
@@ -645,16 +646,24 @@ function Package() {
             </div>
           </div>
           <div className="p-6 pt-8">
-              <Button
-                onClick={() => navigate("/reservation", { state: { numPessoas } })}
-                className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
-                style={{ backgroundColor: '#FFA62B', color: '#003194' }}
-              >
-                Reservar Agora
-              </Button>
-            </div>
-        </div>
-        )}
+                <Button
+                  onClick={() => navigate("/reservation", {
+                    state: {
+                      travelPackageId: currentPackage?.travelPackageId ?? currentPackage?.id ?? 0,
+                      hotelId: hotels[hotelIndex]?.id ?? 0,
+                      roomTypeId: hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0,
+                      startDate: new Date().toISOString().slice(0, 10),
+                      numPessoas
+                    }
+                  })}
+                  className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                  style={{ backgroundColor: '#FFA62B', color: '#003194' }}
+                >
+                  Reservar Agora
+                </Button>
+                </div>
+              </div>
+            )}
 
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -845,8 +854,6 @@ function Package() {
                     <Button
                       className="w-full bg-[#FFA62B] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
                       onClick={() => {
-                        // TODO: Implementar modal de nova avaliação
-                        console.log('Abrir modal de nova avaliação');
                       }}
                     >
                       Escrever uma avaliação
