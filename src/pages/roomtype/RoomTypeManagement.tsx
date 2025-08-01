@@ -162,6 +162,8 @@ export default function RoomTypeManagement() {
     const handleEdit = (roomTypeId: number) => {
         console.log("Editando tipo de quarto:", roomTypeId)
         // Aqui você implementaria a navegação para a tela de edição
+        // Navega para a página de criação/edição passando o ID como parâmetro
+        navigate(`/roomtype?id=${roomTypeId}&mode=edit`);
         setActiveDropdown(null)
     }
 
