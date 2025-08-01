@@ -603,9 +603,9 @@ function Package() {
                       <div className="flex flex-col items-center">
                         <h4 className="font-semibold">{hotels[hotelIndex]?.name || 'Hotel não encontrado'}</h4>
                         <div className="flex items-center space-x-1 mb-1">
-                          <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
+                          {/* <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                          </svg>
+                          </svg> */}
                           <span className="text-sm font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
                         </div>
                         {/* Imagem do hotel */}
@@ -710,13 +710,13 @@ function Package() {
                     ))}
                   </ul>
                 </div>
-                <span className="flex items-center font-semibold text-xl">
+                {/*<span className="flex items-center font-semibold text-xl">
                   Avaliação:&nbsp;
                   <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                   </svg>
                   <span className="font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
-                </span>
+                </span>*/}
             <div className="p-6 pt-8">
               <Button
                 className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
