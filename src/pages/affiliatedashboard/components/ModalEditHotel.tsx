@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
 import apiClient from "../../../utils/apiClient";
-import { validatePhone, validateCEP, validateCNPJ, validateRequired, validateFutureDate } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
+import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import * as MdIcons from "react-icons/md";
+
+interface Amenity {
+    amenityId: number;
+    name: string;
+    iconName: string;
+}
 
 interface Hotel {
     id: string;
@@ -46,8 +54,24 @@ interface ModalEditHotelProps {
 }
 
 function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps) {
+    // Mapeamento dos nomes dos ícones para componentes do react-icons/md
+    const getIconComponent = (iconName: string) => {
+        // Acesso direto aos ícones através do objeto MdIcons
+        const IconComponent = (MdIcons as any)[iconName] || MdIcons.MdRectangle;
+        return IconComponent;
+    };
+
     // Form state
     const [form, setForm] = useState({
+        RazaoSocial: "",
+        NomeFantasia: "",
+        telefone1: "",
+        telefone2: "",
+        email: "",
+        confirmarEmail: "",
+        senha: "",
+        confirmarSenha: "",
+        cpfPassaporte: "",
         name: "",
         description: "",
         contactNumber: "",
@@ -55,7 +79,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         cnpj: "",
         cadastur: "",
         cadasturExpiration: "",
-        imagemHotel: "", // Mudado de imageUrl para imagemHotel para consistência
+        imagemHotel: "",
         streetName: "",
         addressNumber: 0,
         neighborhood: "",
@@ -63,13 +87,138 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         state: "",
         zipCode: "",
         country: "",
+        diferenciais: [] as string[],
+        inscricaoEstadual: "",
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [amenities, setAmenities] = useState<Amenity[]>([]);
+    const [loadingAmenities, setLoadingAmenities] = useState(false);
     const [loadingHotelData, setLoadingHotelData] = useState(false);
     const [saving, setSaving] = useState(false);
     //O que é Cadastur? Interrogation
     const [showCadasturInfo, setShowCadasturInfo] = useState(false);
+
+    // Função para buscar amenities da API
+    const fetchAmenities = async () => {
+        setLoadingAmenities(true);
+        try {
+            const response = await apiClient.get('/Amenity/Hotel');
+            setAmenities(response.data);
+        } catch (error) {
+            console.error('Erro ao buscar amenities:', error);
+            // Fallback para amenities estáticos em caso de erro da API
+            setAmenities([
+                {
+                    amenityId: 49,
+                    name: "Academia",
+                    iconName: "MdFitnessCenter"
+                },
+                {
+                    amenityId: 38,
+                    name: "Acessível para PCD",
+                    iconName: "MdAccessible"
+                },
+                {
+                    amenityId: 35,
+                    name: "Assistente virtual",
+                    iconName: "MdVoiceChat"
+                },
+                {
+                    amenityId: 40,
+                    name: "Balcão virtual 24h",
+                    iconName: "MdSupportAgent"
+                },
+                {
+                    amenityId: 46,
+                    name: "Bar/lounge",
+                    iconName: "MdWineBar"
+                },
+                {
+                    amenityId: 36,
+                    name: "Berço disponível",
+                    iconName: "MdChildFriendly"
+                },
+                {
+                    amenityId: 44,
+                    name: "Café da manhã incluso",
+                    iconName: "MdFreeBreakfast"
+                },
+                {
+                    amenityId: 37,
+                    name: "Entrada com cartão",
+                    iconName: "MdCreditCard"
+                },
+                {
+                    amenityId: 52,
+                    name: "Espaço kids",
+                    iconName: "MdChildCare"
+                },
+                {
+                    amenityId: 39,
+                    name: "Estacionamento gratuito",
+                    iconName: "MdLocalParking"
+                },
+                {
+                    amenityId: 53,
+                    name: "Pet friendly",
+                    iconName: "MdPets"
+                },
+                {
+                    amenityId: 34,
+                    name: "Piscina",
+                    iconName: "MdPool"
+                },
+                {
+                    amenityId: 33,
+                    name: "Piscina privativa",
+                    iconName: "MdPool"
+                },
+                {
+                    amenityId: 43,
+                    name: "Portaria digital",
+                    iconName: "MdSensorDoor"
+                },
+                {
+                    amenityId: 45,
+                    name: "Restaurante no local",
+                    iconName: "MdRestaurant"
+                },
+                {
+                    amenityId: 48,
+                    name: "Sala de jogos",
+                    iconName: "MdSportsEsports"
+                },
+                {
+                    amenityId: 51,
+                    name: "Salas para eventos",
+                    iconName: "MdMeetingRoom"
+                },
+                {
+                    amenityId: 41,
+                    name: "Serviço de manobrista",
+                    iconName: "MdDriveEta"
+                },
+                {
+                    amenityId: 42,
+                    name: "Serviço de quarto",
+                    iconName: "MdRoomService"
+                },
+                {
+                    amenityId: 50,
+                    name: "Spa e bem-estar",
+                    iconName: "MdSpa"
+                },
+                {
+                    amenityId: 47,
+                    name: "Teatro no hotel",
+                    iconName: "MdTheaterComedy"
+                }
+            ]);
+        } finally {
+            setLoadingAmenities(false);
+        }
+    };
 
     // Função para buscar dados do hotel da API
     const fetchHotelData = async (hotelId: string) => {
@@ -80,6 +229,15 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
 
             // Preencher o formulário com os dados do hotel
             setForm({
+                RazaoSocial: "",
+                NomeFantasia: "",
+                telefone1: "",
+                telefone2: "",
+                email: "",
+                confirmarEmail: "",
+                senha: "",
+                confirmarSenha: "",
+                cpfPassaporte: "",
                 name: hotelData.name || "",
                 description: hotelData.description || "",
                 contactNumber: hotelData.contactNumber || "",
@@ -95,6 +253,8 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 state: hotelData.address?.state || "",
                 zipCode: hotelData.address?.zipCode || "",
                 country: hotelData.address?.country || "",
+                diferenciais: [],
+                inscricaoEstadual: "",
             });
         } catch (error) {
             console.error('Erro ao buscar dados do hotel:', error);
@@ -104,9 +264,10 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         }
     };
 
-    // Carrega dados do hotel quando o modal abre
+    // Carrega dados do hotel e amenities quando o modal abre
     useEffect(() => {
         if (isOpen) {
+            fetchAmenities();
             if (hotel) {
                 fetchHotelData(hotel.id);
             }
@@ -119,6 +280,8 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         const checked = 'checked' in target ? target.checked : false;
         let newValue = value;
         switch (name) {
+            case "telefone1":
+            case "telefone2":
             case "contactNumber":
                 newValue = maskPhone(value);
                 break;
@@ -128,6 +291,22 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             case "cnpj":
                 newValue = maskCNPJ(value);
                 break;
+            case "inscricaoEstadual":
+                newValue = maskInscricaoEstadual(value);
+                break;
+            case "cpfPassaporte": {
+                const onlyNumbers = value.replace(/\D/g, "");
+                // CPF: só números, até 11 dígitos
+                if (/^\d{1,11}$/.test(onlyNumbers) && onlyNumbers.length > 0) {
+                    newValue = maskCPF(onlyNumbers);
+                } else if (/^[A-Za-z0-9]{6,12}$/.test(value)) {
+                    // Passaporte: letras e números juntos, 6 a 12 caracteres
+                    newValue = maskPassaporte(value);
+                } else {
+                    newValue = value;
+                }
+                break;
+            }
             default:
                 // outros campos sem máscara
                 break;
@@ -144,6 +323,29 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         const { name, value } = e.target;
         let error = "";
         switch (name) {
+            case "cpfPassaporte": {
+                const onlyNumbers = value.replace(/\D/g, "");
+                if (onlyNumbers.length === 11) {
+                    if (!validateCPF(value)) error = "CPF inválido.";
+                } else {
+                    if (!validatePassaporte(value)) error = "Passaporte inválido (mín. 6 caracteres).";
+                }
+                break;
+            }
+            case "email":
+                if (!validateEmail(value)) error = "Digite um e-mail válido.";
+                break;
+            case "confirmarEmail":
+                error = validateEmailConfirmation(form.email, value) || "";
+                break;
+            case "senha":
+                error = validatePassword(value) || "";
+                break;
+            case "confirmarSenha":
+                error = validatePasswordConfirmation(form.senha, value) || "";
+                break;
+            case "telefone1":
+            case "telefone2":
             case "contactNumber":
                 if (!validatePhone(value)) error = "Telefone inválido.";
                 break;
@@ -152,6 +354,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 break;
             case "cnpj":
                 if (!validateCNPJ(value)) error = "CNPJ inválido.";
+                break;
+            case "cadastur":
+                // Cadastur é apenas para visualização, não validar
                 break;
             case "cadasturExpiration":
                 if (value && !validateFutureDate(value)) error = "Data deve ser futura.";
@@ -172,6 +377,21 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         const newErrors: { [key: string]: string } = {};
 
         // Validação dos campos obrigatórios
+        if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
+        if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
+        if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
+        if (!validateEmail(form.email)) newErrors.email = "Email inválido.";
+        if (!validateEmailConfirmation(form.email, form.confirmarEmail)) newErrors.confirmarEmail = "Emails não conferem.";
+        if (!validatePassword(form.senha)) newErrors.senha = "Senha inválida.";
+        if (!validatePasswordConfirmation(form.senha, form.confirmarSenha)) newErrors.confirmarSenha = "Senhas não conferem.";
+        
+        const onlyNumbers = form.cpfPassaporte.replace(/\D/g, "");
+        if (onlyNumbers.length === 11) {
+            if (!validateCPF(form.cpfPassaporte)) newErrors.cpfPassaporte = "CPF inválido.";
+        } else {
+            if (!validatePassaporte(form.cpfPassaporte)) newErrors.cpfPassaporte = "Passaporte inválido.";
+        }
+        
         if (!validateRequired(form.name)) newErrors.name = "Campo obrigatório.";
         if (!validateRequired(form.description)) newErrors.description = "Campo obrigatório.";
         if (!validateRequired(form.contactNumber)) newErrors.contactNumber = "Campo obrigatório.";
@@ -184,6 +404,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         if (!validateRequired(form.country)) newErrors.country = "Campo obrigatório.";
         if (!validateRequired(form.imagemHotel)) newErrors.imagemHotel = "Campo obrigatório.";
         if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
+        if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
         if (!validatePhone(form.contactNumber)) newErrors.contactNumber = "Telefone inválido.";
         if (!validateCEP(form.zipCode)) newErrors.zipCode = "CEP inválido.";
 
@@ -290,8 +511,178 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 <div className="p-6">
                     <form className="space-y-6" onSubmit={handleSubmit}>
 
-                        {/* Dados da hospedagem */}
+                        {/* Dados Pessoais/Empresariais */}
                         <div className="pt-6">
+                            <h3 className="text-2xl font-semibold text-[#003194] mb-6">Dados Pessoais/Empresariais</h3>
+                            
+                            {!loadingHotelData && (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label htmlFor="RazaoSocial" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Razão Social *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="RazaoSocial"
+                                                name="RazaoSocial"
+                                                placeholder="Razão Social da empresa"
+                                                value={form.RazaoSocial}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.RazaoSocial ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.RazaoSocial && <div style={{ color: "red", fontWeight: 500 }}>{errors.RazaoSocial}</div>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="NomeFantasia" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Nome Fantasia *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="NomeFantasia"
+                                                name="NomeFantasia"
+                                                placeholder="Nome Fantasia da empresa"
+                                                value={form.NomeFantasia}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.NomeFantasia ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.NomeFantasia && <div style={{ color: "red", fontWeight: 500 }}>{errors.NomeFantasia}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label htmlFor="telefone1" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Telefone 1 *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="telefone1"
+                                                name="telefone1"
+                                                placeholder="(00) 00000-0000"
+                                                value={form.telefone1}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.telefone1 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.telefone1 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone1}</div>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="telefone2" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Telefone 2
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="telefone2"
+                                                name="telefone2"
+                                                placeholder="(00) 00000-0000"
+                                                value={form.telefone2}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.telefone2 ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.telefone2 && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefone2}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label htmlFor="email" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                name="email"
+                                                placeholder="email@exemplo.com"
+                                                value={form.email}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.email && <div style={{ color: "red", fontWeight: 500 }}>{errors.email}</div>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="confirmarEmail" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Confirmar Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="confirmarEmail"
+                                                name="confirmarEmail"
+                                                placeholder="email@exemplo.com"
+                                                value={form.confirmarEmail}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.confirmarEmail ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.confirmarEmail && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarEmail}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label htmlFor="senha" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Senha *
+                                            </label>
+                                            <input
+                                                type="password"
+                                                id="senha"
+                                                name="senha"
+                                                placeholder="••••••••"
+                                                value={form.senha}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.senha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.senha && <div style={{ color: "red", fontWeight: 500 }}>{errors.senha}</div>}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="confirmarSenha" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Confirmar Senha *
+                                            </label>
+                                            <input
+                                                type="password"
+                                                id="confirmarSenha"
+                                                name="confirmarSenha"
+                                                placeholder="••••••••"
+                                                value={form.confirmarSenha}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.confirmarSenha ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.confirmarSenha && <div style={{ color: "red", fontWeight: 500 }}>{errors.confirmarSenha}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label htmlFor="cpfPassaporte" className="block text-sm font-medium text-[#003194] mb-2">
+                                            CPF/Passaporte *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="cpfPassaporte"
+                                            name="cpfPassaporte"
+                                            placeholder="000.000.000-00 ou ABC123456"
+                                            value={form.cpfPassaporte}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={`w-full px-3 py-2 border ${errors.cpfPassaporte ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                        />
+                                        {errors.cpfPassaporte && <div style={{ color: "red", fontWeight: 500 }}>{errors.cpfPassaporte}</div>}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Dados da hospedagem */}
+                        <div className="pt-6 border-t border-gray-200">
                             <h3 className="text-2xl font-semibold text-[#003194] mb-6">Dados do Hotel</h3>
 
                             {/* Loading state */}
@@ -604,7 +995,60 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                         {errors.description && <div style={{ color: "red", fontWeight: 500 }}>{errors.description}</div>}
                                     </div>
 
-                                    {/* CNPJ */}
+                                    {/* Diferenciais do hotel */}
+                                    <div className="mb-4 mt-5">
+                                        <label className="block text-sm font-medium text-[#003194] mb-2">
+                                            Diferenciais do hotel
+                                        </label>
+                                        {loadingAmenities ? (
+                                            <div className="rounded-md border border-gray-300 p-4">
+                                                <div className="flex items-center justify-center text-[#003194]">
+                                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003194] mr-2"></div>
+                                                    Carregando amenities...
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 rounded-md border border-gray-300 p-4">
+                                                {amenities.map((amenity) => {
+                                                    const IconComponent = getIconComponent(amenity.iconName);
+                                                    return (
+                                                        <label key={amenity.amenityId} className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="diferenciais"
+                                                                value={amenity.amenityId.toString()}
+                                                                checked={form.diferenciais.includes(amenity.amenityId.toString())}
+                                                                onChange={e => {
+                                                                    const checked = e.target.checked;
+                                                                    setForm(prev => {
+                                                                        return {
+                                                                            ...prev,
+                                                                            diferenciais: checked
+                                                                                ? [...prev.diferenciais, amenity.amenityId.toString()]
+                                                                                : prev.diferenciais.filter(v => v !== amenity.amenityId.toString())
+                                                                        };
+                                                                    });
+                                                                    setErrors(prev => {
+                                                                        const newErrors = { ...prev };
+                                                                        delete newErrors.diferenciais;
+                                                                        return newErrors;
+                                                                    });
+                                                                }}
+                                                                className="h-4 w-4 text-[#003194] border-gray-300 rounded focus:ring-[#003194]"
+                                                            />
+                                                            <div className="flex items-center gap-2">
+                                                                <IconComponent className="text-lg text-[#003194]" />
+                                                                <span className="text-[#003194] font-medium">{amenity.name}</span>
+                                                            </div>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        {errors.diferenciais && <div style={{ color: "red", fontWeight: 500 }}>{errors.diferenciais}</div>}
+                                    </div>
+
+                                    {/* CNPJ e Inscrição Estadual */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-7">
                                         <div>
                                             <label htmlFor="cnpj" className="block text-sm font-medium text-[#003194] mb-2">
@@ -630,6 +1074,23 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                             />
                                             {errors.cnpj && <div style={{ color: "red", fontWeight: 500 }}>{errors.cnpj}</div>}
                                         </div>
+
+                                        <div>
+                                            <label htmlFor="inscricaoEstadual" className="block text-sm font-medium text-[#003194] mb-2">
+                                                Inscrição Estadual *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="inscricaoEstadual"
+                                                name="inscricaoEstadual"
+                                                placeholder="Inscrição na Receita Estadual"
+                                                value={form.inscricaoEstadual}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={`w-full px-3 py-2 border ${errors.inscricaoEstadual ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            />
+                                            {errors.inscricaoEstadual && <div style={{ color: "red", fontWeight: 500 }}>{errors.inscricaoEstadual}</div>}
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -637,7 +1098,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
 
                         {/* Seção Cadastur */}
                         {!loadingHotelData && (
-                            <div>
+                            <div className="pt-6 border-t border-gray-200">
                                 <div className="flex items-center gap-2 mb-4">
                                     <h3 className="text-xl font-bold text-[#003194]">Cadastur</h3>
                                     <HiQuestionMarkCircle
@@ -681,7 +1142,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="cadastur" className="block text-sm font-medium text-[#003194] mb-2">
-                                            Número Cadastur
+                                            Número Cadastur (Visualização)
                                         </label>
                                         <input
                                             type="text"
@@ -689,11 +1150,11 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                             name="cadastur"
                                             placeholder="Ex: ABC123 ou 123456"
                                             value={form.cadastur}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            className={`w-full px-3 py-2 border ${errors.cadastur ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                            readOnly
+                                            disabled
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
                                         />
-                                        {errors.cadastur && <div style={{ color: "red", fontWeight: 500 }}>{errors.cadastur}</div>}
+                                        <small className="text-gray-500">Este campo é apenas para visualização</small>
                                     </div>
 
                                     <div>
