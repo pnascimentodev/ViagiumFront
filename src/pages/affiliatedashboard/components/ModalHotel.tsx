@@ -50,6 +50,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         estado: "",
         pais: "",
         telefoneHotel: "",
+        estrelas: "",
         imagemHotel: "",
         descricao: "",
         diferenciais: [] as string[],
@@ -287,6 +288,12 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             case "dataExpiracao":
                 if (value && !validateFutureDate(value)) error = "Data inválida.";
                 break;
+            case "estrelas":
+                const starsValue = parseInt(value);
+                if (!value || isNaN(starsValue) || starsValue < 1 || starsValue > 5) {
+                    error = "Digite um número de 1 a 5.";
+                }
+                break;
             default:
                 if (!validateRequired(value)) error = "Campo obrigatório.";
         }
@@ -375,6 +382,10 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         if (!validateRequired(form.telefoneHotel)) newErrors.telefoneHotel = "Campo obrigatório.";
         if (!validateRequired(form.imagemHotel)) newErrors.imagemHotel = "Campo obrigatório.";
         if (!validateRequired(form.descricao)) newErrors.descricao = "Campo obrigatório.";
+        const starsValue = parseInt(form.estrelas);
+        if (!form.estrelas || isNaN(starsValue) || starsValue < 1 || starsValue > 5) {
+            newErrors.estrelas = "Digite um número de 1 a 5.";
+        }
         if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
         if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
         // Alterando validação do Cadastur para aceitar texto
@@ -635,7 +646,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                 </div>
                             </div>
 
-                            {/* Telefone Hotel e ImagemURL advinda do computador   */}
+                            {/* Telefone Hotel e Estrelas */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 {/* DIV Telefone */}
                                 <div className="mb-4 mt-4">
@@ -666,76 +677,108 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                     {errors.telefoneHotel && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefoneHotel}</div>}
                                 </div>
 
-                                <div className="mb-4 flex flex-col items-center w-full">
-                                    <label
-                                        htmlFor="imagemHotel"
-                                        className={`w-full flex flex-col items-center justify-center px-3 py-6 border-2 border-dotted cursor-pointer transition-colors duration-150 ${errors.imagemHotel ? 'border-red-500' : 'border-gray-300'
-                                            } rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent text-center`}
-                                        style={{ textAlign: "center" }}
-                                    >
-                                        <FaUpload className="text-[#003194] text-3xl mb-2" />
-                                        <span className="block text-sm font-medium text-[#003194] mb-2 text-center">
-                                            Imagem do hotel *
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                            Formatos: JPG, PNG, GIF, WebP, SVG or BMP
-                                        </span>
-                                        <input
-                                            type="file"
-                                            id="imagemHotel"
-                                            name="imagemHotel"
-                                            accept="image/*"
-                                            onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    const reader = new FileReader();
-                                                    reader.onload = (ev) => {
-                                                        setForm(prev => ({
-                                                            ...prev,
-                                                            imagemHotel: ev.target?.result as string
-                                                        }));
-                                                    };
-                                                    reader.readAsDataURL(file);
-                                                } else {
-                                                    setForm(prev => ({
-                                                        ...prev,
-                                                        imagemHotel: ""
-                                                    }));
-                                                }
+                                {/* Estrelas */}
+                                <div className="mb-4 mt-4">
+                                    <label htmlFor="estrelas" className="block text-sm font-medium text-[#003194] mb-2">
+                                        Quantas estrelas tem o seu hotel? *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="estrelas"
+                                        name="estrelas"
+                                        placeholder="Digite de 1 a 5"
+                                        value={form.estrelas || ""}
+                                        onChange={e => {
+                                            const value = e.target.value;
+                                            // Permite apenas números de 1 a 5
+                                            if (value === "" || (parseInt(value) >= 1 && parseInt(value) <= 5)) {
+                                                setForm(prev => ({ ...prev, estrelas: value }));
                                                 setErrors(prev => {
                                                     const newErrors = { ...prev };
-                                                    delete newErrors.imagemHotel;
+                                                    delete newErrors.estrelas;
                                                     return newErrors;
                                                 });
-                                            }}
-                                            className="hidden"
-                                        />
-                                    </label>
-                                    {/* Preview da imagem */}
-                                    {form.imagemHotel && (
-                                        <div className="mt-2 flex items-center gap-2">
-                                            <span className="truncate max-w-xs text-gray-700 text-sm">
-                                                {(() => {
-                                                    // Extrai o nome do arquivo do DataURL, se possível
-                                                    const input = document.getElementById("imagemHotel") as HTMLInputElement | null;
-                                                    if (input && input.files && input.files[0]) {
-                                                        return input.files[0].name;
-                                                    }
-                                                    // fallback: mostra apenas "Arquivo selecionado"
-                                                    return "Arquivo selecionado";
-                                                })()}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setForm(prev => ({ ...prev, imagemHotel: "" }))}
-                                                className="ml-2 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-xs"
-                                            >
-                                                Remover
-                                            </button>
-                                        </div>
-                                    )}
-                                    {errors.imagemHotel && <div style={{ color: "red", fontWeight: 500 }}>{errors.imagemHotel}</div>}
+                                            }
+                                        }}
+                                        onBlur={handleBlur}
+                                        min="1"
+                                        max="5"
+                                        className={`w-full px-3 py-2 border ${errors.estrelas ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
+                                    />
+                                    {errors.estrelas && <div style={{ color: "red", fontWeight: 500 }}>{errors.estrelas}</div>}
                                 </div>
+                            </div>
+
+                            {/* Upload de Imagem */}
+                            <div className="mb-4 flex flex-col items-center w-full">
+                                <label
+                                    htmlFor="imagemHotel"
+                                    className={`w-full flex flex-col items-center justify-center px-3 py-6 border-2 border-dotted cursor-pointer transition-colors duration-150 ${errors.imagemHotel ? 'border-red-500' : 'border-gray-300'
+                                        } rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent text-center`}
+                                    style={{ textAlign: "center" }}
+                                >
+                                    <FaUpload className="text-[#003194] text-3xl mb-2" />
+                                    <span className="block text-sm font-medium text-[#003194] mb-2 text-center">
+                                        Imagem do hotel *
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        Formatos: JPG, PNG, GIF, WebP, SVG or BMP
+                                    </span>
+                                    <input
+                                        type="file"
+                                        id="imagemHotel"
+                                        name="imagemHotel"
+                                        accept="image/*"
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (ev) => {
+                                                    setForm(prev => ({
+                                                        ...prev,
+                                                        imagemHotel: ev.target?.result as string
+                                                    }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            } else {
+                                                setForm(prev => ({
+                                                    ...prev,
+                                                    imagemHotel: ""
+                                                }));
+                                            }
+                                            setErrors(prev => {
+                                                const newErrors = { ...prev };
+                                                delete newErrors.imagemHotel;
+                                                return newErrors;
+                                            });
+                                        }}
+                                        className="hidden"
+                                    />
+                                </label>
+                                {/* Preview da imagem */}
+                                {form.imagemHotel && (
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <span className="truncate max-w-xs text-gray-700 text-sm">
+                                            {(() => {
+                                                // Extrai o nome do arquivo do DataURL, se possível
+                                                const input = document.getElementById("imagemHotel") as HTMLInputElement | null;
+                                                if (input && input.files && input.files[0]) {
+                                                    return input.files[0].name;
+                                                }
+                                                // fallback: mostra apenas "Arquivo selecionado"
+                                                return "Arquivo selecionado";
+                                            })()}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setForm(prev => ({ ...prev, imagemHotel: "" }))}
+                                            className="ml-2 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-xs"
+                                        >
+                                            Remover
+                                        </button>
+                                    </div>
+                                )}
+                                {errors.imagemHotel && <div style={{ color: "red", fontWeight: 500 }}>{errors.imagemHotel}</div>}
                             </div>
 
                             {/* Descricao */}
