@@ -11,35 +11,50 @@ import type { TravelPackage } from "../../types/travelPackageTypes";
 // ...existing code...
 
 export default function HomePage() {
-    const [packages, setPackages] = useState<any[]>([]);
+    const [packages, setPackages] = useState<TravelPackage[]>([]);
 
     // Pode ser usado diretamente no HomePage.tsx, na hora de setar os pacotes
     function mapApiToTravelPackage(apiPkg: any): TravelPackage {
-        return {
-            id: apiPkg.travelPackageId,
-            title: apiPkg.title,
-            description: apiPkg.description,
-            vehicleType: apiPkg.vehicleType,
-            price: apiPkg.price,
-            originalPrice: apiPkg.originalPrice,
-            packageTax: apiPkg.packageTax,
-            duration: apiPkg.duration,
-            image: apiPkg.imageUrl,
-            rating: 5, // valor fixo, ajuste se necessário
-            reviews: 10, // valor fixo, ajuste se necessário
-            maxPeople: apiPkg.maxPeople,
-            originAddress: apiPkg.originAddress ?? { city: "Origem", country: "BR" },
-            destinationAddress: apiPkg.destinationAddress ?? { city: "Destino", country: "BR" },
-            isActive: apiPkg.isActive,
-            schedules: [], // ajuste se necessário
-        };
-    }
-
+    return {
+        id: apiPkg.travelPackageId,
+        title: apiPkg.title,
+        description: apiPkg.description,
+        vehicleType: apiPkg.vehicleType,
+        price: apiPkg.price,
+        originalPrice: apiPkg.originalPrice,
+        packageTax: apiPkg.packageTax,
+        duration: apiPkg.duration,
+        image: apiPkg.imageUrl,
+        rating: 5, // valor padrão
+        reviews: 10, // valor padrão
+        maxPeople: apiPkg.maxPeople,
+        originAddress: { 
+            city: apiPkg.originCity, 
+            country: apiPkg.originCountry 
+        },
+        destinationAddress: { 
+            city: apiPkg.destinationCity, 
+            country: apiPkg.destinationCountry 
+        },
+        isActive: apiPkg.packageSchedule?.isAvailable ?? true,
+        schedules: apiPkg.packageSchedule ? [apiPkg.packageSchedule] : [],
+        cupomDiscount: apiPkg.cupomDiscount,
+        discountValue: apiPkg.discountValue,
+        manualDiscountValue: apiPkg.manualDiscountValue,
+    };
+}
     useEffect(() => {
         document.title = "Viagium | Descubra o Mundo Com Quem Entende de Viagem";
-        axios.get("http://localhost:5028/api/TravelPackage")
-            .then(res => setPackages(res.data.map(mapApiToTravelPackage)))
-            .catch(() => setPackages([]));
+        
+        axios.get("http://localhost:5028/api/TravelPackage/list")
+            .then(res => {
+                const mappedPackages = res.data.map(mapApiToTravelPackage);
+                setPackages(mappedPackages);
+            })
+            .catch(err => {
+                console.error('Erro ao carregar pacotes:', err);
+                setPackages([]);
+            });
     }, []);
 
     return (
@@ -108,14 +123,14 @@ export default function HomePage() {
                                     originalPrice: pkg.originalPrice,
                                     packageTax: pkg.packageTax,
                                     duration: pkg.duration,
-                                    image: pkg.imageUrl,
-                                    rating: 5, // valor fixo ou ajuste conforme necessário
-                                    reviews: 10, // valor fixo ou ajuste conforme necessário
+                                    image: pkg.image,
+                                    rating: pkg.rating,
+                                    reviews: pkg.reviews,
                                     maxPeople: pkg.maxPeople,
-                                    originAddress: { city: pkg.originCity, country: pkg.originCountry }, // ajuste conforme necessário
-                                    destinationAddress: { city: pkg.destinationCity, country: pkg.destinationCountry }, // ajuste conforme necessário
+                                    originAddress: pkg.originAddress,
+                                    destinationAddress: pkg.destinationAddress,
                                     isActive: pkg.isActive,
-                                    schedules: [], // ajuste se houver dados
+                                    schedules: pkg.schedules,
                                 }}
                             />
                         ))}

@@ -4,10 +4,11 @@ export type Address = {
 };
 
 export type Schedule = {
-    startDate: Date;
+    startDate: string;
+    endDate: string;
+    duration: number;
     isFixed: boolean;
     isAvailable: boolean;
-    salesLeft: number;
 };
 
 export type TravelPackage = {
@@ -27,4 +28,7 @@ export type TravelPackage = {
     destinationAddress: Address;
     isActive: boolean;
     schedules: Schedule[];
+    cupomDiscount?: string;
+    discountValue?: number;
+    manualDiscountValue?: number;
 };
