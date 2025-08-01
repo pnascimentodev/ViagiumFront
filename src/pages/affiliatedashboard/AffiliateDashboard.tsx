@@ -3,7 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, L
 import { useState, useEffect } from 'react'
 import ModalHotel from "./components/ModalHotel"
 import ModalEditHotel from "./components/ModalEditHotel"
-import axios from "axios"
+import apiClient from "../../utils/apiClient"
+import { AuthService } from "../../utils/auth"
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -55,6 +56,8 @@ function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [affiliateName, setAffiliateName] = useState<string>("");
+  const [yourHotels, setYourHotels] = useState<any[]>([]);
 
   // Modal Hotel Handle Abrir e fechar
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,43 +66,7 @@ function AffiliateDashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState<any>(null);
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleOpenEditModal = (hotel: any) => {
-    setSelectedHotel(hotel);
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedHotel(null);
-  };
-
-  const handleSaveHotel = (updatedHotel: any) => {
-    setYourHotels(prevHotels => 
-      prevHotels.map(h => h.id === updatedHotel.id ? updatedHotel : h)
-    );
-  };
-
-  const handleLogout = () => {
-    // Evita propagação de evento se chamado por onClick em dropdown
-    try {
-      localStorage.clear();
-      window.location.href = '/login/affiliate';
-    } catch (e) {
-      console.error('Erro ao fazer logout:', e);
-    }
-  };
-
-
-  const [yourHotels, setYourHotels] = useState<any[]>([]);
-
+  // Dados das reservas
   const reservations = [
     {
       room: "Quarto Família",
@@ -141,26 +108,138 @@ function AffiliateDashboard() {
       status: "Confirmada",
       statusColor: "bg-green-100 text-green-800",
     },
-  ]
+  ];
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleOpenEditModal = (hotel: any) => {
+    setSelectedHotel(hotel);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedHotel(null);
+  };
+
+  const handleSaveHotel = (updatedHotel: any) => {
+    setYourHotels(prevHotels => 
+      prevHotels.map(h => h.id === updatedHotel.id ? updatedHotel : h)
+    );
+  };
 
   const handleDropdownClick = (filteredIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setActiveDropdown(activeDropdown === filteredIndex ? null : filteredIndex);
   };
 
+  // Verificar autenticação no carregamento da página
+  useEffect(() => {
+    // Verifica se o afiliado está autenticado
+    if (!AuthService.isAffiliateAuthenticated()) {
+      // Se não estiver autenticado, redireciona para login
+      window.location.href = '/affiliate';
+      return;
+    }
+
+    // Recupera os dados de autenticação do afiliado
+    const affiliateAuth = AuthService.getAffiliateAuth();
+    if (affiliateAuth && affiliateAuth.id) {
+      // Busca dados do afiliado usando o apiClient (que já inclui o token automaticamente)
+      apiClient.get(`/Affiliate/${affiliateAuth.id}`)
+        .then(res => {
+          if (res.data) {
+            // Nome do afiliado
+            if (res.data.name) setAffiliateName(res.data.name);
+            // Monta o array de hotéis
+            if (res.data.hotels && Array.isArray(res.data.hotels)) {
+              const hotelsMapped = res.data.hotels.map((hotel: any) => ({
+                id: hotel.hotelId,
+                name: hotel.name || "",
+                location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
+                status: hotel.isActive ? "Ativo" : "Inativo",
+                image: hotel.imageUrl || ""
+              }));
+              setYourHotels(hotelsMapped);
+            } else {
+              setYourHotels([]);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados do afiliado:', error);
+          // Se for erro de autenticação, o interceptor já vai redirecionar
+          if (error.response?.status !== 401) {
+            setAffiliateName("");
+            setYourHotels([]);
+          }
+        });
+    }
+  }, []);
+
+  // Fecha o dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveDropdown(null);
+      setIsUserDropdownOpen(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    // Pega o token atual para enviar na requisição de logout
+    const affiliateAuth = AuthService.getAffiliateAuth();
+
+    if (affiliateAuth && affiliateAuth.token) {
+      // Chama a API de logout primeiro
+      apiClient.post('/Affiliate/logout', {
+        token: affiliateAuth.token
+      })
+      .then(() => {
+        // Se o logout na API foi bem-sucedido, limpa os dados locais
+        AuthService.clearAffiliateAuth();
+        // Redireciona para login
+        window.location.href = '/affiliate';
+      })
+      .catch((error) => {
+        console.error('Erro ao fazer logout na API:', error);
+        // Mesmo se der erro na API, limpa os dados locais
+        AuthService.clearAffiliateAuth();
+        window.location.href = '/affiliate';
+      });
+    } else {
+      // Se não tiver token, apenas limpa os dados locais
+      AuthService.clearAffiliateAuth();
+      window.location.href = '/affiliate';
+    }
+  };
+
   const handleActivateHotel = (hotel: any) => {
     if (!hotel || !hotel.id) return;
-    axios.put(`http://localhost:5028/api/Hotel/${hotel.id}/activate`)
-        .then(() => {
-          setYourHotels(prevHotels => prevHotels.map(h =>
-              h.id === hotel.id ? { ...h, status: "Ativo" } : h
-          ));
-          setActiveDropdown(null);
-        })
-        .catch(() => {
-          alert("Erro ao ativar hotel.");
-          setActiveDropdown(null);
-        });
+
+    // Usa o apiClient que já inclui automaticamente o token Bearer
+    apiClient.put(`/Hotel/${hotel.id}/activate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Ativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch((error) => {
+        console.error('Erro ao ativar hotel:', error);
+        alert("Erro ao ativar hotel.");
+        setActiveDropdown(null);
+      });
   };
 
   const handleEditHotel = (hotel: typeof yourHotels[0]) => {
@@ -176,72 +255,21 @@ function AffiliateDashboard() {
 
   const handleDeactivateHotel = (hotel: any) => {
     if (!hotel || !hotel.id) return;
-    axios.delete(`http://localhost:5028/api/Hotel/${hotel.id}/desactivate`)
-        .then(() => {
-          setYourHotels(prevHotels => prevHotels.map(h =>
-              h.id === hotel.id ? { ...h, status: "Inativo" } : h
-          ));
-          setActiveDropdown(null);
-        })
-        .catch(() => {
-          alert("Erro ao desativar hotel.");
-          setActiveDropdown(null);
-        });
+
+    // Usa o apiClient que já inclui automaticamente o token Bearer
+    apiClient.delete(`/Hotel/${hotel.id}/desactivate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Inativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch((error) => {
+        console.error('Erro ao desativar hotel:', error);
+        alert("Erro ao desativar hotel.");
+        setActiveDropdown(null);
+      });
   };
-
-  // Fecha o dropdown ao clicar fora
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setActiveDropdown(null);
-      setIsUserDropdownOpen(false);
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
-
-  const [affiliateName, setAffiliateName] = useState<string>("");
-
-  useEffect(() => {
-    // Recupera o affiliate do localStorage
-    const affiliateStr = localStorage.getItem("affiliate");
-    if (affiliateStr) {
-      try {
-        const affiliate = JSON.parse(affiliateStr);
-        if (affiliate && affiliate.id) {
-          axios.get(`http://localhost:5028/api/Affiliate/${affiliate.id}`)
-              .then(res => {
-                if (res.data) {
-                  // Nome do afiliado
-                  if (res.data.name) setAffiliateName(res.data.name);
-                  // Monta o array de hotéis
-                  if (res.data.hotels && Array.isArray(res.data.hotels)) {
-                    const hotelsMapped = res.data.hotels.map((hotel: any) => ({
-                      id: hotel.hotelId, // Garante que o id seja preenchido
-                      name: hotel.name || "",
-                      location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
-                      status: hotel.isActive ? "Ativo" : "Inativo",
-                      image: hotel.imageUrl || ""
-                    }));
-                    setYourHotels(hotelsMapped);
-                  } else {
-                    setYourHotels([]);
-                  }
-                }
-              })
-              .catch(() => {
-                setAffiliateName("");
-                setYourHotels([]);
-              });
-        }
-      } catch {
-        setAffiliateName("");
-        setYourHotels([]);
-      }
-    }
-  }, []);
 
   return (
       <div className="min-h-screen bg-gradient-to-b to-white p-6"

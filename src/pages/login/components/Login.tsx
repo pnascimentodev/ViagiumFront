@@ -5,6 +5,7 @@ import { FaRegEyeSlash, FaRegEye } from "react-icons/fa"
 import { Input } from "../../../components/Input.tsx";
 import { useState } from "react";
 import axios from "axios";
+import { AuthService } from "../../../utils/auth";
 
 interface LoginProps {
     userType: "client" | "admin" | "affiliate";
@@ -78,24 +79,40 @@ function Login({ userType, newUserOption }: LoginProps) {
         axios.post(endpoint, { email, password })
         .then(response => {
             console.log("Login bem-sucedido:", response.data);
-            // Salvar dados do affiliate no localStorage e redirecionar
+
+            // Salvar dados e token no localStorage usando AuthService
             if (userType === "affiliate") {
-                localStorage.setItem("affiliate", JSON.stringify(response.data));
+                // Salva os dados de autenticação do afiliado
+                AuthService.setAffiliateAuth({
+                    id: response.data.id,
+                    token: response.data.token
+                });
                 window.location.href = "/affiliatedashboard";
             }
-            // redirecionar ou atualizar estado conforme necessário
-            if (userType === "client") {
-                window.location.href = "/";
+
+            if (userType === "client" || userType === "admin") {
+                // Salva os dados de autenticação do usuário/admin
+                AuthService.setUserAuth({
+                    id: response.data.id,
+                    token: response.data.token
+                });
+
+                if (userType === "client") {
+                    window.location.href = "/";
+                }
+                if (userType === "admin") {
+                    window.location.href = "/admindashboard";
+                }
             }
         })
         .catch(error => {
             console.error("Erro no login:", error);
             if (error.response) {
-            // Erro retornado pela API
-            alert(`Erro: ${error.response.data.message || "Falha no login."}`);
+                // Erro retornado pela API
+                alert(`Erro: ${error.response.data.message || "Falha no login."}`);
             } else {
-            // Erro de rede ou outro
-            alert("Erro de rede ou servidor indisponível.");
+                // Erro de rede ou outro
+                alert("Erro de rede ou servidor indisponível.");
             }
         });
 
