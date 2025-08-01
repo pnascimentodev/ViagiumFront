@@ -1,9 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskValidateExpirationDate } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
+import axios from "axios";
 
 const paymentMethods = [
   { id: "pix", name: "PIX", icon: FaPix },
@@ -40,15 +41,17 @@ export default function Payment() {
     : FaMoneyCheckAlt;
 
     interface Reservation {
-      id: number;
-      startDate: Date;
-      totalPrice: string;
+        id: number;
+        startDate: Date;
+        DocumentNumber?: string;
+        totalPrice: string;
     }
 
     const [reservationDetails] = useState<Reservation>({
-      id: 1,
-      startDate: new Date("2025-09-10"),
-      totalPrice: "R$ 3.200,00",
+        id: 1,
+        startDate: new Date("2025-09-10"),
+        DocumentNumber: "16011683061",
+        totalPrice: "R$ 3.200,00",
     });
 
     function handleCardInputChange(field: string, value: string) {
@@ -82,63 +85,81 @@ export default function Payment() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        if (selectedMethod === "credito" || selectedMethod === "debito") {
-        if (!validateCardForm()) {
+        try {
+            // Validação específica para cartões
+            if (selectedMethod === "credito" || selectedMethod === "debito") {
+                if (!validateCardForm()) {
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
+            // Monta o payload unificado para todos os métodos de pagamento
+            const paymentPayload = {
+                paymentMethod: selectedMethod,
+                reservationId: reservationDetails.id,
+                totalPrice: reservationDetails.totalPrice,
+
+                // Dados do cartão (apenas para crédito/débito)
+                ...(selectedMethod === "credito" || selectedMethod === "debito" ? {
+                    cardholderName: cardForm.cardholderName,
+                    cardNumber: cardForm.cardNumber,
+                    expirationDate: cardForm.expirationDate,
+                    cvv: cardForm.cvv,
+                } : {}),
+
+                // CPF/Documento (para PIX e Boleto)
+                ...(selectedMethod === "pix" || selectedMethod === "boleto" ? {
+                    documentNumber: reservationDetails.DocumentNumber, // substitua pelo documento real do usuário
+                } : {})
+            };
+
+            // Envia para a rota unificada independente do método
+            const response = await axios.post("Payment/CreatePayment", paymentPayload);
+
+            if (response && response.status === 200) {
+                setPaymentStatus("success");
+            } else {
+                setPaymentStatus("error");
+            }
+        } catch (error) {
+            console.error("Erro no pagamento:", error);
+            setPaymentStatus("error");
+        } finally {
             setIsSubmitting(false);
-            return;
         }
-        }
-    
-        // Simulação de pagamento
-        setTimeout(() => {
-        setPaymentStatus("success");
-        setIsSubmitting(false);
-        }, 2000);
     }
 
-    const paymentPayload = {
-    reservationId: reservationDetails.id,
-    paymentMethod: selectedMethod, // "pix", "boleto", "credito", "debito"
-    card: selectedMethod === "credito" || selectedMethod === "debito"
-      ? {
-          cardholderName: cardForm.cardholderName,
-          cardNumber: cardForm.cardNumber,
-          expirationDate: cardForm.expirationDate,
-          cvv: cardForm.cvv,
-        }
-      : undefined
-    // outros campos se necessário
-  };
 
-  return (
+    return (
     <div>
-      <Navbar />
+        <Navbar />
 
     <div className="min-h-screen h-full bg-gray-50 py-8 px-4">
-      <div className="text-center mb-8">
+        <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Confirme o Pagamento</h1>
         <p className="text-gray-600">Selecione o método de pagamento e complete as informações</p>
-      </div>
+        </div>
 
-      <div className="flex justify-center items-center">
-      <div className="max-w-2xl w-full bg-[#FFFFFF] mb-20 rounded-xl shadow-2xl p-6">
+        <div className="flex justify-center items-center">
+        <div className="max-w-2xl w-full bg-[#FFFFFF] mb-20 rounded-xl shadow-2xl p-6">
         <div className="ml-6 mt-6 max-w-2xl w-full">
             <h2 className="text-xl font-bold mb-2">Detalhes do Pacote</h2>
         </div>
         <div className="space-y-1 ml-6">
-          <div><span className="font-semibold text-gray-700">Nome:</span> {reservationDetails.startDate.toLocaleDateString()}</div>
-          <div><span className="font-semibold text-gray-700">Destino:</span> {reservationDetails.totalPrice}</div>
+            <div><span className="font-semibold text-gray-700">Nome:</span> {reservationDetails.startDate.toLocaleDateString()}</div>
+            <div><span className="font-semibold text-gray-700">Destino:</span> {reservationDetails.totalPrice}</div>
         </div>
         <hr className="w-full mb-2 mt-2" />
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Payment Method Selection */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+            {/* Payment Method Selection */}
+            <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Método de Pagamento</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {paymentMethods.map((method) => {
+                {paymentMethods.map((method) => {
                 const Icon = method.icon;
                 return (
-                  <button
+                    <button
                     key={method.id}
                     type="button"
                     onClick={() => setSelectedMethod(method.id)}
