@@ -248,9 +248,14 @@ function AffiliateDashboard() {
     setActiveDropdown(null);
   };
 
-  const handleManageRooms = () => {
+  const handleManageRooms = (hotelId?: number) => {
     setActiveDropdown(null);
-    window.location.href = "/roomtypemanagement";
+    // Passa o hotelId como parâmetro na URL
+    if (hotelId) {
+      window.location.href = `/roomtypemanagement?hotelId=${hotelId}`;
+    } else {
+      window.location.href = "/roomtypemanagement";
+    }
   };
 
   const handleDeactivateHotel = (hotel: any) => {
@@ -494,7 +499,7 @@ function AffiliateDashboard() {
 
                                                 <button
                                                     className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-                                                    onClick={handleManageRooms}
+                                                    onClick={() => handleManageRooms(hotel.id)}
                                                 >
                                                   <FaBed className="text-orange-600" />
                                                   <span>Gerenciar tipos de quarto</span>
