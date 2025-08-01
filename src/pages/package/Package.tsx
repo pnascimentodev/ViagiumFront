@@ -123,7 +123,7 @@ function Package() {
       console.log('🛏️ Detalhe do tipo de quarto carregado:', response.data);
     } catch (error) {
       setRoomTypeDetail(null);
-      console.error('❌ Erro ao buscar detalhes do tipo de quarto:', error);
+      console.error('Erro ao buscar detalhes do tipo de quarto:', error);
     }
   };
     const [showHotelModal, setShowHotelModal] = useState(false);
@@ -168,13 +168,11 @@ function Package() {
         setHotels([]); // Limpa hotéis se não houver
       }
       
-      console.log('📦 Pacote carregado com sucesso:', response.data.title);
+      console.log('Pacote carregado com sucesso:', response.data.title);
     }
   } catch (error: unknown) {
-    console.error('❌ Erro ao buscar pacote:', error);
+    console.error('Erro ao buscar pacote:', error);
     if (axios.isAxiosError(error)) {
-      console.log('🔍 Status do erro:', error.response?.status);
-      console.log('🔍 Dados do erro:', error.response?.data);
     }
     setError('Erro ao carregar dados do pacote. Verifique se a API está rodando.');
   } finally {
@@ -185,8 +183,8 @@ function Package() {
   // useEffect para carregar dados quando o componente monta
     useEffect(() => {
     const id = packageId ? parseInt(packageId) : 1;
-    console.log('🚀 Package ID obtido:', id);
-    console.log('📦 URL do packageId:', packageId);
+    console.log('Package ID obtido:', id);
+    console.log('URL do packageId:', packageId);
     
     fetchTravelPackage(id);
     // Não buscar mais amenities separadamente
@@ -206,50 +204,44 @@ function Package() {
   const price = currentPackage ? currentPackage.price * numPessoas : 0;
   const packageTax = currentPackage ? currentPackage.packageTax : 0;
   const discountValue = currentPackage ? currentPackage.discountValue : 0; 
-  const [cupomDiscountValue, setCupomDiscountValue] = useState(0);
   const [cupomError, setCupomError] = useState('');
-
-  // Valor da hospedagem do quarto selecionado
+  const [cupomAplicado, setCupomAplicado] = useState(false);
   const pricePerNight = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
-  // Valor total de hospedagem: (duração - 1) * pricePerNight * numPessoas
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
+  
   const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
-  const valorFinal = (price + packageTax + acomodationTotal) - discountValue - cupomDiscountValue;
+  const valorFinal = price + packageTax + acomodationTotal - (cupomAplicado ? discountValue : 0);
+  console.log('Valor final calculado:', valorFinal);
 
   // Nova lógica de cupom
   const aplicarCupom = async () => {
     setCupomError('');
     const input = cupomDiscountInput.trim();
+    setCupomAplicado(false);
     if (!input) {
-      setCupomDiscountValue(0);
       return;
     }
     if (!currentPackage?.cupomDiscount) {
       setCupomError('Este pacote não possui cupom de desconto.');
-      setCupomDiscountValue(0);
       return;
     }
     if (input.toLowerCase() !== currentPackage.cupomDiscount.trim().toLowerCase()) {
       setCupomError('Cupom inválido.');
-      setCupomDiscountValue(0);
       return;
     }
     try {
       const response = await axios.get('http://localhost:5028/api/TravelPackage/cupom-discount', {
         params: { travelPackageId: currentPackage.travelPackageId ?? currentPackage.id, cupom: input }
       });
-      setCupomDiscountValue(response.data.discountValue || 0);
+      setCupomAplicado(true);
       setCupomError('');
-      console.log('✅ Cupom aplicado com sucesso:', response.data);
+      console.log('Cupom aplicado com sucesso:', response.data);
     } catch (error) {
-      setCupomDiscountValue(0);
+      setCupomAplicado(false);
       setCupomError('Erro ao validar cupom.');
     }
   };
 
-
-
-  // Função para obter amenities do hotel atual (agora só do objeto hotel)
   const getCurrentHotelAmenities = () => {
     if (!hotels[hotelIndex]) return [];
     const hotelAmenitiesArr = Array.isArray(hotels[hotelIndex].amenities) ? hotels[hotelIndex].amenities : [];
@@ -519,20 +511,33 @@ function Package() {
                   </div>
                   <div className="p-4">
                     {/* Só exibe campo de cupom se o pacote tiver cupomDiscount */}
-                    {currentPackage?.cupomDiscount && (
-                      <div className="flex items-center space-x-3 mb-2">
-                        <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
-                        <input
-                          id="cupom"
-                          type="text"
-                          className="w-full border rounded px-2 py-1"
-                          value={cupomDiscountInput}
-                          onChange={e => setCupomDiscountInput(e.target.value)}
-                          onBlur={aplicarCupom}
-                        />
-                        {cupomError && <span className="text-red-500">{cupomError}</span>}
-                      </div>
-                    )}
+                        {currentPackage?.cupomDiscount && (
+                          <div className="flex items-center space-x-3 mb-2">
+                            <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
+                            <input
+                              id="cupom"
+                              type="text"
+                              className="w-full border rounded px-2 py-1"
+                              value={cupomDiscountInput}
+                              onChange={e => {
+                                setCupomDiscountInput(e.target.value);
+                                setCupomAplicado(false); // Remove desconto se campo for alterado
+                              }}
+                            />
+                            {cupomError && <span className="text-red-500">{cupomError}</span>}
+                          </div>
+                        )}
+                        {currentPackage?.cupomDiscount && (
+                          <div className="flex justify-end mb-2">
+                            <Button
+                              className="font-bold px-4 py-2 rounded shadow hover:scale-105 transition-all duration-200"
+                              onClick={aplicarCupom}
+                              type="button"
+                            >
+                              Aplicar cupom
+                            </Button>
+                          </div>
+                        )}
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Pacote + Transporte:</span>
                       <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
@@ -545,6 +550,13 @@ function Package() {
                       <span className="font-bold">Impostos e encargos:</span>
                       <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
                     </div>
+                    {/* Exibe desconto do cupom apenas se aplicado */}
+                    {cupomAplicado && discountValue > 0 && (
+                      <div className="flex justify-between text-sm text-green-700">
+                        <span className="font-bold">Desconto do cupom:</span>
+                        <span className="font-bold">- R$ {discountValue.toLocaleString('pt-BR')},00</span>
+                      </div>
+                    )}
                     <hr className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Valor Final</span>
