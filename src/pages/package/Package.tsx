@@ -112,8 +112,7 @@ function Package() {
     const { packageId } = useParams<{ packageId: string }>();
     const [numPessoas, setNumPessoas] = useState(1);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
-    const [packageImageIndex, setPackageImageIndex] = useState(0);
-    const [hotelImageIndex, setHotelImageIndex] = useState(0);
+    const [hotelIndex, setHotelIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
     const [roomTypeDetail, setRoomTypeDetail] = useState<RoomType | null>(null);
   // Buscar detalhes do tipo de quarto pelo ID
@@ -133,7 +132,6 @@ function Package() {
     // Estados para dados da API
     const [currentPackage, setCurrentPackage] = useState<TravelPackage | null>(null);
     const [hotels, setHotels] = useState<Hotel[]>([]);
-    // Removido: hotelAmenities, roomAmenities - agora tudo vem de currentPackage
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -147,7 +145,7 @@ function Package() {
   setLoading(true);
   setError('');
   
-  console.log('🔄 Iniciando busca do pacote ID:', packageId);
+  console.log('Iniciando busca do pacote ID:', packageId);
   
   try {
     const response = await axios.get(`http://localhost:5028/api/TravelPackage/getById/${packageId}`, {
@@ -156,7 +154,7 @@ function Package() {
       }
     });
     
-    console.log('✅ Resposta da API do pacote:', response.data);
+    console.log('resposta da API do pacote:', response.data);
     
     if (response.data) {
       setCurrentPackage(response.data);
@@ -164,9 +162,9 @@ function Package() {
       // Se o pacote incluir hotéis, configure-os
       if (response.data.hotels && response.data.hotels.length > 0) {
         setHotels(response.data.hotels);
-        console.log('🏨 Hotéis carregados do pacote:', response.data.hotels.length);
+        console.log('Hotéis carregados do pacote:', response.data.hotels.length);
       } else {
-        console.log('📦 Pacote não inclui hotéis');
+        console.log('Pacote não inclui hotéis');
         setHotels([]); // Limpa hotéis se não houver
       }
       
@@ -195,14 +193,13 @@ function Package() {
   }, [packageId]);
 
   useEffect(() => {
-    setPackageImageIndex(0);
-    setHotelImageIndex(0);
+    setHotelIndex(0);
     setRoomTypeIndex(0);
   }, [currentPackage]);
 
   useEffect(() => {
     setRoomTypeIndex(0);
-  }, [hotelImageIndex]);
+  }, [hotelIndex]);
 
   // Calcular valores baseados nos dados da API
 
@@ -213,7 +210,7 @@ function Package() {
   const [cupomError, setCupomError] = useState('');
 
   // Valor da hospedagem do quarto selecionado
-  const pricePerNight = hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
+  const pricePerNight = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
   // Valor total de hospedagem: (duração - 1) * pricePerNight * numPessoas
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
   const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
@@ -254,8 +251,8 @@ function Package() {
 
   // Função para obter amenities do hotel atual (agora só do objeto hotel)
   const getCurrentHotelAmenities = () => {
-    if (!hotels[hotelImageIndex]) return [];
-    const hotelAmenitiesArr = Array.isArray(hotels[hotelImageIndex].amenities) ? hotels[hotelImageIndex].amenities : [];
+    if (!hotels[hotelIndex]) return [];
+    const hotelAmenitiesArr = Array.isArray(hotels[hotelIndex].amenities) ? hotels[hotelIndex].amenities : [];
     return hotelAmenitiesArr;
   };
 
@@ -264,24 +261,24 @@ function Package() {
     if (roomTypeDetail && Array.isArray(roomTypeDetail.amenities) && roomTypeDetail.amenities.length > 0) {
       return roomTypeDetail.amenities;
     }
-    if (hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]?.amenities) {
-      return hotels[hotelImageIndex].roomTypes[roomTypeIndex].amenities;
+    if (hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.amenities) {
+      return hotels[hotelIndex].roomTypes[roomTypeIndex].amenities;
     }
     return [];
   };
   // Buscar detalhes do tipo de quarto ao trocar o quarto selecionado
   useEffect(() => {
-    if (hotels[hotelImageIndex]?.roomTypes?.[roomTypeIndex]) {
-      const roomTypeId = hotels[hotelImageIndex].roomTypes[roomTypeIndex].roomTypeId;
+    if (hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]) {
+      const roomTypeId = hotels[hotelIndex].roomTypes[roomTypeIndex].roomTypeId;
       fetchRoomTypeById(roomTypeId);
     } else {
       setRoomTypeDetail(null);
     }
-  }, [hotelImageIndex, roomTypeIndex, hotels]);
+  }, [hotelIndex, roomTypeIndex, hotels]);
 
     useEffect(() => {
     setRoomTypeIndex(0);
-  }, [numPessoas, hotelImageIndex]);
+  }, [numPessoas, hotelIndex]);
 
     // Adicione esses estados no componente Package
   const [reviews] = useState<Review[]>([
@@ -403,7 +400,6 @@ function Package() {
     md: 'w-4 h-4',
     lg: 'w-5 h-5'
   };
-
   return (
     <div className="flex items-center gap-1">
       {[...Array(5)].map((_, idx) => (
@@ -576,8 +572,8 @@ function Package() {
                   <div className="space-y-4">
                     <select
                       className={`w-full border rounded px-2 py-1${showHotelModal ? ' hidden' : ''}`}
-                      value={hotelImageIndex}
-                      onChange={e => setHotelImageIndex(Number(e.target.value))}
+                      value={hotelIndex}
+                      onChange={e => setHotelIndex(Number(e.target.value))}
                     >
                       {hotels.map((hotel, index) => (
                         <option key={index} value={index}>{hotel.name}</option>
@@ -593,24 +589,24 @@ function Package() {
                     </div>
                     <div className="rounded-xl p-2">
                       <div className="flex flex-col items-center">
-                        <h4 className="font-semibold">{hotels[hotelImageIndex]?.name || 'Hotel não encontrado'}</h4>
+                        <h4 className="font-semibold">{hotels[hotelIndex]?.name || 'Hotel não encontrado'}</h4>
                         <div className="flex items-center space-x-1 mb-1">
                           <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
                             <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                           </svg>
-                          <span className="text-sm font-medium">{hotels[hotelImageIndex]?.rating || 'N/A'}</span>
+                          <span className="text-sm font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
                         </div>
                         {/* Imagem do hotel */}
                         <div className="relative rounded-lg overflow-hidden mb-6">
                           <img
-                            src={hotels[hotelImageIndex]?.imageUrl || '/vite.svg'}
+                            src={hotels[hotelIndex]?.imageUrl || '/vite.svg'}
                             alt="Imagem do hotel"
                             className="w-full h-64 object-cover"
                           />
                         </div>
                         {/* Endereço */}
                         <p className="text-sm text-gray-600 text-center mb-2">
-                          {renderHotelAddress(hotels[hotelImageIndex]?.address)}
+                          {renderHotelAddress(hotels[hotelIndex]?.address)}
                         </p>
                         {/* Informações do hotel */}
                         <div className="p-6 pt-8">
@@ -625,14 +621,14 @@ function Package() {
                     {/* Quarto */}
                     <h3 className="text-lg font-semibold mb-2">Quarto</h3>
                     <div className="space-y-3 w-full">
-                        {Array.isArray(hotels[hotelImageIndex]?.roomTypes) && hotels[hotelImageIndex].roomTypes.length > 0 ? (
+                        {Array.isArray(hotels[hotelIndex]?.roomTypes) && hotels[hotelIndex].roomTypes.length > 0 ? (
                           <>
                             <select
                               className="w-full border rounded px-2 py-1"
                               value={roomTypeIndex}
                               onChange={e => setRoomTypeIndex(Number(e.target.value))}
                             >
-                              {hotels[hotelImageIndex].roomTypes.map((roomType, realIdx) => (
+                              {hotels[hotelIndex].roomTypes.map((roomType, realIdx) => (
                                 <option key={roomType.roomTypeId} value={realIdx}>{roomType.name} - até {roomType.maxOccupancy} hóspedes</option>
                               ))}
                             </select>
@@ -657,7 +653,8 @@ function Package() {
                 </div>
               </div>
             </div>
-            <div className="p-6 pt-8">
+          </div>
+          <div className="p-6 pt-8">
               <Button
                 onClick={() => navigate("/reservation", { state: { numPessoas } })}
                 className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
@@ -666,7 +663,6 @@ function Package() {
                 Reservar Agora
               </Button>
             </div>
-          </div>
         </div>
         )}
 
@@ -679,13 +675,13 @@ function Package() {
               >
                 &times;
               </button>
-              <h2 className="text-xl font-bold mb-2">{hotels[hotelImageIndex]?.name || 'Hotel não encontrado'}</h2>
+              <h2 className="text-xl font-bold mb-2">{hotels[hotelIndex]?.name || 'Hotel não encontrado'}</h2>
               <img
-                src={hotels[hotelImageIndex]?.imageUrl}
+                src={hotels[hotelIndex]?.imageUrl}
                 alt="Imagem do hotel"
                 className="w-full h-48 object-cover rounded mb-4"
               />
-              <p className="mb-2 text-xl">{renderHotelAddress(hotels[hotelImageIndex]?.address)}</p>
+              <p className="mb-2 text-xl">{renderHotelAddress(hotels[hotelIndex]?.address)}</p>
                 <div className="mb-4">
                   <h4 className="font-semibold text-lg mb-2">Amenities do Hotel:</h4>
                   <ul className="mb-2">
@@ -707,7 +703,7 @@ function Package() {
                   <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
                   </svg>
-                  <span className="font-medium">{hotels[hotelImageIndex]?.rating || 'N/A'}</span>
+                  <span className="font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
                 </span>
             <div className="p-6 pt-8">
               <Button
@@ -720,157 +716,157 @@ function Package() {
           </div>
         )}
         
-{showAvaliacoesModal && (
-  <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
-    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-      <button
-        className="absolute top-4 right-4 text-gray-500 text-2xl font-bold hover:text-gray-700"
-        onClick={closeAvaliacoesModal}
-        aria-label="Fechar"
-      >
-        &times;
-      </button>
-      
-      <h2 className="text-2xl font-bold text-center mb-8">
-        Avaliações do Pacote
-      </h2>
-
-      {loadingReviews ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFA62B]"></div>
-          <span className="ml-2 text-gray-600">Carregando avaliações...</span>
-        </div>
-      ) : reviewsError ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-700 text-center">{reviewsError}</p>
-          <button 
-            onClick={() => console.log('Tentar novamente - usando dados mockados')}
-            className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Estatísticas gerais */}
-          {reviewStats && (
-            <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {renderStars(Math.round(reviewStats.averageRating), 'lg')}
-                  <span className="text-2xl font-bold">
-                    {reviewStats.averageRating.toFixed(1)}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">
-                    Baseado em {reviewStats.totalReviews} avaliações
-                  </div>
-                </div>
-              </div>
+        {showAvaliacoesModal && (
+          <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
+            <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-8 relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+              <button
+                className="absolute top-4 right-4 text-gray-500 text-2xl font-bold hover:text-gray-700"
+                onClick={closeAvaliacoesModal}
+                aria-label="Fechar"
+              >
+                &times;
+              </button>
               
-              {/* Distribuição de avaliações */}
-              <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map(star => {
-                  const count = reviewStats.ratingDistribution[star as keyof typeof reviewStats.ratingDistribution];
-                  const percentage = reviewStats.totalReviews > 0 ? (count / reviewStats.totalReviews) * 100 : 0;
-                  
-                  return (
-                    <div key={star} className="flex items-center gap-3">
-                      <span className="text-sm font-medium w-8">{star}★</span>
-                      <div className="bg-gray-200 rounded-full h-2 flex-1">
-                        <div
-                          className="bg-[#FFA62B] h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-500 w-8 text-right">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+              <h2 className="text-2xl font-bold text-center mb-8">
+                Avaliações do Pacote
+              </h2>
 
-          {/* Lista de avaliações */}
-          <div className="space-y-6">
-            {reviews.length > 0 ? (
-              reviews.map((review) => (
-                <div key={review.id} className="bg-[#F8FAFC] rounded-lg shadow p-6 border border-gray-100">
-                  <div className="flex gap-4">
-                    <div className=" rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                      {review.userAvatar || review.userName.charAt(0)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                        <div>
-                          <h4 className="font-bold text-lg">
-                            {review.userName}
-                            {review.isVerified && (
-                              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                ✓ Verificado
-                              </span>
-                            )}
-                          </h4>
-                          {review.title && (
-                            <h5 className="font-semibold text-gray-800 mt-1">{review.title}</h5>
-                          )}
-                        </div>
-                        <span className="text-sm text-gray-500 whitespace-nowrap">
-                          {formatDate(review.createdAt)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 mb-3">
-                        {renderStars(review.rating)}
-                        <span className="text-sm text-gray-600">({review.rating}/5)</span>
-                      </div>
-                      
-                      <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                        {review.comment}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">
-                          {review.packageName}
-                        </span>
-                        
-                        {review.helpfulCount !== undefined && (
-                          <button className="text-sm text-gray-500 hover:text-[#FFA62B] flex items-center gap-1">
-                            👍 {review.helpfulCount} acharam útil
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+              {loadingReviews ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFA62B]"></div>
+                  <span className="ml-2 text-gray-600">Carregando avaliações...</span>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500 text-lg">Nenhuma avaliação encontrada.</p>
-                <p className="text-gray-400 text-sm mt-2">Seja o primeiro a avaliar este pacote!</p>
-              </div>
-            )}
-          </div>
+              ) : reviewsError ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <p className="text-red-700 text-center">{reviewsError}</p>
+                  <button 
+                    onClick={() => console.log('Tentar novamente - usando dados mockados')}
+                    className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 block mx-auto"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Estatísticas gerais */}
+                  {reviewStats && (
+                    <div className="bg-[#F8FAFC] rounded-lg shadow p-6 mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          {renderStars(Math.round(reviewStats.averageRating), 'lg')}
+                          <span className="text-2xl font-bold">
+                            {reviewStats.averageRating.toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">
+                            Baseado em {reviewStats.totalReviews} avaliações
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Distribuição de avaliações */}
+                      <div className="space-y-2">
+                        {[5, 4, 3, 2, 1].map(star => {
+                          const count = reviewStats.ratingDistribution[star as keyof typeof reviewStats.ratingDistribution];
+                          const percentage = reviewStats.totalReviews > 0 ? (count / reviewStats.totalReviews) * 100 : 0;
+                          
+                          return (
+                            <div key={star} className="flex items-center gap-3">
+                              <span className="text-sm font-medium w-8">{star}★</span>
+                              <div className="bg-gray-200 rounded-full h-2 flex-1">
+                                <div
+                                  className="bg-[#FFA62B] h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="text-sm text-gray-500 w-8 text-right">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-          {/* Botão para adicionar avaliação */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <Button
-              className="w-full bg-[#FFA62B] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
-              onClick={() => {
-                // TODO: Implementar modal de nova avaliação
-                console.log('Abrir modal de nova avaliação');
-              }}
-            >
-              Escrever uma avaliação
-            </Button>
+                  {/* Lista de avaliações */}
+                  <div className="space-y-6">
+                    {reviews.length > 0 ? (
+                      reviews.map((review) => (
+                        <div key={review.id} className="bg-[#F8FAFC] rounded-lg shadow p-6 border border-gray-100">
+                          <div className="flex gap-4">
+                            <div className=" rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                              {review.userAvatar || review.userName.charAt(0)}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                                <div>
+                                  <h4 className="font-bold text-lg">
+                                    {review.userName}
+                                    {review.isVerified && (
+                                      <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                        ✓ Verificado
+                                      </span>
+                                    )}
+                                  </h4>
+                                  {review.title && (
+                                    <h5 className="font-semibold text-gray-800 mt-1">{review.title}</h5>
+                                  )}
+                                </div>
+                                <span className="text-sm text-gray-500 whitespace-nowrap">
+                                  {formatDate(review.createdAt)}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 mb-3">
+                                {renderStars(review.rating)}
+                                <span className="text-sm text-gray-600">({review.rating}/5)</span>
+                              </div>
+                              
+                              <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                                {review.comment}
+                              </p>
+                              
+                              <div className="flex items-center justify-between">
+                                <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">
+                                  {review.packageName}
+                                </span>
+                                
+                                {review.helpfulCount !== undefined && (
+                                  <button className="text-sm text-gray-500 hover:text-[#FFA62B] flex items-center gap-1">
+                                    👍 {review.helpfulCount} acharam útil
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 text-lg">Nenhuma avaliação encontrada.</p>
+                        <p className="text-gray-400 text-sm mt-2">Seja o primeiro a avaliar este pacote!</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botão para adicionar avaliação */}
+                  <div className="mt-8 pt-6 border-t border-gray-200">
+                    <Button
+                      className="w-full bg-[#FFA62B] font-bold py-3 text-lg rounded-lg shadow-lg hover:bg-[#e8941f] transition-all duration-200"
+                      onClick={() => {
+                        // TODO: Implementar modal de nova avaliação
+                        console.log('Abrir modal de nova avaliação');
+                      }}
+                    >
+                      Escrever uma avaliação
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </>
-      )}
-    </div>
-  </div>
-)}
+        )}
 
       </div>
       <Footer />
