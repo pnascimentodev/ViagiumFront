@@ -26,6 +26,7 @@ import Payment from './pages/payment/Payment.tsx'
 import PackageSearch from './pages/package-search/packageSearch.tsx'
 import Reservation from './pages/reservation/Reservation.tsx'
 import RoomTypeManagement from "./pages/roomtype/RoomTypeManagement.tsx";
+import PrivacyPolicyPage from './pages/policyandprivate/privacy-policy.tsx'
 
 function App() {
   return (
@@ -55,7 +56,8 @@ function App() {
       <Route path="/payment" element={<Payment />} />
       <Route path="/packagesearch" element={<PackageSearch />} />
       <Route path="/reservation" element={<Reservation />} />
-        <Route path="/roomtypemanagement" element={<RoomTypeManagement />} />
+      <Route path="/roomtypemanagement" element={<RoomTypeManagement />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
     </Routes>
   )
 }
