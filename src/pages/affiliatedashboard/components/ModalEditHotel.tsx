@@ -546,20 +546,16 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                             <label htmlFor="typeHosting" className="block text-sm font-medium text-[#003194] mb-2">
                                                 Tipo *
                                             </label>
-                                            <select
+                                            <input
+                                                type="text"
                                                 id="typeHosting"
                                                 name="typeHosting"
+                                                placeholder="Ex: Hotel, Pousada, Resort, Hostel"
                                                 value={form.typeHosting}
                                                 onChange={handleChange}
                                                 onBlur={handleBlur}
                                                 className={`w-full px-3 py-2 border ${errors.typeHosting ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
-                                            >
-                                                <option value="">Selecione o tipo de hospedagem</option>
-                                                <option value="Hotel">Hotel</option>
-                                                <option value="Pousada">Pousada</option>
-                                                <option value="Resort">Resort</option>
-                                                <option value="Hostel">Hostel</option>
-                                            </select>
+                                            />
                                             {errors.typeHosting && <div style={{ color: "red", fontWeight: 500 }}>{errors.typeHosting}</div>}
                                         </div>
                                     </div>
