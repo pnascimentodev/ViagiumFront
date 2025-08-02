@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import apiClient from "../../../utils/apiClient";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
+import { maskPhone, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import * as MdIcons from "react-icons/md";
+import axios from "axios";
 
 interface Amenity {
     amenityId: number;
@@ -102,6 +103,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     const [saving, setSaving] = useState(false);
     //O que é Cadastur? Interrogation
     const [showCadasturInfo, setShowCadasturInfo] = useState(false);
+    // Estados para mensagens de sucesso e erro
+    const [successMessage, setSuccessMessage] = useState<string>("");
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
     // Função para buscar amenities da API
     const fetchAmenities = async () => {
@@ -272,6 +276,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     // Carrega dados do hotel e amenities quando o modal abre
     useEffect(() => {
         if (isOpen) {
+            // Limpar mensagens anteriores
+            setSuccessMessage("");
+            setErrorMessage("");
             fetchAmenities();
             if (hotel) {
                 fetchHotelData(hotel.id);
@@ -289,9 +296,6 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             case "telefone2":
             case "contactNumber":
                 newValue = maskPhone(value);
-                break;
-            case "zipCode":
-                newValue = maskCEP(value);
                 break;
             case "cnpj":
                 newValue = maskCNPJ(value);
@@ -322,6 +326,15 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             delete newErrors[name];
             return newErrors;
         });
+    }
+
+    function validateCEP(cep: string){
+        if(!cep || cep.trim() === "") {
+            return false;
+        }
+        else{
+            return true;
+        }    
     }
 
     function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -379,30 +392,26 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     }
 
     function handleSubmit(e: React.FormEvent) {
+        console.log('Botão Salvar Alterações clicado!');
         e.preventDefault();
-
-        if (!hotel) return;
-
+        
+        // Limpar mensagens anteriores
+        setSuccessMessage("");
+        setErrorMessage("");
+        
+        if (!hotel) {
+            console.log("Erro: hotel não encontrado");
+            setErrorMessage("Erro: hotel não encontrado");
+            return;
+        }
+        
+        console.log("Hotel ID:", hotel.id);
+        console.log("Hotel objeto completo:", hotel);
         setSaving(true);
 
         const newErrors: { [key: string]: string } = {};
 
-        // Validação dos campos obrigatórios
-        if (!validateRequired(form.RazaoSocial)) newErrors.RazaoSocial = "Campo obrigatório.";
-        if (!validateRequired(form.NomeFantasia)) newErrors.NomeFantasia = "Campo obrigatório.";
-        if (!validatePhone(form.telefone1)) newErrors.telefone1 = "Telefone inválido.";
-        if (!validateEmail(form.email)) newErrors.email = "Email inválido.";
-        if (!validateEmailConfirmation(form.email, form.confirmarEmail)) newErrors.confirmarEmail = "Emails não conferem.";
-        if (!validatePassword(form.senha)) newErrors.senha = "Senha inválida.";
-        if (!validatePasswordConfirmation(form.senha, form.confirmarSenha)) newErrors.confirmarSenha = "Senhas não conferem.";
-        
-        const onlyNumbers = form.cpfPassaporte.replace(/\D/g, "");
-        if (onlyNumbers.length === 11) {
-            if (!validateCPF(form.cpfPassaporte)) newErrors.cpfPassaporte = "CPF inválido.";
-        } else {
-            if (!validatePassaporte(form.cpfPassaporte)) newErrors.cpfPassaporte = "Passaporte inválido.";
-        }
-        
+        // Validação apenas dos campos que existem no formulário de edição
         if (!validateRequired(form.name)) newErrors.name = "Campo obrigatório.";
         if (!validateRequired(form.description)) newErrors.description = "Campo obrigatório.";
         if (!validateRequired(form.contactNumber)) newErrors.contactNumber = "Campo obrigatório.";
@@ -429,78 +438,98 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             newErrors.cadasturExpiration = "Data deve ser futura.";
         }
 
+        console.log("Erros encontrados:", newErrors);
         setErrors(newErrors);
 
         if (Object.keys(newErrors).length > 0) {
+            console.log("Salvamento cancelado devido a erros de validação");
+            setErrorMessage("Por favor, corrija os erros no formulário antes de continuar.");
             setSaving(false);
             return;
         }
 
-        // Preparar dados para envio
+        // Monte o array de amenities selecionados (apenas os IDs)
+        const selectedAmenityIds = amenities
+            .filter(a => form.diferenciais.includes(a.amenityId.toString()))
+            .map(a => a.amenityId); // Apenas o ID, não o objeto completo
+
+        // Preparar dados para envio - estrutura correta esperada pela API
         const updateData = {
-            hotelId: parseInt(hotel.id),
-            name: form.name,
-            description: form.description,
-            contactNumber: form.contactNumber,
-            typeHosting: form.typeHosting,
-            isActive: true, // Manter ativo por padrão
-            cnpj: form.cnpj,
-            cadastur: form.cadastur,
-            cadasturExpiration: form.cadasturExpiration ? `${form.cadasturExpiration}T00:00:00.000Z` : null,
-            imageUrl: form.imagemHotel,
-            address: {
-                streetName: form.streetName,
-                addressNumber: form.addressNumber,
-                neighborhood: form.neighborhood,
-                city: form.city,
-                state: form.state,
-                zipCode: form.zipCode,
-                country: form.country,
-                createdAt: new Date().toISOString(),
-                addressId: 0
+            hotelUpdateDTO: {
+                hotelId: parseInt(hotel.id),
+                name: form.name,
+                description: form.description,
+                contactNumber: form.contactNumber,
+                typeHosting: form.typeHosting,
+                isActive: true,
+                cnpj: form.cnpj,
+                inscricaoEstadual: form.inscricaoEstadual,
+                cadastur: form.cadastur,
+                cadasturExpiration: form.cadasturExpiration ? `${form.cadasturExpiration}T00:00:00.000Z` : null,
+                star: parseInt(form.estrelas) || 0,
+                imageUrl: form.imagemHotel,
+                address: {
+                    streetName: form.streetName,
+                    addressNumber: form.addressNumber,
+                    neighborhood: form.neighborhood,
+                    city: form.city,
+                    state: form.state,
+                    zipCode: form.zipCode,
+                    country: form.country,
+                    createdAt: new Date().toISOString(),
+                },
+                amenities: selectedAmenityIds, // Array de IDs apenas
             }
         };
+        
+        console.log("URL da requisição:", `http://localhost:5028/api/Hotel/${hotel.id}`);
+        console.log("Dados sendo enviados:", updateData);
 
-        // Enviar dados para a API
-        apiClient.put(`/Hotel/${hotel.id}`, updateData)
-            .then(() => {
-                // Atualizar dados locais
-                const updatedHotel: Hotel = {
-                    ...hotel,
-                    name: form.name,
-                    image: form.imagemHotel,
-                    location: `${form.city}, ${form.country}`
-                };
-                onSave(updatedHotel);
-                alert("Hotel atualizado com sucesso!");
-                onClose();
+        axios.put(`http://localhost:5028/api/Hotel/${hotel.id}`, updateData, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then((response) => {
+                console.log("Resposta da API:", response);
+                setSuccessMessage("Hotel atualizado com sucesso!");
+                onSave({ ...hotel, ...updateData });
+                // Fechar o modal após 2 segundos para o usuário ver a mensagem
+                setTimeout(() => {
+                    onClose();
+                }, 2000);
             })
             .catch((error) => {
-                console.error('Erro ao atualizar hotel:', error);
-                let errorMessage = 'Erro ao atualizar hotel. Tente novamente.';
-
-                if (error.response?.status === 401) {
-                    // Token expirado - o interceptor já vai redirecionar
-                    return;
-                } else if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response?.data?.error) {
-                    errorMessage = error.response.data.error;
-                }
-
-                alert(errorMessage);
+                console.error("Erro detalhado:", error);
+                console.error("Response data:", error.response?.data);
+                console.error("Response status:", error.response?.status);
+                console.error("Response headers:", error.response?.headers);
+                
+                const errorMsg = error.response?.data?.message || 
+                                error.response?.data?.title || 
+                                error.message || 
+                                "Erro desconhecido";
+                                   
+                setErrorMessage(`Erro ao atualizar hotel: ${errorMsg}`);
             })
             .finally(() => {
+                console.log("Finalizando requisição");
                 setSaving(false);
             });
-    }
+        }
 
     function handleCloseModal() {
+        // Limpar mensagens ao fechar o modal
+        setSuccessMessage("");
+        setErrorMessage("");
         onClose();
     }
 
     function handleBackdropClick(e: React.MouseEvent) {
         if (e.target === e.currentTarget) {
+            // Limpar mensagens ao fechar o modal
+            setSuccessMessage("");
+            setErrorMessage("");
             onClose();
         }
     }
@@ -541,7 +570,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label htmlFor="name" className="block text-sm font-medium text-[#003194] mb-2">
+                                            <label htmlFor="name" className="block text-sm font-medium mb-2">
                                                 Nome da hospedagem *
                                             </label>
                                             <input
@@ -589,7 +618,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 placeholder="00000-000"
                                                 value={form.zipCode}
                                                 onChange={(e) => {
-                                                    const maskedValue = maskCEP(e.target.value);
+                                                    const maskedValue = (e.target.value);
                                                     setForm(prev => ({ ...prev, zipCode: maskedValue }));
                                                     setErrors(prev => {
                                                         const newErrors = { ...prev };
@@ -731,8 +760,16 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 placeholder="(00) 00000-0000"
                                                 value={form.contactNumber}
                                                 onChange={(e) => {
-                                                    const maskedValue = maskPhone(e.target.value);
-                                                    setForm(prev => ({ ...prev, contactNumber: maskedValue }));
+                                                    const value = e.target.value;
+                                                    const newNumbers = value.replace(/\D/g, '');
+                                                    const oldNumbers = form.contactNumber.replace(/\D/g, '');
+                                                    if (newNumbers.length < oldNumbers.length) {
+                                                        setForm(prev => ({ ...prev, contactNumber: newNumbers }));
+                                                    } else {
+                                                        const maskedValue = value === '' ? '' : maskPhone(value);
+                                                        setForm(prev => ({ ...prev, contactNumber: maskedValue }));
+                                                    }
+                                                    
                                                     setErrors(prev => {
                                                         const newErrors = { ...prev };
                                                         delete newErrors.contactNumber;
@@ -1070,6 +1107,28 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                 {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                             </button>
                         </div>
+
+                        {/* Mensagens de feedback */}
+                        {(successMessage || errorMessage) && (
+                            <div className="pt-4 flex justify-center">
+                                {successMessage && (
+                                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>{successMessage}</span>
+                                    </div>
+                                )}
+                                {errorMessage && (
+                                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>{errorMessage}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>
