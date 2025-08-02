@@ -7,6 +7,7 @@ import * as Md from "react-icons/md"
 import { useNavigate } from "react-router-dom"
 import apiClient from "../../utils/apiClient"
 import { AuthService } from "../../utils/auth"
+import EditRoomTypeModal from "./components/EditRoomTypeModal"
 
 // Componente para renderizar ícone dinamicamente
 const DynamicIcon = ({ iconName, size = 16, style }: { iconName: string; size?: number; style?: React.CSSProperties }) => {
@@ -49,6 +50,8 @@ export default function RoomTypeManagement() {
     const [searchTerm, setSearchTerm] = useState("")
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
     const [loading, setLoading] = useState(true)
+    const [editModalOpen, setEditModalOpen] = useState(false)
+    const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null)
     const navigate = useNavigate();
 
     // Buscar dados da API no carregamento
@@ -161,14 +164,30 @@ export default function RoomTypeManagement() {
 
     const handleEdit = (roomTypeId: number) => {
         console.log("Editando tipo de quarto:", roomTypeId)
-        // Aqui você implementaria a navegação para a tela de edição
-        // Navega para a página de criação/edição passando o ID como parâmetro
-        navigate(`/roomtype?id=${roomTypeId}&mode=edit`);
+        
+        // Buscar o roomType pelo ID
+        const roomTypeToEdit = roomTypes.find(room => room.roomTypeId === roomTypeId)
+        if (roomTypeToEdit) {
+            setSelectedRoomType(roomTypeToEdit)
+            setEditModalOpen(true)
+        }
+        
         setActiveDropdown(null)
     }
 
     const handleNewRoomType = () => {
         navigate("/roomtype");
+    }
+
+    const handleCloseEditModal = () => {
+        setEditModalOpen(false)
+        setSelectedRoomType(null)
+    }
+
+    const handleSaveEdit = () => {
+        // Recarregar a lista de tipos de quarto após edição
+        fetchRoomTypes()
+        handleCloseEditModal()
     }
 
     const formatCurrency = (value: number) => {
@@ -464,6 +483,14 @@ export default function RoomTypeManagement() {
                     </div>
                 )}
             </div>
+
+            {/* Modal de Edição */}
+            <EditRoomTypeModal
+                isOpen={editModalOpen}
+                onClose={handleCloseEditModal}
+                onSave={handleSaveEdit}
+                roomType={selectedRoomType}
+            />
         </div>
     )
 }
