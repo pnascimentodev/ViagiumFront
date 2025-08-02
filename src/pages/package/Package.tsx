@@ -39,7 +39,7 @@ function Package() {
     hotelId?: number;
     name: string;
     address: any; // pode ser string ou objeto
-    rating: number;
+    star?: number; // Campo correto do backend
     imageUrl?: string;
     roomTypes: RoomType[];
     amenities?: Amenity[]; // amenities do hotel
@@ -117,11 +117,8 @@ function Package() {
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
     const [hotelIndex, setHotelIndex] = useState(0);
     const [roomTypeIndex, setRoomTypeIndex] = useState(0);
-    // Removido roomTypeDetail e fetchRoomTypeById, pois os dados já vêm do pacote
     const [showHotelModal, setShowHotelModal] = useState(false);
     const [showAvaliacoesModal, setShowAvaliacoesModal] = useState(false);
-    
-    // Estados para dados da API
     const [currentPackage, setCurrentPackage] = useState<TravelPackage | null>(null);
     const [hotels, setHotels] = useState<Hotel[]>([]);
     const [loading, setLoading] = useState(true);
@@ -155,6 +152,11 @@ function Package() {
       if (response.data.hotels && response.data.hotels.length > 0) {
         setHotels(response.data.hotels);
         console.log('Hotéis carregados do pacote:', response.data.hotels.length);
+        console.log('Dados de todos os hotéis:');
+        response.data.hotels.forEach((hotel: any, index: number) => {
+          console.log(`Hotel ${index + 1}:`, hotel.name);
+          console.log('Estrutura completa:', JSON.stringify(hotel, null, 2));
+        });
       } else {
         console.log('Pacote não inclui hotéis');
         setHotels([]); // Limpa hotéis se não houver
@@ -376,7 +378,6 @@ function Package() {
     });
   };
 
-  // Função para renderizar estrelas
   const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {
   const sizeClasses = {
     sm: 'w-3 h-3',
@@ -385,16 +386,19 @@ function Package() {
   };
   return (
     <div className="flex items-center gap-1">
-      {[...Array(5)].map((_, idx) => (
-        <svg 
-          key={idx} 
-          className={sizeClasses[size]} 
-          fill={idx < rating ? "#FFA62B" : "#E5E7EB"} 
-          viewBox="0 0 20 20"
-        >
-          <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-        </svg>
-      ))}
+      {[...Array(5)].map((_, idx) => {
+        const filled = idx < rating;
+        return (
+          <svg 
+            key={idx} 
+            className={sizeClasses[size]} 
+            fill={filled ? "#FFA62B" : "#E5E7EB"} 
+            viewBox="0 0 20 20"
+          >
+            <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+          </svg>
+        );
+      })}
     </div>
   );
 };
@@ -593,12 +597,15 @@ function Package() {
                     <div className="rounded-xl p-2">
                       <div className="flex flex-col items-center">
                         <h4 className="font-semibold">{hotels[hotelIndex]?.name || 'Hotel não encontrado'}</h4>
-                        <div className="flex items-center space-x-1 mb-1">
-                          {/* <svg className="w-5 h-5 inline" fill="#FFA62B" viewBox="0 0 20 20">
-                            <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                          </svg> 
-                          <span className="text-sm font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>*/}
-                        </div>
+                        {(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star) && (
+                          <div className="flex items-center space-x-1 mb-1">
+                            {(() => {
+                              const star = hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0;
+                              return renderStars(star, 'sm');
+                            })()}
+                            <span className="text-sm font-medium ml-1">{hotels[hotelIndex]?.star}</span>
+                          </div>
+                        )}
                         {/* Imagem do hotel */}
                         <div className="relative rounded-lg overflow-hidden mb-6">
                           <img
@@ -735,13 +742,13 @@ function Package() {
                     ))}
                   </ul>
                 </div>
-                {/*<span className="flex items-center font-semibold text-xl">
-                  Avaliação:&nbsp;
-                  <svg className="w-5 h-5 mr-1" fill="#FFA62B" viewBox="0 0 20 20">
-                    <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-                  </svg>
-                  <span className="font-medium">{hotels[hotelIndex]?.rating || 'N/A'}</span>
-                </span>*/}
+                {(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star) && (
+                  <div className="flex items-center font-semibold text-xl mb-4">
+                    <span className="mr-2">Avaliação:</span>
+                    {renderStars(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0, 'md')}
+                    <span className="font-medium ml-2">{hotels[hotelIndex]?.star || hotels[hotelIndex]?.star}</span>
+                  </div>
+                )}
             <div className="p-6 pt-8">
               <Button
                 className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
