@@ -103,6 +103,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     const [saving, setSaving] = useState(false);
     //O que é Cadastur? Interrogation
     const [showCadasturInfo, setShowCadasturInfo] = useState(false);
+    // Estados para mensagens de sucesso e erro
+    const [successMessage, setSuccessMessage] = useState<string>("");
+    const [errorMessage, setErrorMessage] = useState<string>("");
 
     // Função para buscar amenities da API
     const fetchAmenities = async () => {
@@ -273,6 +276,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     // Carrega dados do hotel e amenities quando o modal abre
     useEffect(() => {
         if (isOpen) {
+            // Limpar mensagens anteriores
+            setSuccessMessage("");
+            setErrorMessage("");
             fetchAmenities();
             if (hotel) {
                 fetchHotelData(hotel.id);
@@ -388,8 +394,14 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
     function handleSubmit(e: React.FormEvent) {
         console.log('Botão Salvar Alterações clicado!');
         e.preventDefault();
+        
+        // Limpar mensagens anteriores
+        setSuccessMessage("");
+        setErrorMessage("");
+        
         if (!hotel) {
             console.log("Erro: hotel não encontrado");
+            setErrorMessage("Erro: hotel não encontrado");
             return;
         }
         
@@ -431,6 +443,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
 
         if (Object.keys(newErrors).length > 0) {
             console.log("Salvamento cancelado devido a erros de validação");
+            setErrorMessage("Por favor, corrija os erros no formulário antes de continuar.");
             setSaving(false);
             return;
         }
@@ -479,8 +492,12 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         })
             .then((response) => {
                 console.log("Resposta da API:", response);
+                setSuccessMessage("Hotel atualizado com sucesso!");
                 onSave({ ...hotel, ...updateData });
-                onClose();
+                // Fechar o modal após 2 segundos para o usuário ver a mensagem
+                setTimeout(() => {
+                    onClose();
+                }, 2000);
             })
             .catch((error) => {
                 console.error("Erro detalhado:", error);
@@ -488,12 +505,12 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 console.error("Response status:", error.response?.status);
                 console.error("Response headers:", error.response?.headers);
                 
-                const errorMessage = error.response?.data?.message || 
-                                   error.response?.data?.title || 
-                                   error.message || 
-                                   "Erro desconhecido";
+                const errorMsg = error.response?.data?.message || 
+                                error.response?.data?.title || 
+                                error.message || 
+                                "Erro desconhecido";
                                    
-                alert(`Erro ao atualizar hotel: ${errorMessage}`);
+                setErrorMessage(`Erro ao atualizar hotel: ${errorMsg}`);
             })
             .finally(() => {
                 console.log("Finalizando requisição");
@@ -502,11 +519,17 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         }
 
     function handleCloseModal() {
+        // Limpar mensagens ao fechar o modal
+        setSuccessMessage("");
+        setErrorMessage("");
         onClose();
     }
 
     function handleBackdropClick(e: React.MouseEvent) {
         if (e.target === e.currentTarget) {
+            // Limpar mensagens ao fechar o modal
+            setSuccessMessage("");
+            setErrorMessage("");
             onClose();
         }
     }
@@ -547,7 +570,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label htmlFor="name" className="block text-sm font-medium text-[#003194] mb-2">
+                                            <label htmlFor="name" className="block text-sm font-medium mb-2">
                                                 Nome da hospedagem *
                                             </label>
                                             <input
@@ -1084,6 +1107,28 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                 {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                             </button>
                         </div>
+
+                        {/* Mensagens de feedback */}
+                        {(successMessage || errorMessage) && (
+                            <div className="pt-4 flex justify-center">
+                                {successMessage && (
+                                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>{successMessage}</span>
+                                    </div>
+                                )}
+                                {errorMessage && (
+                                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>{errorMessage}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>
