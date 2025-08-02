@@ -1,6 +1,6 @@
 import type React from "react"
 import { useEffect, useState } from "react"
-import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, /*FaToggleOn, FaToggleOff,*/ FaEye } from "react-icons/fa"
+import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, FaToggleOn, FaToggleOff, FaEye } from "react-icons/fa"
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 
@@ -61,6 +61,7 @@ interface HotelFormData {
     phone: string
     email: string
     isActive: boolean
+    star: number
 }
 
 interface PackageFormData {
@@ -115,194 +116,30 @@ function AdminDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
 
-    // Form states
-    const [packageForm, setPackageForm] = useState<PackageFormData>({
-        title: "",
-        description: "",
-        originAddress: { city: "", country: "" },
-        destinationAddress: { city: "", country: "" },
-        image: null,
-        duration: "",
-        maxPeople: "",
-        vehicleType: "",
-        originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
-        isActive: true,
-        // Novos campos
-        packageType: "fixed",
-        packageTax: "",
-        cupomDiscount: "",
-        discountValue: "",
-        // Campos para pacote com data fixa
-        fixedStartDate: "",
-        // Campos para pacote sazonal
-        seasonalPeriods: [
-            { startDate: "", endDate: "", isAvailable: true },
-            { startDate: "", endDate: "", isAvailable: true }
-        ],
-        // Campos para pacote recorrente
-        recurrenceStartDate: "",
-        recurrenceEndDate: "",
-        intervalDays: ""
-    })
 
-    const [userForm, setUserForm] = useState<UserFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        role: "Cliente",
-        isActive: true
-    })
+    // Funções utilitárias para buscar dados específicos, ao clicar no botão de visualizar ou editar da tabela
+    function getPackageById(packageId: number) {
+        return allPackages.find((p: any) => p.travelPackageId === packageId);
+    }
 
-    // Adicione um novo estado para controlar o modal de edição
+    function getUserById(userId: number) {
+        return allUsers.find((u: any) => u.userId === userId);
+    }
+
+    function getAffiliateById(affiliateId: number) {
+        return allAffiliates.find((a: any) => a.affiliateId === affiliateId);
+    }
+
+    function getHotelById(hotelId: number) {
+        return allHotels.find((h: any) => h.hotelId === hotelId);
+    }
+
+    function getClientById(clientId: number) {
+        return allClients.find((c: any) => c.userId === clientId);
+    }
+
+    // Adicione um novo estado para controlar o modal de Criação de PACOTES E AFILIADOS
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
-
-    // Estado para o formulário de edição
-    const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
-        title: "",
-        description: "",
-        originAddress: { city: "", country: "" },
-        destinationAddress: { city: "", country: "" },
-        image: null,
-        duration: "",
-        maxPeople: "",
-        vehicleType: "",
-        originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
-        isActive: true,
-        // Novos campos
-        packageType: "fixed",
-        packageTax: "",
-        cupomDiscount: "",
-        discountValue: "",
-        // Campos para pacote com data fixa
-        fixedStartDate: "",
-        // Campos para pacote sazonal
-        seasonalPeriods: [
-            { startDate: "", endDate: "", isAvailable: true },
-            { startDate: "", endDate: "", isAvailable: true }
-        ],
-        // Campos para pacote recorrente
-        recurrenceStartDate: "",
-        recurrenceEndDate: "",
-        intervalDays: ""
-    });
-
-    // Estados para edição de usuários
-    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<TableData | null>(null);
-    const [editUserForm, setEditUserForm] = useState<UserFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        role: "Cliente",
-        isActive: true
-    });
-
-    // Estados para edição de afiliados
-    const [isEditAffiliateModalOpen, setIsEditAffiliateModalOpen] = useState(false);
-    const [editingAffiliate, setEditingAffiliate] = useState<TableData | null>(null);
-    const [editAffiliateForm, setEditAffiliateForm] = useState<AffiliateFormData>({
-        corporateName: "",
-        tradeName: "",
-        cnpj: "",
-        stateRegistration: "",
-        phone1: "",
-        phone2: "",
-        email: "",
-        cep: "",
-        street: "",
-        number: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        country: "",
-        isActive: true
-    });
-
-    // Estados para edição de hotéis
-    const [isEditHotelModalOpen, setIsEditHotelModalOpen] = useState(false);
-    const [editingHotel, setEditingHotel] = useState<TableData | null>(null);
-    const [editHotelForm, setEditHotelForm] = useState<HotelFormData>({
-        name: "",
-        description: "",
-        street: "",
-        number: "",
-        neighborhood: "",
-        city: "",
-        cep: "",
-        state: "",
-        country: "",
-        phone: "",
-        email: "",
-        isActive: true
-    });
-
-    // Estados para edição de clientes
-    const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
-    const [editingClient, setEditingClient] = useState<TableData | null>(null);
-    const [editClientForm, setEditClientForm] = useState<ClientFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        isActive: true
-    });
-
-    const menuItems: MenuItem[] = [
-        { id: "dashboard", label: "Dashboard", icon: <FaChartBar style={{ color: "white", fill: "white" }} /> },
-        { id: "pacotes", label: "Pacotes", icon: <FaBox style={{ color: "white", fill: "white" }} /> },
-        { id: "afiliados", label: "Afiliados", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
-        { id: "hoteis", label: "Hotéis", icon: <FaHotel style={{ color: "white", fill: "white" }} /> },
-        { id: "clientes", label: "Clientes", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
-        { id: "usuarios", label: "Usuários Adm", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
-    ]
-
-    // Estado para os dados das tabelas
-    // const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
-    //     pacotes: [
-    //         { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
-    //         { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
-    //         { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
-    //     ],
-    //     afiliados: [
-    //         { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
-    //         { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
-    //         { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
-    //     ],
-    //     hoteis: [
-    //         { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
-    //         { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
-    //         { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
-    //     ],
-    //     clientes: [
-    //         { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
-    //         { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
-    //         { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
-    //     ],
-    //     usuarios: [
-    //         { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
-    //         { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
-    //         { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
-    //     ],
-    // });
-
-    const vehicleTypes = [
-        "Ônibus",
-        "Avião"
-    ]
-
     const openModal = (type: "pacotes" | "usuarios") => {
         setModalType(type)
         setIsModalOpen(true)
@@ -351,363 +188,10 @@ function AdminDashboard() {
             })
         }
     }
-
     const closeModal = () => {
         setIsModalOpen(false)
         setModalType(null)
     }
-
-    const handlePackageSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Validações básicas
-        if (!packageForm.title.trim()) {
-            alert("Por favor, insira um título para o pacote");
-            return;
-        }
-        if (!packageForm.description.trim()) {
-            alert("Por favor, insira uma descrição para o pacote");
-            return;
-        }
-        // Validação baseada no tipo de pacote
-        if (packageForm.packageType === "fixed" && !packageForm.fixedStartDate) {
-            alert("Por favor, defina a data de início para o pacote de data fixa");
-            return;
-        }
-        if (packageForm.packageType === "seasonal") {
-            const period1Valid = packageForm.seasonalPeriods[0]?.startDate && packageForm.seasonalPeriods[0]?.endDate;
-            const period2Valid = packageForm.seasonalPeriods[1]?.startDate && packageForm.seasonalPeriods[1]?.endDate;
-            if (!period1Valid || !period2Valid) {
-                alert("Por favor, defina ambos os períodos sazonais");
-                return;
-            }
-        }
-        if (packageForm.packageType === "recurring") {
-            if (!packageForm.recurrenceStartDate || !packageForm.recurrenceEndDate || !packageForm.intervalDays) {
-                alert("Por favor, defina o período e intervalo para o pacote recorrente");
-                return;
-            }
-        }
-
-        // Montar o objeto conforme esperado pela API
-        let packageSchedule: any = {};
-        if (packageForm.packageType === "fixed") {
-            packageSchedule = {
-                startDate: packageForm.fixedStartDate,
-                isFixed: true,
-                isAvailable: true
-            };
-        } else if (packageForm.packageType === "seasonal") {
-            // Envia o primeiro período como exemplo
-            packageSchedule = {
-                startDate: packageForm.seasonalPeriods[0].startDate,
-                endDate: packageForm.seasonalPeriods[0].endDate,
-                isFixed: false,
-                isAvailable: packageForm.seasonalPeriods[0].isAvailable
-            };
-        } else if (packageForm.packageType === "recurring") {
-            packageSchedule = {
-                startDate: packageForm.recurrenceStartDate,
-                endDate: packageForm.recurrenceEndDate,
-                isFixed: false,
-                isAvailable: true
-            };
-        }
-
-
-        const formData = new FormData();
-        formData.append("title", packageForm.title.trim());
-        formData.append("description", packageForm.description.trim());
-        if (packageForm.image) {
-            formData.append("image", packageForm.image); // arquivo real
-        }
-        formData.append("vehicleType", packageForm.vehicleType);
-        formData.append("duration", packageForm.duration);
-        formData.append("maxPeople", packageForm.maxPeople);
-        formData.append("originalPrice", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("price", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("packageTax", packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
-        formData.append("discountValue", packageForm.discountValue);
-        formData.append("manualDiscountValue", "0");
-        formData.append("originAddress.City", packageForm.originAddress.city);
-        formData.append("originAddress.Country", packageForm.originAddress.country);
-        formData.append("destinationAddress.City", packageForm.destinationAddress.city);
-        formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
-        formData.append("userId", "2");
-
-        formData.append("packageSchedule", JSON.stringify(packageSchedule));
-
-        try {
-            const axios = (await import("axios")).default;
-            const response = await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data"
-                }
-            });
-            alert(`Pacote "${packageForm.title}" criado com sucesso!`);
-            closeModal();
-        } catch (error: any) {
-            for (let pair of formData.entries()) {
-                console.log(pair[0], pair[1]);
-            }
-
-            alert("Erro ao criar pacote. Verifique os dados e tente novamente.");
-            console.error(error);
-        }
-    }
-
-    const handleUserSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        console.log("Novo usuário:", userForm)
-        closeModal()
-    }
-
-    const handleEditPackage = (packageItem: TableData) => {
-        setEditingPackage(packageItem);
-
-        // Pré-preencher o formulário com os dados do pacote selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
-        setEditPackageForm({
-            title: packageItem.name,
-            description: `Descrição do ${packageItem.name}`,
-            originAddress: {
-                city: "São Paulo",
-                country: "Brasil"
-            },
-            destinationAddress: {
-                city: "Rio de Janeiro",
-                country: "Brasil"
-            },
-            image: null,
-            duration: "3 dias",
-            maxPeople: "4",
-            vehicleType: "Ônibus",
-            originalPrice: packageItem.value || "R$ 0,00",
-            packageFee: "R$ 50,00",
-            discountCoupon: "0",
-            isActive: packageItem.status === "Ativo",
-            // Novos campos
-            packageType: "fixed",
-            packageTax: "R$ 150,00",
-            cupomDiscount: "PROMO10",
-            discountValue: "10",
-            // Campos para pacote com data fixa
-            fixedStartDate: "2025-12-01",
-            // Campos para pacote sazonal
-            seasonalPeriods: [
-                { startDate: "2025-12-01", endDate: "2025-12-31", isAvailable: true },
-                { startDate: "2026-06-01", endDate: "2026-06-30", isAvailable: true }
-            ],
-            // Campos para pacote recorrente
-            recurrenceStartDate: "2025-08-01",
-            recurrenceEndDate: "2025-12-31",
-            intervalDays: "15"
-        });
-
-        setIsEditModalOpen(true);
-    };
-
-    const handleEditUser = (userItem: TableData) => {
-        setEditingUser(userItem);
-
-        // Pré-preencher o formulário com os dados do usuário selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
-        const [firstName, ...lastNameParts] = userItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-
-        setEditUserForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: `${firstName.toLowerCase()}@example.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            role: "",
-            isActive: userItem.status === "Ativo",
-        });
-
-        setIsEditUserModalOpen(true);
-    };
-
-    // Funções de visualização (somente leitura) para afiliados e hotéis
-    const handleViewAffiliate = (affiliateItem: TableData) => {
-        setEditingAffiliate(affiliateItem);
-
-        // Pré-preencher o formulário com os dados do afiliado selecionado para visualização
-        const tradeName = affiliateItem.name.replace(/\s+(Ltda|Eireli|S\.A\.|ME|EPP)$/i, '').trim();
-
-        setEditAffiliateForm({
-            corporateName: affiliateItem.name,
-            tradeName: tradeName,
-            cnpj: affiliateItem.value || "00.000.000/0001-00",
-            stateRegistration: "123456789",
-            phone1: "(11) 99999-9999",
-            phone2: "(11) 88888-8888",
-            email: `contato@${tradeName.toLowerCase().replace(/\s+/g, '')}.com`,
-            cep: "01234-567",
-            street: "Rua Exemplo",
-            number: "123",
-            neighborhood: "Centro",
-            city: "São Paulo",
-            state: "SP",
-            country: "Brasil",
-            isActive: affiliateItem.status === "Ativo",
-        });
-
-        setIsEditAffiliateModalOpen(true);
-    };
-
-    const handleViewHotel = (hotelItem: TableData) => {
-        setEditingHotel(hotelItem);
-
-        setEditHotelForm({
-            name: hotelItem.name,
-            description: `Descrição do ${hotelItem.name}`,
-            street: "Rua Exemplo",
-            number: "123",
-            neighborhood: "Copacabana",
-            city: "Rio de Janeiro",
-            cep: "22070-900",
-            state: "RJ",
-            country: "Brasil",
-            phone: "(21) 99999-9999",
-            email: `contato@${hotelItem.name.toLowerCase().replace(/\s+/g, '')}.com`,
-            isActive: hotelItem.status === "Ativo",
-        });
-
-        setIsEditHotelModalOpen(true);
-    };
-
-    const handleViewClient = (clientItem: TableData) => {
-        setEditingClient(clientItem);
-
-        // Pré-preencher o formulário com os dados do cliente selecionado para visualização
-        const [firstName, ...lastNameParts] = clientItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-
-        setEditClientForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: clientItem.value || `${firstName.toLowerCase()}@email.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            isActive: clientItem.status === "Ativo",
-        });
-
-        setIsEditClientModalOpen(true);
-    };
-
-    const closeEditModal = () => {
-        setIsEditModalOpen(false)
-        setEditingPackage(null)
-        // Limpar o formulário de edição
-        setEditPackageForm({
-            title: "",
-            description: "",
-            originAddress: { city: "", country: "" },
-            destinationAddress: { city: "", country: "" },
-            image: null,
-            duration: "",
-            maxPeople: "",
-            vehicleType: "",
-            originalPrice: "",
-            packageFee: "",
-            discountCoupon: "",
-            isActive: true,
-            // Novos campos
-            packageType: "fixed",
-            packageTax: "",
-            cupomDiscount: "",
-            discountValue: "",
-            // Campos para pacote com data fixa
-            fixedStartDate: "",
-            // Campos para pacote sazonal
-            seasonalPeriods: [
-                { startDate: "", endDate: "", isAvailable: true },
-                { startDate: "", endDate: "", isAvailable: true }
-            ],
-            // Campos para pacote recorrente
-            recurrenceStartDate: "",
-            recurrenceEndDate: "",
-            intervalDays: ""
-        })
-    }
-
-    const closeEditUserModal = () => {
-        setIsEditUserModalOpen(false)
-        setEditingUser(null)
-        // Limpar o formulário de edição de usuário
-        setEditUserForm({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            documentNumber: "",
-            birthDate: "",
-            role: "",
-            isActive: true
-        })
-    }
-
-    const closeEditAffiliateModal = () => {
-        setIsEditAffiliateModalOpen(false)
-        setEditingAffiliate(null)
-        // Limpar o formulário de edição de afiliado
-        setEditAffiliateForm({
-            corporateName: "",
-            tradeName: "",
-            cnpj: "",
-            stateRegistration: "",
-            phone1: "",
-            phone2: "",
-            email: "",
-            cep: "",
-            street: "",
-            number: "",
-            neighborhood: "",
-            city: "",
-            state: "",
-            country: "",
-            isActive: true
-        })
-    }
-
-    const closeEditHotelModal = () => {
-        setIsEditHotelModalOpen(false)
-        setEditingHotel(null)
-        // Limpar o formulário de edição de hotel
-        setEditHotelForm({
-            name: "",
-            description: "",
-            street: "",
-            number: "",
-            neighborhood: "",
-            city: "",
-            cep: "",
-            state: "",
-            country: "",
-            phone: "",
-            email: "",
-            isActive: true
-        })
-    }
-
-    const closeEditClientModal = () => {
-        setIsEditClientModalOpen(false)
-        setEditingClient(null)
-        // Limpar o formulário de edição de cliente
-        setEditClientForm({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            documentNumber: "",
-            birthDate: "",
-            isActive: true
-        })
-    }
-
     // Função genérica para alterar status de qualquer item
     const handleToggleItemStatus = (item: TableData, tabId: string) => {
         // Determinar o novo status baseado no status atual e tipo de entidade
@@ -756,7 +240,7 @@ function AdminDashboard() {
 
         console.log(`Alterando status do ${entityName} "${item.name}" (ID: ${item.id}) de "${item.status}" para "${newStatus}"`);
     }
-
+    // Funções de visualização (somente leitura) para afiliados e hotéis
     const renderModal = () => {
         if (!isModalOpen || !modalType) return null
 
@@ -1028,6 +512,17 @@ function AdminDashboard() {
 
                                 <div className="mt-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
+                                    {/* Exibe a imagem atual do pacote, se houver */}
+                                    {packageForm && packageForm.image && (
+                                        <div className="mb-3">
+                                            <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
+                                            <img
+                                                src={URL.createObjectURL(packageForm.image)}
+                                                alt="Imagem atual do pacote"
+                                                className="w-32 h-32 object-cover rounded border"
+                                            />
+                                        </div>
+                                    )}
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -1305,7 +800,6 @@ function AdminDashboard() {
             </div>
         )
     }
-
     const renderEditModal = () => {
         if (!isEditModalOpen || !editingPackage) return null;
 
@@ -1314,7 +808,7 @@ function AdminDashboard() {
                 {/* Overlay com gradiente */}
                 <div
                     className="fixed inset-0 bg-opacity-80"
-                    onClick={closeEditModal}
+                    onClick={closeEditPackageModal}
                     style={{
                         background: MODAL_OVERLAY_GRADIENT
                     }}
@@ -1329,7 +823,7 @@ function AdminDashboard() {
                                 Editar Pacote: {editingPackage.name}
                             </h2>
                             <button
-                                onClick={closeEditModal}
+                                onClick={closeEditPackageModal}
                                 className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <FaTimes size={20} />
@@ -1534,7 +1028,7 @@ function AdminDashboard() {
                         <div className="flex gap-4">
                             <button
                                 type="button"
-                                onClick={closeEditModal}
+                                onClick={closeEditPackageModal}
                                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                             >
                                 Cancelar
@@ -1554,7 +1048,365 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de edição de usuários
+    // Form states
+    // Estados para criação e edição de pacotes
+    const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
+    const [packageForm, setPackageForm] = useState<PackageFormData>({
+        title: "",
+        description: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
+        image: null,
+        duration: "",
+        maxPeople: "",
+        vehicleType: "",
+        originalPrice: "",
+        packageFee: "",
+        discountCoupon: "",
+        isActive: true,
+        // Novos campos
+        packageType: "fixed",
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        // Campos para pacote com data fixa
+        fixedStartDate: "",
+        // Campos para pacote sazonal
+        seasonalPeriods: [
+            { startDate: "", endDate: "", isAvailable: true },
+            { startDate: "", endDate: "", isAvailable: true }
+        ],
+        // Campos para pacote recorrente
+        recurrenceStartDate: "",
+        recurrenceEndDate: "",
+        intervalDays: ""
+    })
+    const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
+        title: "",
+        description: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
+        image: null,
+        duration: "",
+        maxPeople: "",
+        vehicleType: "",
+        originalPrice: "",
+        packageFee: "",
+        discountCoupon: "",
+        isActive: true,
+        // Novos campos
+        packageType: "fixed",
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        // Campos para pacote com data fixa
+        fixedStartDate: "",
+        // Campos para pacote sazonal
+        seasonalPeriods: [
+            { startDate: "", endDate: "", isAvailable: true },
+            { startDate: "", endDate: "", isAvailable: true }
+        ],
+        // Campos para pacote recorrente
+        recurrenceStartDate: "",
+        recurrenceEndDate: "",
+        intervalDays: ""
+    });
+    const handlePackageSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        // Validações básicas
+        if (!packageForm.title.trim()) {
+            alert("Por favor, insira um título para o pacote");
+            return;
+        }
+        if (!packageForm.description.trim()) {
+            alert("Por favor, insira uma descrição para o pacote");
+            return;
+        }
+        // Validação baseada no tipo de pacote
+        if (packageForm.packageType === "fixed" && !packageForm.fixedStartDate) {
+            alert("Por favor, defina a data de início para o pacote de data fixa");
+            return;
+        }
+        if (packageForm.packageType === "seasonal") {
+            const period1Valid = packageForm.seasonalPeriods[0]?.startDate && packageForm.seasonalPeriods[0]?.endDate;
+            const period2Valid = packageForm.seasonalPeriods[1]?.startDate && packageForm.seasonalPeriods[1]?.endDate;
+            if (!period1Valid || !period2Valid) {
+                alert("Por favor, defina ambos os períodos sazonais");
+                return;
+            }
+        }
+        if (packageForm.packageType === "recurring") {
+            if (!packageForm.recurrenceStartDate || !packageForm.recurrenceEndDate || !packageForm.intervalDays) {
+                alert("Por favor, defina o período e intervalo para o pacote recorrente");
+                return;
+            }
+        }
+
+        // Montar o objeto conforme esperado pela API
+        let packageSchedule: any = {};
+        if (packageForm.packageType === "fixed") {
+            packageSchedule = {
+                startDate: packageForm.fixedStartDate,
+                isFixed: true,
+                isAvailable: true
+            };
+        } else if (packageForm.packageType === "seasonal") {
+            // Envia o primeiro período como exemplo
+            packageSchedule = {
+                startDate: packageForm.seasonalPeriods[0].startDate,
+                endDate: packageForm.seasonalPeriods[0].endDate,
+                isFixed: false,
+                isAvailable: packageForm.seasonalPeriods[0].isAvailable
+            };
+        } else if (packageForm.packageType === "recurring") {
+            packageSchedule = {
+                startDate: packageForm.recurrenceStartDate,
+                endDate: packageForm.recurrenceEndDate,
+                isFixed: false,
+                isAvailable: true
+            };
+        }
+
+
+        const formData = new FormData();
+        formData.append("title", packageForm.title.trim());
+        formData.append("description", packageForm.description.trim());
+        if (packageForm.image) {
+            formData.append("image", packageForm.image); // arquivo real
+        }
+        formData.append("vehicleType", packageForm.vehicleType);
+        formData.append("duration", packageForm.duration);
+        formData.append("maxPeople", packageForm.maxPeople);
+        formData.append("originalPrice", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("price", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("packageTax", packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
+        formData.append("discountValue", packageForm.discountValue);
+        formData.append("manualDiscountValue", "0");
+        formData.append("originAddress.City", packageForm.originAddress.city);
+        formData.append("originAddress.Country", packageForm.originAddress.country);
+        formData.append("destinationAddress.City", packageForm.destinationAddress.city);
+        formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
+        formData.append("userId", "2");
+
+        formData.append("packageSchedule", JSON.stringify(packageSchedule));
+
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            alert(`Pacote "${packageForm.title}" criado com sucesso!`);
+            closeModal();
+        } catch (error: any) {
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
+            alert("Erro ao criar pacote. Verifique os dados e tente novamente.");
+            console.error(error);
+        }
+    }
+    const handleEditPackage = (packageItem: TableData) => {
+        setEditingPackage(packageItem);
+
+        // Pré-preencher o formulário com os dados do pacote selecionado
+        // Como os dados da tabela são limitados, vamos simular dados mais completos
+        setEditPackageForm({
+            title: packageItem.name,
+            description: `Descrição do ${packageItem.name}`,
+            originAddress: {
+                city: "São Paulo",
+                country: "Brasil"
+            },
+            destinationAddress: {
+                city: "Rio de Janeiro",
+                country: "Brasil"
+            },
+            image: null,
+            duration: "3 dias",
+            maxPeople: "4",
+            vehicleType: "Ônibus",
+            originalPrice: packageItem.value || "R$ 0,00",
+            packageFee: "R$ 50,00",
+            discountCoupon: "0",
+            isActive: packageItem.status === "Ativo",
+            // Novos campos
+            packageType: "fixed",
+            packageTax: "R$ 150,00",
+            cupomDiscount: "PROMO10",
+            discountValue: "10",
+            // Campos para pacote com data fixa
+            fixedStartDate: "2025-12-01",
+            // Campos para pacote sazonal
+            seasonalPeriods: [
+                { startDate: "2025-12-01", endDate: "2025-12-31", isAvailable: true },
+                { startDate: "2026-06-01", endDate: "2026-06-30", isAvailable: true }
+            ],
+            // Campos para pacote recorrente
+            recurrenceStartDate: "2025-08-01",
+            recurrenceEndDate: "2025-12-31",
+            intervalDays: "15"
+        });
+
+        setIsEditModalOpen(true);
+    };
+    const closeEditPackageModal = () => {
+        setIsEditModalOpen(false)
+        setEditingPackage(null)
+        // Limpar o formulário de edição
+        setEditPackageForm({
+            title: "",
+            description: "",
+            originAddress: { city: "", country: "" },
+            destinationAddress: { city: "", country: "" },
+            image: null,
+            duration: "",
+            maxPeople: "",
+            vehicleType: "",
+            originalPrice: "",
+            packageFee: "",
+            discountCoupon: "",
+            isActive: true,
+            // Novos campos
+            packageType: "fixed",
+            packageTax: "",
+            cupomDiscount: "",
+            discountValue: "",
+            // Campos para pacote com data fixa
+            fixedStartDate: "",
+            // Campos para pacote sazonal
+            seasonalPeriods: [
+                { startDate: "", endDate: "", isAvailable: true },
+                { startDate: "", endDate: "", isAvailable: true }
+            ],
+            // Campos para pacote recorrente
+            recurrenceStartDate: "",
+            recurrenceEndDate: "",
+            intervalDays: ""
+        })
+    }
+    // Função para lidar com o envio do formulário de edição
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!editingPackage) return;
+
+        // Monta o objeto conforme esperado pela API
+        const formData = new FormData();
+        formData.append("travelPackageId", String(editingPackage.id));
+        formData.append("title", editPackageForm.title);
+        formData.append("description", editPackageForm.description);
+        if (editPackageForm.image) {
+            formData.append("imageFile", editPackageForm.image); // arquivo real
+        }
+        formData.append("vehicleType", editPackageForm.vehicleType);
+        formData.append("duration", editPackageForm.duration);
+        formData.append("maxPeople", editPackageForm.maxPeople);
+        formData.append("originalPrice", editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("price", editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("packageTax", editPackageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("cupomDiscount", editPackageForm.cupomDiscount);
+        formData.append("discountValue", editPackageForm.discountValue);
+        formData.append("manualDiscountValue", "0");
+        formData.append("originCity", editPackageForm.originAddress.city);
+        formData.append("originCountry", editPackageForm.originAddress.country);
+        formData.append("destinationCity", editPackageForm.destinationAddress.city);
+        formData.append("destinationCountry", editPackageForm.destinationAddress.country);
+
+        const packageSchedule = {
+            startDate: editPackageForm.fixedStartDate,
+            endDate: null,
+            duration: 0,
+            isFixed: true,
+            isAvailable: editPackageForm.isActive
+        };
+        formData.append("packageSchedule", JSON.stringify(packageSchedule));
+
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put("http://localhost:5028/api/TravelPackage/update", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            alert("Pacote atualizado com sucesso!");
+            closeEditPackageModal();
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao atualizar pacote.");
+            console.error(error);
+        }
+    };
+
+    // Estados para edição de usuários
+    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+    const [userForm, setUserForm] = useState<UserFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        role: "Cliente",
+        isActive: true
+    })
+    const [editingUser, setEditingUser] = useState<TableData | null>(null);
+    const [editUserForm, setEditUserForm] = useState<UserFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        role: "Cliente",
+        isActive: true
+    });
+    const handleUserSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        console.log("Novo usuário:", userForm)
+        closeModal()
+    }
+    const handleEditUser = (userItem: TableData) => {
+        setEditingUser(userItem);
+
+        // Pré-preencher o formulário com os dados do usuário selecionado
+        // Como os dados da tabela são limitados, vamos simular dados mais completos
+        const [firstName, ...lastNameParts] = userItem.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        setEditUserForm({
+            firstName: firstName || "",
+            lastName: lastName || "",
+            email: `${firstName.toLowerCase()}@example.com`,
+            phone: "(11) 99999-9999",
+            documentNumber: "000.000.000-00",
+            birthDate: "1990-01-01",
+            role: "",
+            isActive: userItem.status === "Ativo",
+        });
+
+        setIsEditUserModalOpen(true);
+    };
+    const closeEditUserModal = () => {
+        setIsEditUserModalOpen(false)
+        setEditingUser(null)
+        // Limpar o formulário de edição de usuário
+        setEditUserForm({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            documentNumber: "",
+            birthDate: "",
+            role: "",
+            isActive: true
+        })
+    }
+    // Modal de edição
     const renderEditUserModal = () => {
         if (!isEditUserModalOpen || !editingUser) return null;
 
@@ -1724,8 +1576,104 @@ function AdminDashboard() {
             </div>
         );
     };
+    // Função para lidar com o envio do formulário de edição de usuários
+    const handleEditUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    // Modal de edição de afiliados
+        if (!editingUser) return;
+
+        // Aqui você implementaria a lógica para salvar as alterações do usuário
+        const updatedUserData = {
+            userId: editingUser.id,
+            email: editUserForm.email,
+            firstName: editUserForm.firstName,
+            lastName: editUserForm.lastName,
+            birthDate: editUserForm.birthDate,
+            password: "string" // Se não for alterar, envie um valor padrão ou o atual
+        };
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
+            alert("Usuário atualizado com sucesso!");
+            closeEditUserModal();
+            fetchClients(); // Atualiza a tabela de clientes após edição
+        } catch (error) {
+            alert("Erro ao atualizar usuário.");
+            console.error(error);
+        }
+    };
+
+
+    // Estados para edição de afiliados
+    const [isEditAffiliateModalOpen, setIsEditAffiliateModalOpen] = useState(false);
+    const [editingAffiliate, setEditingAffiliate] = useState<TableData | null>(null);
+    const [editAffiliateForm, setEditAffiliateForm] = useState<AffiliateFormData>({
+        corporateName: "",
+        tradeName: "",
+        cnpj: "",
+        stateRegistration: "",
+        phone1: "",
+        phone2: "",
+        email: "",
+        cep: "",
+        street: "",
+        number: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        country: "",
+        isActive: true
+    });
+    const handleViewAffiliate = (affiliateItem: TableData) => {
+        setEditingAffiliate(affiliateItem);
+
+        // Pré-preencher o formulário com os dados do afiliado selecionado para visualização
+        const tradeName = affiliateItem.name.replace(/\s+(Ltda|Eireli|S\.A\.|ME|EPP)$/i, '').trim();
+
+        setEditAffiliateForm({
+            corporateName: affiliateItem.name,
+            tradeName: tradeName,
+            cnpj: affiliateItem.value || "00.000.000/0001-00",
+            stateRegistration: "123456789",
+            phone1: "(11) 99999-9999",
+            phone2: "(11) 88888-8888",
+            email: `contato@${tradeName.toLowerCase().replace(/\s+/g, '')}.com`,
+            cep: "01234-567",
+            street: "Rua Exemplo",
+            number: "123",
+            neighborhood: "Centro",
+            city: "São Paulo",
+            state: "SP",
+            country: "Brasil",
+            isActive: affiliateItem.status === "Ativo",
+        });
+
+        setIsEditAffiliateModalOpen(true);
+    };
+    const closeEditAffiliateModal = () => {
+        setIsEditAffiliateModalOpen(false)
+        setEditingAffiliate(null)
+        // Limpar o formulário de edição de afiliado
+        setEditAffiliateForm({
+            corporateName: "",
+            tradeName: "",
+            cnpj: "",
+            stateRegistration: "",
+            phone1: "",
+            phone2: "",
+            email: "",
+            cep: "",
+            street: "",
+            number: "",
+            neighborhood: "",
+            city: "",
+            state: "",
+            country: "",
+            isActive: true
+        })
+    }
+    // Modal de edição
     const renderEditAffiliateModal = () => {
         if (!isEditAffiliateModalOpen || !editingAffiliate) return null;
 
@@ -1957,7 +1905,72 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de edição de hotéis
+
+    // Estados para edição de hotéis
+    const [isEditHotelModalOpen, setIsEditHotelModalOpen] = useState(false);
+    const [editingHotel, setEditingHotel] = useState<TableData | null>(null);
+    const [editHotelForm, setEditHotelForm] = useState<HotelFormData>({
+        name: "",
+        description: "",
+        street: "",
+        number: "",
+        neighborhood: "",
+        city: "",
+        cep: "",
+        state: "",
+        country: "",
+        phone: "",
+        email: "",
+        isActive: true,
+        star: 0
+    });
+    const handleViewHotel = (item: TableData) => {
+
+        const hotel = getHotelById(item.id);
+        if (!hotel) return;
+
+        setEditingHotel(hotel);
+
+        setEditHotelForm({
+            name: hotel.name,
+            description: hotel.description || "",
+            street: hotel.address?.streetName || "",
+            number: hotel.address?.addressNumber || "",
+            neighborhood: hotel.address?.neighborhood || "",
+            city: hotel.address?.city || "",
+            cep: hotel.address?.zipCode || "",
+            state: hotel.address?.state || "",
+            country: hotel.address?.country || "",
+            phone: hotel.contactNumber || "",
+            email: hotel.affiliate?.email || "",
+            isActive: hotel.isActive,
+            star: hotel.star || 1
+        });
+
+        setIsEditHotelModalOpen(true);
+    };
+    const closeEditHotelModal = () => {
+        setIsEditHotelModalOpen(false)
+        setEditingHotel(null)
+        // Limpar o formulário de edição de hotel
+        setEditHotelForm({
+            name: "",
+            description: "",
+            street: "",
+            number: "",
+            neighborhood: "",
+            city: "",
+            cep: "",
+            state: "",
+            country: "",
+            phone: "",
+            email: "",
+            isActive: true,
+            star: 1
+        })
+    }
+
+    // Modal de edição
     const renderEditHotelModal = () => {
         if (!isEditHotelModalOpen || !editingHotel) return null;
 
@@ -2119,6 +2132,15 @@ function AdminDashboard() {
                                         style={{ color: "#003194" }}
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Estrelas</label>
+                                    <input
+                                        value={editHotelForm.star}
+                                        readOnly
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-2 mt-6">
@@ -2152,7 +2174,52 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de visualização de clientes
+    // Estados para edição de clientes
+    const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState<TableData | null>(null);
+    const [editClientForm, setEditClientForm] = useState<ClientFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        isActive: true
+    });
+    const handleViewClient = (clientItem: TableData) => {
+        setEditingClient(clientItem);
+
+        // Pré-preencher o formulário com os dados do cliente selecionado para visualização
+        const [firstName, ...lastNameParts] = clientItem.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        setEditClientForm({
+            firstName: firstName || "",
+            lastName: lastName || "",
+            email: clientItem.value || `${firstName.toLowerCase()}@email.com`,
+            phone: "(11) 99999-9999",
+            documentNumber: "000.000.000-00",
+            birthDate: "1990-01-01",
+            isActive: clientItem.status === "Ativo",
+        });
+
+        setIsEditClientModalOpen(true);
+    };
+    const closeEditClientModal = () => {
+        setIsEditClientModalOpen(false)
+        setEditingClient(null)
+        // Limpar o formulário de edição de cliente
+        setEditClientForm({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            documentNumber: "",
+            birthDate: "",
+            isActive: true
+        })
+    }
+    // Modal de edição
     const renderEditClientModal = () => {
         if (!isEditClientModalOpen || !editingClient) return null;
 
@@ -2286,6 +2353,51 @@ function AdminDashboard() {
         );
     };
 
+    const menuItems: MenuItem[] = [
+        { id: "dashboard", label: "Dashboard", icon: <FaChartBar style={{ color: "white", fill: "white" }} /> },
+        { id: "pacotes", label: "Pacotes", icon: <FaBox style={{ color: "white", fill: "white" }} /> },
+        { id: "afiliados", label: "Afiliados", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
+        { id: "hoteis", label: "Hotéis", icon: <FaHotel style={{ color: "white", fill: "white" }} /> },
+        { id: "clientes", label: "Clientes", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
+        { id: "usuarios", label: "Usuários Adm", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
+    ]
+
+    // Estado para os dados das tabelas
+    // const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
+    //     pacotes: [
+    //         { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
+    //         { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
+    //         { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
+    //     ],
+    //     afiliados: [
+    //         { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
+    //         { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
+    //         { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
+    //     ],
+    //     hoteis: [
+    //         { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
+    //         { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
+    //         { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
+    //     ],
+    //     clientes: [
+    //         { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
+    //         { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
+    //         { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
+    //     ],
+    //     usuarios: [
+    //         { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
+    //         { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
+    //         { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
+    //     ],
+    // });
+
+    const vehicleTypes = [
+        "Ônibus",
+        "Avião"
+    ]
+
+
+    // Renderiza os dashboards principais
     const renderDashboard = () => (
         <div className="space-y-6">
             {/* Metrics Cards */}
@@ -2543,15 +2655,15 @@ function AdminDashboard() {
 
         const data =
             tabId === "pacotes"
-                ? backendPackages
+                ? packagesTableData
                 : tabId === "afiliados"
-                    ? backendAffiliates
+                    ? affiliatesTableData
                     : tabId === "hoteis"
-                        ? backendHotels
+                        ? hotelsTableData
                         : tabId === "clientes"
-                            ? backendClients
+                            ? clientsTableData
                             : tabId === "usuarios"
-                                ? backendAdmins
+                                ? usersTableData
                                 : [];
         const tabLabels: Record<string, string> = {
             pacotes: "Pacotes",
@@ -2658,7 +2770,7 @@ function AdminDashboard() {
                             >
                                 <FaEdit />
                             </button>
-                            {/* <button
+                            <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
                                 className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
                                     ? "text-red-600 hover:bg-red-50"
@@ -2667,7 +2779,7 @@ function AdminDashboard() {
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
-                            </button> */}
+                            </button>
                         </td>
                     </tr>
                 );
@@ -2710,7 +2822,7 @@ function AdminDashboard() {
                             >
                                 {(tabId === "afiliados" || tabId === "hoteis" || tabId === "clientes") ? <FaEye /> : <FaEdit />}
                             </button>
-                            {/* <button
+                            <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
                                 className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
                                     ? "text-red-600 hover:bg-red-50"
@@ -2719,7 +2831,7 @@ function AdminDashboard() {
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
-                            </button> */}
+                            </button>
                         </td>
                     </tr>
                 );
@@ -2756,104 +2868,59 @@ function AdminDashboard() {
         )
     }
 
-    // Função para lidar com o envio do formulário de edição
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // USUÁRIOS ADMINS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [usersTableData, setUsersTableData] = useState<TableData[]>([]);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
 
-        if (!editingPackage) return;
-
-        // Monta o objeto conforme esperado pela API
-        const updatedPackageData = {
-            travelPackageId: editingPackage.id,
-            title: editPackageForm.title,
-            description: editPackageForm.description,
-            imageUrl: "", /* editPackageForm.image,*/
-            vehicleType: editPackageForm.vehicleType,
-            duration: parseInt(editPackageForm.duration) || 0,
-            maxPeople: parseInt(editPackageForm.maxPeople) || 0,
-            originalPrice: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
-            price: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
-            packageTax: parseFloat(editPackageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
-            cupomDiscount: editPackageForm.cupomDiscount,
-            discountValue: parseInt(editPackageForm.discountValue) || 0,
-            manualDiscountValue: 0,
-            originCity: editPackageForm.originAddress.city,
-            originCountry: editPackageForm.originAddress.country,
-            destinationCity: editPackageForm.destinationAddress.city,
-            destinationCountry: editPackageForm.destinationAddress.country,
-            packageSchedule: {
-                startDate: editPackageForm.fixedStartDate,
-                endDate: null,
-                duration: 0,
-                isFixed: true,
-                isAvailable: editPackageForm.isActive
-            }
-        };
-
+    async function fetchUsers() {
         try {
             const axios = (await import("axios")).default;
-            await axios.put("http://localhost:5028/api/TravelPackage/update", updatedPackageData);
-            alert("Pacote atualizado com sucesso!");
-            closeEditModal();
-            fetchPackages();
-        } catch (error) {
-            alert("Erro ao atualizar pacote.");
-            console.error(error);
+            const response = await axios.get("http://localhost:5028/api/admin");
+            setAllUsers(response.data);
+            const mapped = response.data.map((user: any) => ({
+                id: user.userId,
+                name: `${user.firstName} ${user.lastName}`,
+                status: user.isActive ? "Ativo" : "Inativo",
+                date: user.birthDate ? user.birthDate.split("T")[0] : "",
+                value: user.role === 2 ? "Administrador" : user.role === 3 ? "Suporte" : "Cliente"
+            }));
+            setUsersTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar usuários administrativos:", err);
         }
-    };
+    }
 
-    // Função para lidar com o envio do formulário de edição de usuários
-    const handleEditUserSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // PACOTES -> Carrega os dados da API e mapeia para o formato da tabela
+    const [packagesTableData, setPackagesTableData] = useState<TableData[]>([]);
+    const [allPackages, setAllPackages] = useState<any[]>([]);
 
-        if (!editingUser) return;
-
-        // Aqui você implementaria a lógica para salvar as alterações do usuário
-        const updatedUserData = {
-            userId: editingUser.id,
-            email: editUserForm.email,
-            firstName: editUserForm.firstName,
-            lastName: editUserForm.lastName,
-            birthDate: editUserForm.birthDate,
-            password: "string" // Se não for alterar, envie um valor padrão ou o atual
-        };
-
-        try {
-            const axios = (await import("axios")).default;
-            await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
-            alert("Usuário atualizado com sucesso!");
-            closeEditUserModal();
-            fetchClients(); // Atualiza a tabela de clientes após edição
-        } catch (error) {
-            alert("Erro ao atualizar usuário.");
-            console.error(error);
-        }
-    };
-
-    const [backendPackages, setBackendPackages] = useState<TableData[]>([]);
     async function fetchPackages() {
         try {
             const axios = (await import("axios")).default;
             const response = await axios.get("http://localhost:5028/api/TravelPackage/list");
+            setAllPackages(response.data);
             const mapped = response.data.map((pkg: any) => ({
                 id: pkg.travelPackageId,
                 name: pkg.title,
                 status: pkg.packageSchedule.isAvailable ? "Ativo" : "Inativo",
-                date: pkg.packageSchedule.startDate ? pkg.packageSchedule.startDate.split("T")[0] : "",
+                date: pkg.createdAt ? pkg.createdAt.split("T")[0] : "API NAO TRAS CREATEDAT",
                 value: `R$ ${pkg.price || pkg.originalPrice}`,
-                remainingSlots: pkg.maxPeople
+                remainingSlots: pkg.remainingSlots || "API NAO TRAS VAGAS RESTANTES",
             }));
-            setBackendPackages(mapped);
+            setPackagesTableData(mapped);
         } catch (err) {
             console.error("Erro ao buscar pacotes:", err);
         }
     }
 
-    const [backendAffiliates, setBackendAffiliates] = useState<TableData[]>([]);
+    // AFILIADOS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [affiliatesTableData, setAffiliatesTableData] = useState<TableData[]>([]);
+    const [allAffiliates, setAllAffiliates] = useState<any[]>([]);
     async function fetchAffiliates() {
         try {
             const axios = (await import("axios")).default;
             const response = await axios.get("http://localhost:5028/api/Affiliate");
+            setAllAffiliates(response.data);
             const mapped = response.data.map((aff: any) => ({
                 id: aff.affiliateId,
                 name: aff.companyName || aff.name,
@@ -2862,35 +2929,43 @@ function AdminDashboard() {
                 date: aff.createdAt ? aff.createdAt.split("T")[0] : "",
                 value: aff.cnpj
             }));
-            setBackendAffiliates(mapped);
+            setAffiliatesTableData(mapped);
         } catch (err) {
             console.error("Erro ao buscar afiliados:", err);
         }
     }
 
-    const [backendHotels, setBackendHotels] = useState<TableData[]>([]);
+    // HOTEIS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [hotelsTableData, setHotelsTableData] = useState<TableData[]>([]);
+    const [allHotels, setAllHotels] = useState<any[]>([]);
+
     async function fetchHotels() {
         try {
             const axios = (await import("axios")).default;
             const response = await axios.get("http://localhost:5028/api/Hotel");
+            setAllHotels(response.data);
             const mapped = response.data.map((hotel: any) => ({
                 id: hotel.hotelId,
                 name: hotel.name,
                 status: hotel.isActive ? "Ativo" : "Inativo",
-                date: hotel.address?.createdAt ? hotel.address.createdAt.split("T")[0] : "",
-                value: hotel.affiliateId ? `Afiliado #${hotel.affiliateId}` : "",
+                date: hotel.createdAt ? hotel.createdAt.split("T")[0] : "",
+                value: hotel.affiliateId ? hotel.affiliate?.name : "",
             }));
-            setBackendHotels(mapped);
+            setHotelsTableData(mapped);
         } catch (err) {
             console.error("Erro ao buscar hotéis:", err);
         }
     }
 
-    const [backendClients, setBackendClients] = useState<TableData[]>([]);
+    // CLIENTES -> Carrega os dados da API e mapeia para o formato da tabela
+    const [clientsTableData, setClientsTableData] = useState<TableData[]>([]);
+    const [allClients, setAllClients] = useState<any[]>([]);
+
     async function fetchClients() {
         try {
             const axios = (await import("axios")).default;
             const response = await axios.get("http://localhost:5028/api/User");
+            setAllClients(response.data);
             const mapped = response.data.map((user: any) => ({
                 id: user.userId,
                 name: `${user.firstName} ${user.lastName}`,
@@ -2898,28 +2973,9 @@ function AdminDashboard() {
                 date: user.birthDate ? user.birthDate.split("T")[0] : "",
                 value: user.email
             }));
-            setBackendClients(mapped);
+            setClientsTableData(mapped);
         } catch (err) {
             console.error("Erro ao buscar clientes:", err);
-        }
-    }
-
-    const [backendAdmins, setBackendAdmins] = useState<TableData[]>([]);
-
-    async function fetchAdmins() {
-        try {
-            const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/admin");
-            const mapped = response.data.map((user: any) => ({
-                id: user.userId,
-                name: `${user.firstName} ${user.lastName}`,
-                status: user.isActive ? "Ativo" : "Inativo",
-                date: user.birthDate ? user.birthDate.split("T")[0] : "",
-                value: user.role === 2 ? "Administrador" : user.role === 3 ? "Suporte" : "Cliente"
-            }));
-            setBackendAdmins(mapped);
-        } catch (err) {
-            console.error("Erro ao buscar usuários administrativos:", err);
         }
     }
 
@@ -2931,7 +2987,7 @@ function AdminDashboard() {
                 fetchAffiliates(),
                 fetchHotels(),
                 fetchClients(),
-                fetchAdmins()
+                fetchUsers()
             ]);
             setIsLoading(false);
         }
