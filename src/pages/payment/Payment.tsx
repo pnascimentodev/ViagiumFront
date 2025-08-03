@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
-import { maskCardNumber, maskValidateExpirationDate } from "../../utils/masks";
+import { maskCardNumber, maskExpiryMonth, maskExpiryYear } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 
@@ -16,15 +16,23 @@ export default function Payment() {
 
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
     const [cardForm, setCardForm] = useState({
-    cardholderName: "",
+    holderName: "",
     cardNumber: "",
-    expirationDate: "",
-    cvv: "",
+    expiryMonth: "",
+    expiryYear: "",
+    ccv: "",
     });
 
     const [errors, setErrors] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<"success" | "error" | "pending">("pending");
+
+    const paymentMethodMap: { [key: string]: number } = {
+        "pix": 1,
+        "boleto": 2,
+        "credito": 3,
+        "debito": 4,
+    };
 
   // Status config
     const statusConfig = {
@@ -45,11 +53,17 @@ export default function Payment() {
       totalPrice: string;
     }
 
-    const [reservationDetails] = useState<Reservation>({
-      id: 1,
-      startDate: new Date("2025-09-10"),
-      totalPrice: "R$ 3.200,00",
-    });
+    // TODO: Get reservation details from props or API
+    const [reservationDetails] = useState<Reservation | null>(null);
+
+    // TODO: Load reservation data on component mount
+    useEffect(() => {
+        // Example: Load reservation from URL params or props
+        // const reservationId = new URLSearchParams(window.location.search).get('reservationId');
+        // if (reservationId) {
+        //     loadReservationDetails(reservationId);
+        // }
+    }, []);
 
     function handleCardInputChange(field: string, value: string) {
         setCardForm((prev: any) => ({ ...prev, [field]: value }));
@@ -58,21 +72,26 @@ export default function Payment() {
 
     function validateCardForm() {
         const newErrors: any = {};
-        if (!cardForm.cardholderName) newErrors.cardholderName = "Nome obrigatório";
+        if (!cardForm.holderName) newErrors.holderName = "Nome obrigatório";
         if (!cardForm.cardNumber) {
             newErrors.cardNumber = "Número obrigatório";
         } else if (cardForm.cardNumber.replace(/\s/g, "").length !== 16) {
         newErrors.cardNumber = "O número do cartão deve ter 16 dígitos";
         }
-        if (!cardForm.expirationDate) {
-            newErrors.expirationDate = "Validade obrigatória";
-        } else if (cardForm.expirationDate.replace(/\D/g, "").length !== 4) {
-            newErrors.expirationDate = "A validade deve ter 4 dígitos";
+        if (!cardForm.expiryMonth) {
+            newErrors.expiryMonth = "Mês obrigatório";
+        } else if (cardForm.expiryMonth.replace(/\D/g, "").length !== 2) {
+            newErrors.expiryMonth = "O mês deve ter 2 dígitos";
         }
-        if (!cardForm.cvv) {
-            newErrors.cvv = "CVV obrigatório";
-        } else if (cardForm.cvv.replace(/\D/g, "").length !== 3) {
-            newErrors.cvv = "O CVV deve ter 3 dígitos";
+        if (!cardForm.expiryYear) {
+            newErrors.expiryYear = "Ano obrigatório";
+        } else if (cardForm.expiryYear.replace(/\D/g, "").length !== 2) {
+            newErrors.expiryYear = "O ano deve ter 2 dígitos";
+        }
+        if (!cardForm.ccv) {
+            newErrors.ccv = "CVV obrigatório";
+        } else if (cardForm.ccv.replace(/\D/g, "").length !== 3) {
+            newErrors.ccv = "O CVV deve ter 3 dígitos";
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -82,33 +101,58 @@ export default function Payment() {
         e.preventDefault();
         setIsSubmitting(true);
 
+        if (!selectedMethod) {
+            setErrors({ paymentMethod: "Selecione um método de pagamento" });
+            setIsSubmitting(false);
+            return;
+        }
+
         if (selectedMethod === "credito" || selectedMethod === "debito") {
         if (!validateCardForm()) {
             setIsSubmitting(false);
             return;
         }
         }
-    
-        // Simulação de pagamento
-        setTimeout(() => {
-        setPaymentStatus("success");
-        setIsSubmitting(false);
-        }, 2000);
-    }
 
-    const paymentPayload = {
-    reservationId: reservationDetails.id,
-    paymentMethod: selectedMethod, // "pix", "boleto", "credito", "debito"
-    card: selectedMethod === "credito" || selectedMethod === "debito"
-      ? {
-          cardholderName: cardForm.cardholderName,
-          cardNumber: cardForm.cardNumber,
-          expirationDate: cardForm.expirationDate,
-          cvv: cardForm.cvv,
+        if (!reservationDetails) {
+            setErrors({ general: "Dados da reserva não encontrados" });
+            setIsSubmitting(false);
+            return;
         }
-      : undefined
-    // outros campos se necessário
-  };
+
+        const getRemoteIp = () => {
+            // TODO: Implement real IP detection
+            return "127.0.0.1";
+        };
+
+        // Prepare payment data for API
+        const paymentData = {
+            reservationId: reservationDetails.id,
+            paymentMethod: paymentMethodMap[selectedMethod || ""],
+            holderName: cardForm.holderName,
+            cardNumber: cardForm.cardNumber.replace(/\s/g, ""), // Remove spaces
+            expiryMonth: cardForm.expiryMonth,
+            expiryYear: cardForm.expiryYear,
+            ccv: cardForm.ccv,
+            remoteIp: getRemoteIp(),
+        };
+
+        console.log("Payment data to be sent to API:", paymentData);
+        
+        try {
+            // TODO: Make actual API call
+            // const response = await paymentAPI.processPayment(paymentData);
+            // setPaymentStatus(response.success ? "success" : "error");
+            
+            // Placeholder - remove when implementing real API
+            setPaymentStatus("pending");
+        } catch (error) {
+            console.error("Payment error:", error);
+            setPaymentStatus("error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
   return (
     <div>
@@ -126,8 +170,14 @@ export default function Payment() {
             <h2 className="text-xl font-bold mb-2">Detalhes do Pacote</h2>
         </div>
         <div className="space-y-1 ml-6">
-          <div><span className="font-semibold text-gray-700">Nome:</span> {reservationDetails.startDate.toLocaleDateString()}</div>
-          <div><span className="font-semibold text-gray-700">Destino:</span> {reservationDetails.totalPrice}</div>
+          {reservationDetails ? (
+            <>
+              <div><span className="font-semibold text-gray-700">Data:</span> {reservationDetails.startDate.toLocaleDateString()}</div>
+              <div><span className="font-semibold text-gray-700">Valor Total:</span> {reservationDetails.totalPrice}</div>
+            </>
+          ) : (
+            <div className="text-gray-500">Carregando detalhes da reserva...</div>
+          )}
         </div>
         <hr className="w-full mb-2 mt-2" />
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -141,7 +191,10 @@ export default function Payment() {
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => setSelectedMethod(method.id)}
+                    onClick={() => {
+                      setSelectedMethod(method.id);
+                      setErrors((prev: any) => ({ ...prev, paymentMethod: "" }));
+                    }}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
                       selectedMethod === method.id
                         ? "border-[#FFA62B] bg-orange-50"
@@ -160,6 +213,7 @@ export default function Payment() {
                 );
               })}
             </div>
+            {errors.paymentMethod && <p className="text-red-500 text-sm mt-2">{errors.paymentMethod}</p>}
           </div>
 
           {/* Card Form - Show only for credit/debit cards */}
@@ -169,24 +223,24 @@ export default function Payment() {
               <div className="space-y-4">
                 {/* Cardholder Name */}
                 <div>
-                  <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="holderName" className="block text-sm font-medium text-gray-700 mb-1">
                     Nome do Portador
                   </label>
                   <input
                     type="text"
-                    id="cardholderName"
-                    value={cardForm.cardholderName}
-                    onChange={(e) => handleCardInputChange("cardholderName", e.target.value)}
+                    id="holderName"
+                    value={cardForm.holderName}
+                    onChange={(e) => handleCardInputChange("holderName", e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFA62B] ${
-                      errors.cardholderName ? "border-red-500" : "border-gray-300"
+                      errors.holderName ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Nome completo como no cartão"
                   />
-                  {errors.cardholderName && <p className="text-red-500 text-sm mt-1">{errors.cardholderName}</p>}
+                  {errors.holderName && <p className="text-red-500 text-sm mt-1">{errors.holderName}</p>}
                 </div>
 
                 {/* Card Number */}
-                <div>
+                <div className="mt-2">
                   <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
                     Número do Cartão
                   </label>
@@ -206,38 +260,54 @@ export default function Payment() {
                 </div>
 
                 {/* Expiration Date and CVV */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 mt-2 gap-6">
                   <div>
-                    <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1">
-                      Data de Validade
+                    <label htmlFor="expiryMonth" className="block text-sm font-medium text-gray-700 mb-1">
+                      Mês
                     </label>
                     <input
                       type="text"
-                      id="expirationDate"
-                      value={cardForm.expirationDate}
-                      onChange={(e) => handleCardInputChange("expirationDate", maskValidateExpirationDate(e.target.value))}
+                      id="expiryMonth"
+                      value={cardForm.expiryMonth}
+                      onChange={(e) => handleCardInputChange("expiryMonth", maskExpiryMonth(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFA62B] ${
-                        errors.expirationDate ? "border-red-500" : "border-gray-300"
+                        errors.expiryMonth ? "border-red-500" : "border-gray-300"
                       }`}
-                      placeholder="MM/YY"
+                      placeholder="MM"
                     />
-                    {errors.expirationDate && <p className="text-red-500 text-sm mt-1">{errors.expirationDate}</p>}
+                    {errors.expiryMonth && <p className="text-red-500 text-sm mt-1">{errors.expiryMonth}</p>}
                   </div>
                   <div>
-                    <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="expiryYear" className="block text-sm font-medium text-gray-700 mb-1">
+                      Ano
+                    </label>
+                    <input
+                      type="text"
+                      id="expiryYear"
+                      value={cardForm.expiryYear}
+                      onChange={(e) => handleCardInputChange("expiryYear", maskExpiryYear(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFA62B] ${
+                        errors.expiryYear ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="YY"
+                    />
+                    {errors.expiryYear && <p className="text-red-500 text-sm mt-1">{errors.expiryYear}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="ccv" className="block text-sm font-medium text-gray-700 mb-1">
                       CVV
                     </label>
                     <input
                       type="text"
-                      id="cvv"
-                      value={cardForm.cvv}
-                      onChange={(e) => handleCardInputChange("cvv", e.target.value)}
+                      id="ccv"
+                      value={cardForm.ccv}
+                      onChange={(e) => handleCardInputChange("ccv", e.target.value.replace(/\D/g, "").slice(0, 3))}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFA62B] ${
-                        errors.cvv ? "border-red-500" : "border-gray-300"
+                        errors.ccv ? "border-red-500" : "border-gray-300"
                       }`}
                       placeholder="123"
                     />
-                    {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
+                    {errors.ccv && <p className="text-red-500 text-sm mt-1">{errors.ccv}</p>}
                   </div>
                 </div>
               </div>
