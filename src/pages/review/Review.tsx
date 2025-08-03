@@ -1,6 +1,8 @@
 import { Button } from "../../components/Button"
 import { useState } from "react"
 import logo from "../../assets/img/logo.svg";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function Review() {
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
@@ -50,7 +52,9 @@ function StarRating({
 
   return (
 
-    <div className="bg-gradient-to-r from-[#003194] to-[#FFA62B] flex justify-center items-center min-h-screen ">
+    <div>
+    <Navbar />
+    <div className="bg-gray-50 flex justify-center items-center min-h-screen ">
         <div className="w-full bg-[#FFFFFF] max-w-sm mx-auto rounded-lg shadow-md px-4">
           <div className="flex items-center justify-center p-6 gap-6">
             <img src={logo} alt="Logo Viagium" className="h-20" />
@@ -94,6 +98,8 @@ function StarRating({
           </form>
         </div>
         </div>
+    </div>
+    <Footer />
     </div>
   );
 }
