@@ -37,7 +37,7 @@ function Package() {
     hotelId?: number;
     name: string;
     address: any; // pode ser string ou objeto
-    star?: number; // Campo correto do backend
+    star: number; // Campo correto do backend
     imageUrl?: string;
     roomTypes: RoomType[];
     amenities?: Amenity[]; // amenities do hotel
