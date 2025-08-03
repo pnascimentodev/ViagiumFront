@@ -681,7 +681,10 @@ function Package() {
                             roomTypeId,
                             startDate,
                             numPessoas: numPessoasReserva,
-                            userId
+                            userId,
+                            totalValue: valorFinal,
+                            cupomApplied: cupomAplicado,
+                            discountValue: cupomAplicado ? valorDesconto : 0
                           });
                           const reserva = response.data;
                           console.log("Reserva criada:", reserva);
@@ -693,7 +696,13 @@ function Package() {
                               roomTypeId,
                               startDate,
                               numPessoas: numPessoasReserva,
-                              userId
+                              userId,
+                              totalValue: valorFinal,
+                              packagePrice: price,
+                              accommodationTotal: acomodationTotal,
+                              packageTax: packageTax,
+                              discountValue: cupomAplicado ? valorDesconto : 0,
+                              cupomApplied: cupomAplicado
                             }
                           });
                         } catch (error) {
