@@ -10,12 +10,10 @@ import Footer from '../../components/Footer';
 
 function Package() {
 
-  localStorage.setItem("userId", "1");
-
   // Interfaces para dados da API
   interface TravelPackage {
     id: number;
-    travelPackageId?: number; // compatível com backend
+    travelPackageId?: number; 
     title: string;
     description: string;
     originCity: string;
@@ -681,7 +679,10 @@ function Package() {
                             roomTypeId,
                             startDate,
                             numPessoas: numPessoasReserva,
-                            userId
+                            userId,
+                            totalValue: valorFinal,
+                            cupomApplied: cupomAplicado,
+                            discountValue: cupomAplicado ? valorDesconto : 0
                           });
                           const reserva = response.data;
                           console.log("Reserva criada:", reserva);
@@ -693,7 +694,13 @@ function Package() {
                               roomTypeId,
                               startDate,
                               numPessoas: numPessoasReserva,
-                              userId
+                              userId,
+                              totalValue: valorFinal,
+                              packagePrice: price,
+                              accommodationTotal: acomodationTotal,
+                              packageTax: packageTax,
+                              discountValue: cupomAplicado ? valorDesconto : 0,
+                              cupomApplied: cupomAplicado
                             }
                           });
                         } catch (error) {
