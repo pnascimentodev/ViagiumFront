@@ -10,12 +10,10 @@ import Footer from '../../components/Footer';
 
 function Package() {
 
-  localStorage.setItem("userId", "1");
-
   // Interfaces para dados da API
   interface TravelPackage {
     id: number;
-    travelPackageId?: number; // compatível com backend
+    travelPackageId?: number; 
     title: string;
     description: string;
     originCity: string;
