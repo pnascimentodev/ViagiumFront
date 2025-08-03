@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, FaToggleOn, FaToggleOff, FaEye } from "react-icons/fa"
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
+import { formatBRL } from "../../utils/currency"
 
 interface MenuItem {
     id: string
@@ -35,8 +36,7 @@ interface AffiliateFormData {
     tradeName: string
     cnpj: string
     stateRegistration: string
-    phone1: string
-    phone2: string
+    phone: string
     email: string
     cep: string
     street: string
@@ -70,12 +70,11 @@ interface PackageFormData {
     originAddress: { city: string; country: string };
     destinationAddress: { city: string; country: string };
     image: File | null;
+    imageUrl?: string; // caso de edição, pode já ter uma imagem carregada no banco
     duration: string;
     maxPeople: string;
     vehicleType: string;
     originalPrice: string;
-    packageFee: string;
-    discountCoupon: string;
     isActive: boolean;
     // Novos campos para os tipos de pacote
     packageType: "fixed" | "seasonal" | "recurring";
@@ -155,8 +154,6 @@ function AdminDashboard() {
                 maxPeople: "",
                 vehicleType: "",
                 originalPrice: "",
-                packageFee: "",
-                discountCoupon: "",
                 isActive: true,
                 // Novos campos
                 packageType: "fixed",
@@ -607,24 +604,17 @@ function AdminDashboard() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="w-full space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem de Desconto (%)</label>
-                                            <select
+                                            <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                step={1}
                                                 value={packageForm.discountValue}
                                                 onChange={(e) => setPackageForm({ ...packageForm, discountValue: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <option value="0">Sem desconto</option>
-                                                <option value="5">5%</option>
-                                                <option value="10">10%</option>
-                                                <option value="15">15%</option>
-                                                <option value="20">20%</option>
-                                                <option value="25">25%</option>
-                                                <option value="30">30%</option>
-                                                <option value="35">35%</option>
-                                                <option value="40">40%</option>
-                                                <option value="45">45%</option>
-                                                <option value="50">50%</option>
-                                            </select>
+                                                placeholder="Digite a porcentagem do cupom"
+                                            />
                                         </div>
 
                                         <div>
@@ -833,9 +823,9 @@ function AdminDashboard() {
 
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                        <form id="edit-package-form" onSubmit={handleEditSubmit} className="space-y-8">
+                        <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Título do Pacote</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
                                 <input
                                     type="text"
                                     required
@@ -846,7 +836,7 @@ function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Descrição</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                 <textarea
                                     required
                                     value={editPackageForm.description}
@@ -857,9 +847,162 @@ function AdminDashboard() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Novo campo: Tipo de Pacote */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pacote</label>
+                                <select
+                                    required
+                                    value={editPackageForm.packageType}
+                                    onChange={(e) => setEditPackageForm({
+                                        ...editPackageForm,
+                                        packageType: e.target.value as "fixed" | "seasonal" | "recurring"
+                                    })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="fixed">Data Fixa</option>
+                                    <option value="seasonal">Sazonal - 2x ao ano</option>
+                                    <option value="recurring">Recorrente - O ano todo</option>
+                                </select>
+                            </div>
+
+                            {/* Campos condicionais baseados no tipo de pacote */}
+                            {editPackageForm.packageType === "fixed" && (
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <h4 className="text-sm font-medium text-blue-900 mb-3">Configuração de Data Fixa</h4>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={editPackageForm.fixedStartDate}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, fixedStartDate: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {packageForm.packageType === "seasonal" && (
+                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                    <h4 className="text-sm font-medium text-green-900 mb-3">Configuração Sazonal (2 períodos por ano)</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">1º Período</label>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={editPackageForm.seasonalPeriods[0]?.startDate || ""}
+                                                        onChange={(e) => {
+                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
+                                                            newPeriods[0] = { ...newPeriods[0], startDate: e.target.value };
+                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={editPackageForm.seasonalPeriods[0]?.endDate || ""}
+                                                        onChange={(e) => {
+                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
+                                                            newPeriods[0] = { ...newPeriods[0], endDate: e.target.value };
+                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">2º Período</label>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={editPackageForm.seasonalPeriods[1]?.startDate || ""}
+                                                        onChange={(e) => {
+                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
+                                                            newPeriods[1] = { ...newPeriods[1], startDate: e.target.value };
+                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
+                                                    <input
+                                                        type="date"
+                                                        required
+                                                        value={editPackageForm.seasonalPeriods[1]?.endDate || ""}
+                                                        onChange={(e) => {
+                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
+                                                            newPeriods[1] = { ...newPeriods[1], endDate: e.target.value };
+                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
+                                                        }}
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {packageForm.packageType === "recurring" && (
+                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                    <h4 className="text-sm font-medium text-purple-900 mb-3">Configuração Recorrente</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={editPackageForm.recurrenceStartDate}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, recurrenceStartDate: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Fim</label>
+                                            <input
+                                                type="date"
+                                                required
+                                                value={editPackageForm.recurrenceEndDate}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, recurrenceEndDate: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Intervalo (dias)</label>
+                                            <select
+                                                required
+                                                value={editPackageForm.intervalDays}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, intervalDays: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <option value="">Selecione</option>
+                                                <option value="7">A cada 7 dias</option>
+                                                <option value="14">A cada 14 dias</option>
+                                                <option value="15">A cada 15 dias</option>
+                                                <option value="30">A cada 30 dias</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Cidade de Origem</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Origem</label>
                                     <input
                                         type="text"
                                         required
@@ -871,7 +1014,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">País de Origem</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">País de Origem</label>
                                     <input
                                         type="text"
                                         required
@@ -883,9 +1026,9 @@ function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Cidade de Destino</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Destino</label>
                                     <input
                                         type="text"
                                         required
@@ -900,7 +1043,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">País de Destino</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">País de Destino</label>
                                     <input
                                         type="text"
                                         required
@@ -915,8 +1058,19 @@ function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Upload de Imagem</label>
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
+                                {/* Exibe a imagem atual do pacote, se houver */}
+                                {editPackageForm && editPackageForm.image && (
+                                    <div className="mb-3">
+                                        <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
+                                        <img
+                                            src={URL.createObjectURL(editPackageForm.image)}
+                                            alt="Imagem atual do pacote"
+                                            className="w-32 h-32 object-cover rounded border"
+                                        />
+                                    </div>
+                                )}
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -928,9 +1082,9 @@ function AdminDashboard() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"> {/* Aumenta o espaço acima desta seção */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Duração</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração</label>
                                     <input
                                         type="text"
                                         required
@@ -941,7 +1095,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Máx. Pessoas</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Máx. Pessoas</label>
                                     <input
                                         type="number"
                                         required
@@ -953,7 +1107,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Tipo de Veículo</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Veículo</label>
                                     <select
                                         required
                                         value={editPackageForm.vehicleType}
@@ -972,43 +1126,66 @@ function AdminDashboard() {
 
                             <div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Preço Original</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preço Original</label>
                                     <input
                                         type="text"
                                         required
                                         value={editPackageForm.originalPrice}
                                         onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 1.200,00"
+                                        placeholder="Ex: R$ 1.999,99"
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
-                                    <select
-                                        value={editPackageForm.discountCoupon}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, discountCoupon: e.target.value })}
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Pacote</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editPackageForm.packageTax}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="0">Sem desconto</option>
-                                        <option value="5">5%</option>
-                                        <option value="10">10%</option>
-                                        <option value="15">15%</option>
-                                        <option value="20">20%</option>
-                                        <option value="25">25%</option>
-                                        <option value="30">30%</option>
-                                        <option value="35">35%</option>
-                                        <option value="40">40%</option>
-                                        <option value="45">45%</option>
-                                        <option value="50">50%</option>
-                                    </select>
+                                        placeholder="Ex: R$ 150,00"
+                                    />
                                 </div>
-                                <div></div>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="w-full space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            value={editPackageForm.discountValue}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, discountValue: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Digite a porcentagem do cupom"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
+                                        <input
+                                            type="text"
+                                            value={editPackageForm.cupomDiscount}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: CARNAVAL10"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="w-full">
+                                    {/* Espaço vazio para manter o layout */}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-4 mb-4">
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -1020,6 +1197,8 @@ function AdminDashboard() {
                                     <span className="ml-3 text-sm font-medium text-gray-900">Pacote Ativo</span>
                                 </label>
                             </div>
+
+
                         </form>
                     </div>
 
@@ -1061,8 +1240,6 @@ function AdminDashboard() {
         maxPeople: "",
         vehicleType: "",
         originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
         isActive: true,
         // Novos campos
         packageType: "fixed",
@@ -1087,12 +1264,11 @@ function AdminDashboard() {
         originAddress: { city: "", country: "" },
         destinationAddress: { city: "", country: "" },
         image: null,
+        imageUrl: "",
         duration: "",
         maxPeople: "",
         vehicleType: "",
         originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
         isActive: true,
         // Novos campos
         packageType: "fixed",
@@ -1210,45 +1386,47 @@ function AdminDashboard() {
         }
     }
     const handleEditPackage = (packageItem: TableData) => {
-        setEditingPackage(packageItem);
+        const selectedPackage = getPackageById(packageItem.id);
+        if (!selectedPackage) return;
+
+        setEditingPackage(selectedPackage);
 
         // Pré-preencher o formulário com os dados do pacote selecionado
         // Como os dados da tabela são limitados, vamos simular dados mais completos
         setEditPackageForm({
-            title: packageItem.name,
-            description: `Descrição do ${packageItem.name}`,
+            title: selectedPackage.title || "",
+            description: selectedPackage.description || "",
             originAddress: {
-                city: "São Paulo",
-                country: "Brasil"
+                city: selectedPackage.originCity || "",
+                country: selectedPackage.originCountry || ""
             },
             destinationAddress: {
-                city: "Rio de Janeiro",
-                country: "Brasil"
+                city: selectedPackage.destinationCity || "",
+                country: selectedPackage.destinationCountry || ""
             },
             image: null,
-            duration: "3 dias",
-            maxPeople: "4",
-            vehicleType: "Ônibus",
-            originalPrice: packageItem.value || "R$ 0,00",
-            packageFee: "R$ 50,00",
-            discountCoupon: "0",
-            isActive: packageItem.status === "Ativo",
+            imageUrl: selectedPackage.imageUrl || "",
+            duration: selectedPackage.duration || "",
+            maxPeople: selectedPackage.maxPeople || "",
+            vehicleType: selectedPackage.vehicleType || "",
+            originalPrice: selectedPackage.originalPrice || "",
+            isActive: selectedPackage.isActive || "",
             // Novos campos
-            packageType: "fixed",
-            packageTax: "R$ 150,00",
-            cupomDiscount: "PROMO10",
-            discountValue: "10",
+            packageType: selectedPackage.duration || "",
+            packageTax: selectedPackage.packageTax || "",
+            cupomDiscount: selectedPackage.cupomDiscount || "",
+            discountValue: selectedPackage.discountValue || "",
             // Campos para pacote com data fixa
-            fixedStartDate: "2025-12-01",
+            fixedStartDate: selectedPackage.fixedStartDate || "",
             // Campos para pacote sazonal
             seasonalPeriods: [
-                { startDate: "2025-12-01", endDate: "2025-12-31", isAvailable: true },
-                { startDate: "2026-06-01", endDate: "2026-06-30", isAvailable: true }
+                { startDate: "ainda não existe na API", endDate: "ainda não existe na API", isAvailable: true },
+                { startDate: "ainda não existe na API", endDate: "ainda não existe na API", isAvailable: true }
             ],
             // Campos para pacote recorrente
-            recurrenceStartDate: "2025-08-01",
-            recurrenceEndDate: "2025-12-31",
-            intervalDays: "15"
+            recurrenceStartDate: "ainda não existe na API",
+            recurrenceEndDate: "ainda não existe na API",
+            intervalDays: "ainda não existe na API"
         });
 
         setIsEditModalOpen(true);
@@ -1267,8 +1445,6 @@ function AdminDashboard() {
             maxPeople: "",
             vehicleType: "",
             originalPrice: "",
-            packageFee: "",
-            discountCoupon: "",
             isActive: true,
             // Novos campos
             packageType: "fixed",
@@ -1371,22 +1547,21 @@ function AdminDashboard() {
         closeModal()
     }
     const handleEditUser = (userItem: TableData) => {
+
+        const selectedUser = getUserById(userItem.id);
+        if (!selectedUser) return;
+
         setEditingUser(userItem);
 
-        // Pré-preencher o formulário com os dados do usuário selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
-        const [firstName, ...lastNameParts] = userItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-
         setEditUserForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: `${firstName.toLowerCase()}@example.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            role: "",
-            isActive: userItem.status === "Ativo",
+            firstName: selectedUser.firstName || "",
+            lastName: selectedUser.lastName || "",
+            email: selectedUser.email || "",
+            phone: selectedUser.phone || "",
+            documentNumber: selectedUser.documentNumber || "",
+            birthDate: selectedUser.birthDate ? selectedUser.birthDate.split("T")[0] : "",
+            role: selectedUser.role || "",
+            isActive: selectedUser.isActive,
         });
 
         setIsEditUserModalOpen(true);
@@ -1406,7 +1581,6 @@ function AdminDashboard() {
             isActive: true
         })
     }
-    // Modal de edição
     const renderEditUserModal = () => {
         if (!isEditUserModalOpen || !editingUser) return null;
 
@@ -1576,7 +1750,6 @@ function AdminDashboard() {
             </div>
         );
     };
-    // Função para lidar com o envio do formulário de edição de usuários
     const handleEditUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -1604,7 +1777,6 @@ function AdminDashboard() {
         }
     };
 
-
     // Estados para edição de afiliados
     const [isEditAffiliateModalOpen, setIsEditAffiliateModalOpen] = useState(false);
     const [editingAffiliate, setEditingAffiliate] = useState<TableData | null>(null);
@@ -1613,8 +1785,7 @@ function AdminDashboard() {
         tradeName: "",
         cnpj: "",
         stateRegistration: "",
-        phone1: "",
-        phone2: "",
+        phone: "",
         email: "",
         cep: "",
         street: "",
@@ -1626,27 +1797,26 @@ function AdminDashboard() {
         isActive: true
     });
     const handleViewAffiliate = (affiliateItem: TableData) => {
-        setEditingAffiliate(affiliateItem);
+        const selectedAffiliate = getAffiliateById(affiliateItem.id);
+        if (!selectedAffiliate) return;
 
-        // Pré-preencher o formulário com os dados do afiliado selecionado para visualização
-        const tradeName = affiliateItem.name.replace(/\s+(Ltda|Eireli|S\.A\.|ME|EPP)$/i, '').trim();
+        setEditingAffiliate(selectedAffiliate);
 
         setEditAffiliateForm({
-            corporateName: affiliateItem.name,
-            tradeName: tradeName,
-            cnpj: affiliateItem.value || "00.000.000/0001-00",
-            stateRegistration: "123456789",
-            phone1: "(11) 99999-9999",
-            phone2: "(11) 88888-8888",
-            email: `contato@${tradeName.toLowerCase().replace(/\s+/g, '')}.com`,
-            cep: "01234-567",
-            street: "Rua Exemplo",
-            number: "123",
-            neighborhood: "Centro",
-            city: "São Paulo",
-            state: "SP",
-            country: "Brasil",
-            isActive: affiliateItem.status === "Ativo",
+            corporateName: selectedAffiliate.name || "",
+            tradeName: selectedAffiliate.companyName || "",
+            cnpj: selectedAffiliate.cnpj || "",
+            stateRegistration: selectedAffiliate.stateRegistration || "",
+            phone: selectedAffiliate.phone || "",
+            email: selectedAffiliate.email || "",
+            cep: selectedAffiliate.address?.zipCode || "",
+            street: selectedAffiliate.address?.streetName || "",
+            number: selectedAffiliate.address?.addressNumber || "",
+            neighborhood: selectedAffiliate.address?.neighborhood || "",
+            city: selectedAffiliate.address?.city || "",
+            state: selectedAffiliate.address?.state || "",
+            country: selectedAffiliate.address?.country || "",
+            isActive: selectedAffiliate.isActive,
         });
 
         setIsEditAffiliateModalOpen(true);
@@ -1660,8 +1830,7 @@ function AdminDashboard() {
             tradeName: "",
             cnpj: "",
             stateRegistration: "",
-            phone1: "",
-            phone2: "",
+            phone: "",
             email: "",
             cep: "",
             street: "",
@@ -1673,7 +1842,6 @@ function AdminDashboard() {
             isActive: true
         })
     }
-    // Modal de edição
     const renderEditAffiliateModal = () => {
         if (!isEditAffiliateModalOpen || !editingAffiliate) return null;
 
@@ -1758,21 +1926,10 @@ function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone 1</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
                                     <input
                                         type="tel"
-                                        value={editAffiliateForm.phone1}
-                                        readOnly
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                                        style={{ color: "#003194" }}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone 2 (Opcional)</label>
-                                    <input
-                                        type="tel"
-                                        value={editAffiliateForm.phone2}
+                                        value={editAffiliateForm.phone}
                                         readOnly
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
                                         style={{ color: "#003194" }}
@@ -1905,7 +2062,6 @@ function AdminDashboard() {
         );
     };
 
-
     // Estados para edição de hotéis
     const [isEditHotelModalOpen, setIsEditHotelModalOpen] = useState(false);
     const [editingHotel, setEditingHotel] = useState<TableData | null>(null);
@@ -1969,7 +2125,6 @@ function AdminDashboard() {
             star: 1
         })
     }
-
     // Modal de edição
     const renderEditHotelModal = () => {
         if (!isEditHotelModalOpen || !editingHotel) return null;
@@ -2187,20 +2342,19 @@ function AdminDashboard() {
         isActive: true
     });
     const handleViewClient = (clientItem: TableData) => {
-        setEditingClient(clientItem);
+        const selectedClient = getClientById(clientItem.id);
+        if (!selectedClient) return;
 
-        // Pré-preencher o formulário com os dados do cliente selecionado para visualização
-        const [firstName, ...lastNameParts] = clientItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
+        setEditingClient(selectedClient);
 
         setEditClientForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: clientItem.value || `${firstName.toLowerCase()}@email.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            isActive: clientItem.status === "Ativo",
+            firstName: selectedClient.firstName || "",
+            lastName: selectedClient.lastName || "",
+            email: selectedClient.email || "",
+            phone: selectedClient.phone || "",
+            documentNumber: selectedClient.documentNumber || "",
+            birthDate: selectedClient.birthDate ? selectedClient.birthDate.split("T")[0] : "",
+            isActive: selectedClient.isActive,
         });
 
         setIsEditClientModalOpen(true);
@@ -2222,6 +2376,8 @@ function AdminDashboard() {
     // Modal de edição
     const renderEditClientModal = () => {
         if (!isEditClientModalOpen || !editingClient) return null;
+        console.log("Rendering Edit Client Modal", editingClient);
+
 
         return (
             <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -2362,40 +2518,12 @@ function AdminDashboard() {
         { id: "usuarios", label: "Usuários Adm", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
     ]
 
-    // Estado para os dados das tabelas
-    // const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
-    //     pacotes: [
-    //         { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
-    //         { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
-    //         { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
-    //     ],
-    //     afiliados: [
-    //         { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
-    //         { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
-    //         { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
-    //     ],
-    //     hoteis: [
-    //         { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
-    //         { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
-    //         { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
-    //     ],
-    //     clientes: [
-    //         { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
-    //         { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
-    //         { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
-    //     ],
-    //     usuarios: [
-    //         { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
-    //         { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
-    //         { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
-    //     ],
-    // });
-
     const vehicleTypes = [
         "Ônibus",
-        "Avião"
+        "Avião",
+        "Trem",
+        "Navio"
     ]
-
 
     // Renderiza os dashboards principais
     const renderDashboard = () => (
@@ -2644,6 +2772,7 @@ function AdminDashboard() {
         </div>
     )
 
+    // Estado para os dados das tabelas
     const renderTable = (tabId: string) => {
         if (isLoading) {
             return (
@@ -2881,7 +3010,7 @@ function AdminDashboard() {
                 id: user.userId,
                 name: `${user.firstName} ${user.lastName}`,
                 status: user.isActive ? "Ativo" : "Inativo",
-                date: user.birthDate ? user.birthDate.split("T")[0] : "",
+                date: user.createdAt ? user.createdAt.split("T")[0] : "",
                 value: user.role === 2 ? "Administrador" : user.role === 3 ? "Suporte" : "Cliente"
             }));
             setUsersTableData(mapped);
@@ -2902,9 +3031,9 @@ function AdminDashboard() {
             const mapped = response.data.map((pkg: any) => ({
                 id: pkg.travelPackageId,
                 name: pkg.title,
-                status: pkg.packageSchedule.isAvailable ? "Ativo" : "Inativo",
-                date: pkg.createdAt ? pkg.createdAt.split("T")[0] : "API NAO TRAS CREATEDAT",
-                value: `R$ ${pkg.price || pkg.originalPrice}`,
+                status: pkg.isActive ? "Ativo" : "Inativo",
+                date: pkg.createdAt ? pkg.createdAt.split("T")[0] : "",
+                value: formatBRL(pkg.originalPrice),
                 remainingSlots: pkg.remainingSlots || "API NAO TRAS VAGAS RESTANTES",
             }));
             setPackagesTableData(mapped);
@@ -2919,13 +3048,12 @@ function AdminDashboard() {
     async function fetchAffiliates() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/Affiliate");
+            const response = await axios.get("http://localhost:5028/api/Affiliate/all-adm");
             setAllAffiliates(response.data);
             const mapped = response.data.map((aff: any) => ({
                 id: aff.affiliateId,
                 name: aff.companyName || aff.name,
-                // status: aff.isActive ? "Ativo" : "Inativo",
-                status: "Ativo",
+                status: aff.isActive ? "Ativo" : "Inativo",
                 date: aff.createdAt ? aff.createdAt.split("T")[0] : "",
                 value: aff.cnpj
             }));
@@ -2970,7 +3098,7 @@ function AdminDashboard() {
                 id: user.userId,
                 name: `${user.firstName} ${user.lastName}`,
                 status: user.isActive ? "Ativo" : "Inativo",
-                date: user.birthDate ? user.birthDate.split("T")[0] : "",
+                date: user.createdAt ? user.createdAt.split("T")[0] : "",
                 value: user.email
             }));
             setClientsTableData(mapped);
