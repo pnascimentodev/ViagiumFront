@@ -189,54 +189,65 @@ function AdminDashboard() {
         setIsModalOpen(false)
         setModalType(null)
     }
+
+    // Configuração genérica para ações de ativação/desativação de entidades
+    const statusActions: Record<string, {
+        activate: { url: (id: number) => string, method: "GET" | "PUT" | "POST" | "DELETE" },
+        deactivate: { url: (id: number) => string, method: "GET" | "PUT" | "POST" | "DELETE" }
+    }> = {
+        // AS AÇÕES DO PACOTE NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
+        pacotes: {
+            activate: { url: id => `http://localhost:5028/api/TravelPackage/activate/${id}`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/TravelPackage/deactivate/${id}`, method: "DELETE" }
+        },
+        // AS AÇÕES DO AFILIADO NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
+        afiliados: {
+            activate: { url: id => `http://localhost:5028/api/Affiliate/activateById/${id}`, method: "GET" },
+            deactivate: { url: id => `http://localhost:5028/api/Affiliate/${id}`, method: "DELETE" }
+        },
+        hoteis: {
+            activate: { url: id => `http://localhost:5028/api/Hotel/${id}/activate`, method: "PUT" },
+            deactivate: { url: id => `http://localhost:5028/api/hotel/${id}/desactivate`, method: "DELETE" }
+        },
+        usuarios: {
+            activate: { url: id => `http://localhost:5028/api/admin/${id}/activate`, method: "POST"},
+            deactivate: { url: id => `http://localhost:5028/api/admin/${id}`, method: "DELETE" }
+        },
+        clientes: {
+            activate: { url: id => `http://localhost:5028/api/user/activate/${id}`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/user/${id}`, method: "DELETE" }
+        }
+    };
+
     // Função genérica para alterar status de qualquer item
-    const handleToggleItemStatus = (item: TableData, tabId: string) => {
-        // Determinar o novo status baseado no status atual e tipo de entidade
-        let newStatus: string;
-
-        // Lógica específica para cada tipo de entidade
-        switch (tabId) {
-            case "pacotes":
-            case "usuarios":
-            case "clientes":
-                // Para pacotes, usuários e clientes: Ativo <-> Inativo
-                newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
-                break;
-
-            case "afiliados":
-                // Para afiliados: Ativo <-> Inativo (Pendente vira Ativo)
-                if (item.status === "Ativo") {
-                    newStatus = "Inativo";
-                } else {
-                    newStatus = "Ativo"; // Pendente ou Inativo vira Ativo
-                }
-                break;
-
-            case "hoteis":
-                // Para hotéis: Ativo <-> Inativo (Manutenção vira Ativo)
-                if (item.status === "Ativo") {
-                    newStatus = "Inativo";
-                } else {
-                    newStatus = "Ativo"; // Manutenção ou Inativo vira Ativo
-                }
-                break;
-
-            default:
-                // Padrão para qualquer outro tipo
-                newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
+    const handleToggleItemStatus = async (item: TableData, tabId: string) => {
+        const actionType = item.status === "Ativo" ? "deactivate" : "activate";
+        const config = statusActions[tabId]?.[actionType];
+        if (!config) {
+            alert("Ação não configurada para esta entidade.");
+            return;
         }
 
-        // Log para debug com informações mais detalhadas
-        const entityName = {
-            pacotes: "pacote",
-            usuarios: "usuário",
-            clientes: "cliente",
-            afiliados: "afiliado",
-            hoteis: "hotel"
-        }[tabId] || "item";
-
-        console.log(`Alterando status do ${entityName} "${item.name}" (ID: ${item.id}) de "${item.status}" para "${newStatus}"`);
-    }
+        try {
+            const axios = (await import("axios")).default;
+            await axios.request({
+                url: config.url(item.id),
+                method: config.method
+            });
+            alert("Status alterado com sucesso!");
+            // Atualiza a tabela
+            switch (tabId) {
+                case "pacotes": fetchPackages(); break;
+                case "afiliados": fetchAffiliates(); break;
+                case "hoteis": fetchHotels(); break;
+                case "usuarios": fetchUsers(); break;
+                case "clientes": fetchClients(); break;
+            }
+        } catch (error) {
+            alert("Erro ao alterar status.");
+            console.error(error);
+        }
+    };
     // Funções de visualização (somente leitura) para afiliados e hotéis
     const renderModal = () => {
         if (!isModalOpen || !modalType) return null
