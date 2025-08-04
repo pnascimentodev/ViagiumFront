@@ -24,16 +24,6 @@ interface Passenger {
   dateOfBirth: string
 }
 
-interface PackageDetails {
-  id: number
-  packageName: string
-  origin: string
-  destination: string
-  duration: string
-  startDate: Date
-  totalValue: string
-}
-
 interface Reservation{
   id: number
   startDate: Date
@@ -41,9 +31,17 @@ interface Reservation{
 }
 
 export default function Reservation() {
-  // Mock client data
+  const location = useLocation();
+  const { reservationData, displayData } = location.state || {};
+  
+  console.log('Dados recebidos do Package:', location.state);
+  console.log('reservationData:', reservationData);
+  console.log('displayData:', displayData);
+  
+  const numPessoas = displayData?.numPessoas || 1;
+
   const [client] = useState<Client>({
-    id: 1,
+    id: reservationData?.userId || Number(localStorage.getItem("userId")) || 1,
     firstName: "Maria",
     lastName: "Silva Santos",
     documentNumber: "123.456.789-00",
@@ -51,19 +49,20 @@ export default function Reservation() {
     dateOfBirth: "1990-01-01",
   })
 
-  // Mock package data
-  const [packageDetails] = useState<PackageDetails>({
-    id: 1,
-    packageName: "Pacote Viagem Rio de Janeiro",
-    origin: "São Paulo",
-    destination: "Rio de Janeiro",
-    duration: "7 dias",
-    startDate: new Date("2023-10-01"),
-    totalValue: "R$ 9.824,00",
-  })
-
-  const location = useLocation();
-  const numPessoas = location.state?.numPessoas || 1;
+  // Use dados vindos do Package em vez de dados mockados
+  const packageDetails = {
+    id: reservationData?.travelPackageId || 1,
+    packageName: displayData?.packageTitle || "Pacote não informado",
+    origin: displayData?.originCity && displayData?.originCountry 
+      ? `${displayData.originCity}, ${displayData.originCountry}` 
+      : "Origem não informada",
+    destination: displayData?.destinationCity && displayData?.destinationCountry 
+      ? `${displayData.destinationCity}, ${displayData.destinationCountry}` 
+      : "Destino não informado",
+    duration: displayData?.duration?.toString() || "Duração não informada",
+    startDate: reservationData?.startDate ? new Date(reservationData.startDate) : new Date(),
+    totalValue: `R$ ${displayData?.finalValue?.toLocaleString('pt-BR') || '0'},00`,
+  }
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: Math.max(numPessoas - 1, 0) }, (_, idx) => ({
       id: idx,
@@ -77,6 +76,7 @@ export default function Reservation() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('useEffect - Atualizando passengers para numPessoas:', numPessoas);
     setPassengers(Array.from({ length: Math.max(numPessoas - 1, 0) }, (_, idx) => ({
       id: idx,
       firstName: "",
@@ -86,29 +86,29 @@ export default function Reservation() {
     })));
   }, [numPessoas]);
   
-  const reservationPayload = {
-  userId: client.id,
-  travelPackageId: packageDetails.id, // Adicione o campo id ao seu estado
-  startDate: new Date().toISOString(), // ou a data escolhida pelo usuário
-  totalPrice: parseFloat(packageDetails.totalValue.replace(/[^\d,]/g, '').replace(',', '.')), // ajuste conforme formato
-  status: "Pending",
-  isActive: true,
-  travelers: [
-    {
-      firstName: client.firstName,
-      lastName: client.lastName,
-      documentNumber: client.documentNumber,
-      dateOfBirth: client.dateOfBirth // adicione ao seu estado client
-    },
-    ...passengers.map(p => ({
-      firstName: p.firstName,
-      lastName: p.lastName,
-      documentNumber: p.documentNumber,
-      dateOfBirth: p.dateOfBirth
-    }))
-  ],
-  // Adicione reservationRooms se houver
-};
+  // Função para criar o payload da reserva
+  const createReservationPayload = () => {
+    return {
+      userId: reservationData?.userId || client.id,
+      travelPackageId: reservationData?.travelPackageId || packageDetails.id,
+      hotelId: reservationData?.hotelId || 0,
+      roomTypeId: reservationData?.roomTypeId || 0,
+      travelers: [
+        {
+          firstName: client.firstName,
+          lastName: client.lastName,
+          documentNumber: client.documentNumber,
+          dateOfBirth: client.dateOfBirth
+        },
+        ...passengers.map(p => ({
+          firstName: p.firstName,
+          lastName: p.lastName,
+          documentNumber: p.documentNumber,
+          dateOfBirth: p.dateOfBirth
+        }))
+      ]
+    };
+  };
 
   const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
     setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
@@ -130,11 +130,21 @@ export default function Reservation() {
   }
     const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
 
-    function handleConfirmReservation() {
+    async function handleConfirmReservation() {
     const errors = validatePassengers();
     setPassengerErrors(errors);
     if (Object.keys(errors).length === 0) {
-      navigate("/payment");
+      // Apenas navega para o pagamento com os dados da reserva
+      navigate("/payment", {
+        state: {
+          reservationData,
+          displayData,
+          passengerData: passengers,
+          clientData: client,
+          packageDetails,
+          createReservationPayload: createReservationPayload()
+        }
+      });
     }
   }
 
@@ -316,7 +326,7 @@ export default function Reservation() {
                         className="w-full bg-[#FFA62B] text-white py-3 px-6 rounded-md font-semibold text-lg hover:bg-[#e8941f] transition-colors duration-200 shadow-md hover:shadow-lg"
                         onClick={handleConfirmReservation}
                       >
-                        Confirmar Reserva
+                        Prosseguir para Pagamento
                       </button>
                   </div>
                 </div>

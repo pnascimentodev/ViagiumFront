@@ -150,11 +150,6 @@ function Package() {
       if (response.data.hotels && response.data.hotels.length > 0) {
         setHotels(response.data.hotels);
         console.log('Hotéis carregados do pacote:', response.data.hotels.length);
-        console.log('Dados de todos os hotéis:');
-        response.data.hotels.forEach((hotel: any, index: number) => {
-          console.log(`Hotel ${index + 1}:`, hotel.name);
-          console.log('Estrutura completa:', JSON.stringify(hotel, null, 2));
-        });
       } else {
         console.log('Pacote não inclui hotéis');
         setHotels([]); // Limpa hotéis se não houver
@@ -213,7 +208,6 @@ function Package() {
   
   const valorDesconto = cupomAplicado && discountPercent > 0 ? (valorBase * (discountPercent / 100)) : 0;
   const valorFinal = valorBase - valorDesconto;
-  console.log('Valor final calculado:', valorFinal);
 
   // Nova lógica de cupom
   const aplicarCupom = async () => {
@@ -663,60 +657,63 @@ function Package() {
             </div>
           </div>
           <div className="p-6 pt-8">
-                <Button
-                      onClick={async () => {
-                        const selectedHotel = hotels[hotelIndex];
-                        const selectedHotelId = selectedHotel?.hotelId ?? selectedHotel?.id;
-                        const roomTypeId = selectedHotel?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0;
-                        const travelPackageId = currentPackage?.travelPackageId ?? currentPackage?.id ?? 0;
-                        const startDate = new Date().toISOString().slice(0, 10);
-                        const userId = Number(localStorage.getItem("userId")) || 0;
-                        const numPessoasReserva = numPessoas;
-                        try {
-                          const response = await axios.post("http://localhost:5028/api/Reservation", {
-                            travelPackageId,
-                            hotelId: selectedHotelId,
-                            roomTypeId,
-                            startDate,
-                            numPessoas: numPessoasReserva,
-                            userId,
-                            totalValue: valorFinal,
-                            cupomApplied: cupomAplicado,
-                            discountValue: cupomAplicado ? valorDesconto : 0
-                          });
-                          const reserva = response.data;
-                          console.log("Reserva criada:", reserva);
-                          navigate("/reservation", {
-                            state: {
-                              reservationId: reserva.id,
-                              travelPackageId,
-                              hotelId: selectedHotelId,
-                              roomTypeId,
-                              startDate,
-                              numPessoas: numPessoasReserva,
-                              userId,
-                              totalValue: valorFinal,
-                              packagePrice: price,
-                              accommodationTotal: acomodationTotal,
-                              packageTax: packageTax,
-                              discountValue: cupomAplicado ? valorDesconto : 0,
-                              cupomApplied: cupomAplicado
-                            }
-                          });
-                        } catch (error) {
-                          console.error("Erro ao criar reserva:", error);
-                          alert("Erro ao criar reserva. Tente novamente.");
+                  <Button
+                    onClick={() => {
+                      const selectedHotel = hotels[hotelIndex];
+                      const selectedHotelId = selectedHotel?.hotelId ?? selectedHotel?.id;
+                      const roomTypeId = selectedHotel?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0;
+                      const travelPackageId = currentPackage?.travelPackageId ?? currentPackage?.id ?? 0;
+                      const startDate = new Date().toISOString().slice(0, 10);
+                      const userId = Number(localStorage.getItem("userId")) || 0;
+                      const numPessoasReserva = numPessoas;
+                      
+                      const navigationData = {
+                        reservationData: {
+                          travelPackageId,
+                          hotelId: selectedHotelId,
+                          roomTypeId,
+                          startDate,
+                          numPessoas: numPessoasReserva,
+                          userId,
+                          totalValue: valorFinal,
+                          cupomApplied: cupomAplicado,
+                          discountValue: cupomAplicado ? valorDesconto : 0
+                        },
+                        displayData: {
+                          packageTitle: currentPackage?.title,
+                          packageDescription: currentPackage?.description,
+                          hotelName: selectedHotel?.name,
+                          roomTypeName: selectedHotel?.roomTypes?.[roomTypeIndex]?.name,
+                          packagePrice: price,
+                          accommodationTotal: acomodationTotal,
+                          packageTax: packageTax,
+                          discountValue: cupomAplicado ? valorDesconto : 0,
+                          finalValue: valorFinal,
+                          duration: currentPackage?.duration,
+                          numPessoas: numPessoas,
+                          cupomApplied: cupomAplicado,
+                          vehicleType: currentPackage?.vehicleType,
+                          originCity: currentPackage?.originCity,
+                          originCountry: currentPackage?.originCountry,
+                          destinationCity: currentPackage?.destinationCity,
+                          destinationCountry: currentPackage?.destinationCountry
                         }
-                      }}
-                  className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
-                  style={{ backgroundColor: '#FFA62B', color: '#003194' }}
-                >
-                  Reservar Agora
-                </Button>
+                      };
+                      
+                      console.log('Dados sendo enviados para Reservation:', navigationData);
+                      
+                      navigate("/reservation", {
+                        state: navigationData
+                      });
+                    }}
+                    className="w-full text-white font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                    style={{ backgroundColor: '#FFA62B', color: '#003194' }}
+                  >
+                    Reservar Agora
+                  </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-
+                )}
         {showHotelModal && (
           <div className="fixed inset-0 flex justify-center items-center z-[99999]" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="bg-white rounded-lg p-6 max-w-xl w-full relative z-[100000]" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
