@@ -6,6 +6,7 @@ import { FaUser, FaMapMarkerAlt, FaUsers, FaDollarSign } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import { validateCPF, validateCNPJ, validateRequired } from "../../utils/validations";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 interface Client {
   id: number
@@ -38,18 +39,19 @@ export default function Reservation() {
   console.log('reservationData:', reservationData);
   console.log('displayData:', displayData);
   
+
   const numPessoas = displayData?.numPessoas || 1;
 
   const [client] = useState<Client>({
-    id: reservationData?.userId || Number(localStorage.getItem("userId")) || 1,
-    firstName: "Maria",
-    lastName: "Silva Santos",
-    documentNumber: "123.456.789-00",
-    phoneNumber: "(11) 99999-8888",
-    dateOfBirth: "1990-01-01",
+    id: 3,
+    firstName: "João",
+    lastName: "Silva",
+    documentNumber: "03159792080",
+    phoneNumber: "(11) 91234-5678",
+    dateOfBirth: "1990-05-15",
   })
 
-  // Use dados vindos do Package em vez de dados mockados
+
   const packageDetails = {
     id: reservationData?.travelPackageId || 1,
     packageName: displayData?.packageTitle || "Pacote não informado",
@@ -89,25 +91,17 @@ export default function Reservation() {
   // Função para criar o payload da reserva
   const createReservationPayload = () => {
     return {
-      userId: reservationData?.userId || client.id,
+      userId: client.id,
       travelPackageId: reservationData?.travelPackageId || packageDetails.id,
       hotelId: reservationData?.hotelId || 0,
       roomTypeId: reservationData?.roomTypeId || 0,
-      travelers: [
-        {
-          firstName: client.firstName,
-          lastName: client.lastName,
-          documentNumber: client.documentNumber,
-          dateOfBirth: client.dateOfBirth
-        },
-        ...passengers.map(p => ({
+      travelers: passengers.map(p => ({
           firstName: p.firstName,
           lastName: p.lastName,
           documentNumber: p.documentNumber,
           dateOfBirth: p.dateOfBirth
         }))
-      ]
-    };
+      };
   };
 
   const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
@@ -131,22 +125,35 @@ export default function Reservation() {
     const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
 
     async function handleConfirmReservation() {
-    const errors = validatePassengers();
-    setPassengerErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      // Apenas navega para o pagamento com os dados da reserva
-      navigate("/payment", {
-        state: {
-          reservationData,
-          displayData,
-          passengerData: passengers,
-          clientData: client,
-          packageDetails,
-          createReservationPayload: createReservationPayload()
+      const errors = validatePassengers();
+      setPassengerErrors(errors);
+      if (Object.keys(errors).length === 0) {
+        try {
+          const payload = createReservationPayload();
+          // Cria a reserva na API
+          const response = await axios.post("http://localhost:5028/api/Reservation", payload, {
+            headers: { "Content-Type": "application/json" }
+          });
+
+          // Se sucesso, navega para pagamento com os dados da reserva criada
+          if (response.data) {
+            navigate("/payment", {
+              state: {
+                reservationData: response.data, // dados da reserva criada
+                displayData,
+                passengerData: passengers,
+                clientData: client,
+                packageDetails,
+                createReservationPayload: payload
+              }
+            });
+          }
+        } catch (error) {
+          alert("Erro ao criar reserva. Tente novamente.");
+          console.error(error);
         }
-      });
+      }
     }
-  }
 
   return (
     <div>
@@ -327,6 +334,7 @@ export default function Reservation() {
                         onClick={handleConfirmReservation}
                       >
                         Prosseguir para Pagamento
+
                       </button>
                   </div>
                 </div>
