@@ -12,6 +12,10 @@ export function maskCPF(value: string) {
     return v;
 }
 
+export function unmaskCPF(maskedCPF: string): string {
+    return maskedCPF.replace(/\D/g, "");
+}
+
 // Máscara para Passaporte: retorna tudo em maiúsculo, permite letras e números
 export function maskPassaporte(value: string) {
     return value.toUpperCase();
