@@ -39,6 +39,7 @@ export default function Reservation() {
   console.log('reservationData:', reservationData);
   console.log('displayData:', displayData);
   
+
   const numPessoas = displayData?.numPessoas || 1;
 
   const [client] = useState<Client>({
