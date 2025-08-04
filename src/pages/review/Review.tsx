@@ -5,53 +5,59 @@ import logo from "../../assets/img/logo.svg";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import axios from "axios";
-import type { Reservation, ReviewRequest } from "../../types/reviewTypes";
+import type { Reservation } from "../../types/reviewTypes";
 
 export default function Review() {
-  const [searchParams] = useSearchParams();
-  const userId = searchParams.get('userId');
   
-  const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
+  const [newReview, setNewReview] = useState({ rating: 0, description: "" });
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [selectedReservation, setSelectedReservation] = useState<number | null>(null);
+  // Não há mais seleção de reserva pelo usuário
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Buscar reservas do usuário
-  useEffect(() => {
-    const fetchUserReservations = async () => {
-      if (!userId) {
-        setError("ID do usuário não fornecido na URL");
-        setLoading(false);
-        return;
-      }
+  const [searchParams] = useSearchParams();
+  const reservationId = searchParams.get('reservationId');
+  const userId = searchParams.get('userId');
 
-      try {
+useEffect(() => {
+  const fetchReservations = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (reservationId) {
+        // Buscar apenas a reserva específica
+        const response = await axios.get(`http://localhost:5028/api/Reservation/${reservationId}`);
+        setReservations(response.data ? [response.data] : []);
+      } else if (userId) {
+        // Buscar todas as reservas finalizadas do usuário
         const response = await axios.get(`http://localhost:5028/api/Reservation/user/${userId}`);
-        
-        // Filtrar apenas reservas com status "finalizada"
         const finishedReservations = response.data.filter((reservation: Reservation) => {
           const status = reservation.status?.toLowerCase();
-          return status === 'finalizada' || 
-                 status === 'finished' ||
-                 status === 'concluida';
+          return status === 'finalizada' || status === 'finished' || status === 'concluida';
         });
-
         setReservations(finishedReservations);
-        setLoading(false);
-      } catch (error) {
-        console.error("Erro ao buscar reservas:", error);
-        setError("Erro ao carregar suas reservas. Verifique se você possui reservas finalizadas.");
-        setLoading(false);
+      } else {
+        setError("ID da reserva ou do usuário não fornecido na URL");
+        setReservations([]);
       }
-    };
+    } catch (error) {
+      setError("Erro ao carregar reservas para avaliação.");
+      setReservations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchUserReservations();
-  }, [userId]);
+  fetchReservations();
+}, [reservationId, userId]);
 
-  // Componente de estrelas interativas
+
+// Não é mais necessário selecionar reserva
+
+
 function StarRating({
   rating,
   onRate,
@@ -85,35 +91,41 @@ function StarRating({
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedReservation) {
-      alert("Por favor, selecione uma reserva para avaliar.");
+
+    if (!reservations.length) {
+      alert("Nenhuma reserva disponível para avaliar.");
       return;
     }
 
-    if (newReview.rating === 0 || newReview.comment.trim() === "") {
+    if (newReview.rating === 0 || newReview.description.trim() === "") {
       alert("Por favor, preencha todos os campos.");
       return;
     }
 
-    if (newReview.comment.length < 10) {
-      alert("O comentário deve ter pelo menos 10 caracteres.");
+    if (newReview.description.length < 10) {
+      alert("A descrição deve ter pelo menos 10 caracteres.");
       return;
     }
 
-    if (newReview.comment.length > 500) {
-      alert("O comentário deve ter no máximo 500 caracteres.");
+    if (newReview.description.length > 500) {
+      alert("A descrição deve ter no máximo 500 caracteres.");
       return;
     }
 
     setSubmitting(true);
     setError(null);
 
+
     try {
-      const reviewData: ReviewRequest = {
-        reservationId: selectedReservation,
+      // Debug: mostrar a reserva e o payload
+      console.log('Reserva selecionada:', reservations[0]);
+      const reviewData = {
+        reservationId: reservations[0].reservationId,
         rating: newReview.rating,
-        comment: newReview.comment.trim()
+        description: newReview.description.trim(),
+        createdAt: new Date().toISOString()
       };
+      console.log('Payload enviado para o backend:', reviewData);
 
       await axios.post("http://localhost:5028/api/Review", reviewData, {
         headers: {
@@ -121,18 +133,21 @@ function StarRating({
         }
       });
 
+
       setSuccess(true);
-      setNewReview({ rating: 0, comment: "" });
-      setSelectedReservation(null);
-      
-      // Remover a reserva avaliada da lista
-      setReservations(prev => prev.filter(res => res.id !== selectedReservation));
+      setNewReview({ rating: 0, description: "" });
+      setReservations([]);
       
     } catch (error: any) {
       console.error("Erro ao enviar avaliação:", error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data || 
-                          "Erro ao enviar avaliação. Tente novamente.";
+      let errorMessage = "Erro ao enviar avaliação. Tente novamente mais tarde.";
+      if (error.response?.status === 500) {
+        errorMessage = "Ocorreu um erro interno ao processar sua avaliação. Por favor, verifique os dados e tente novamente em instantes. Se o problema persistir, entre em contato com o suporte.";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Não foi possível enviar sua avaliação. Verifique se todos os campos estão preenchidos corretamente.";
+      } else if (typeof error.response?.data === 'string') {
+        errorMessage = error.response.data;
+      }
       setError(errorMessage);
     } finally {
       setSubmitting(false);
@@ -252,55 +267,15 @@ function StarRating({
       <Navbar />
       <div className="bg-gray-50 flex justify-center items-center min-h-screen py-8">
         <div className="w-full bg-[#FFFFFF] max-w-lg mx-4 rounded-lg shadow-md">
-          <div className="flex items-center justify-center p-6 border-b border-gray-200">
+          <div className="flex items-center justify-center p-6 border-gray-200">
             <img src={logo} alt="Logo Viagium" className="h-16 mr-4" />
             <h2 className="text-2xl font-bold">Escreva sua Avaliação</h2>
           </div>
-          
           <div className="p-6">
             <form className="space-y-6" onSubmit={handleSubmitReview}>
-              {/* Seleção de Reserva */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecione a Reserva para Avaliar
-                </label>
-                <select
-                  value={selectedReservation || ""}
-                  onChange={(e) => setSelectedReservation(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFA62B] focus:border-transparent bg-white"
-                  required
-                >
-                  <option value="">Selecione uma reserva...</option>
-                  {reservations.map((reservation) => (
-                    <option key={reservation.id} value={reservation.id}>
-                      {reservation.travelPackage?.packageName || `Reserva #${reservation.id}`} - 
-                      {" "}{reservation.travelPackage?.destinationAddress?.city || "Destino não informado"}
-                      {" "}({new Date(reservation.startDate).toLocaleDateString('pt-BR')})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Informações da reserva selecionada */}
-              {selectedReservation && (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  {(() => {
-                    const selected = reservations.find(r => r.id === selectedReservation);
-                    return selected ? (
-                      <div className="text-sm text-gray-600">
-                        <p><strong>Pacote:</strong> {selected.travelPackage?.packageName || 'Nome não disponível'}</p>
-                        <p><strong>Destino:</strong> {selected.travelPackage?.destinationAddress?.city}, {selected.travelPackage?.destinationAddress?.country}</p>
-                        <p><strong>Data da viagem:</strong> {new Date(selected.startDate).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Valor:</strong> R$ {selected.totalPrice?.toFixed(2) || '0,00'}</p>
-                      </div>
-                    ) : null;
-                  })()}
-                </div>
-              )}
-
               {/* Star Rating Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Sua Avaliação</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sua Avaliação</label>
                 <div className="flex items-center gap-3">
                   <StarRating
                     rating={newReview.rating}
@@ -314,13 +289,13 @@ function StarRating({
 
               {/* Comment Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Seu Comentário</label>
+                <label className="block text-sm font-medium text-gray-700 mt-6 mb-2">Seu Comentário</label>
                 <textarea
                   placeholder="Compartilhe sua experiência com este pacote de viagem... (mínimo 10 caracteres)"
-                  value={newReview.comment}
+                  value={newReview.description}
                   onChange={(e) => {
                     if (e.target.value.length <= 500) {
-                      setNewReview((prev) => ({ ...prev, comment: e.target.value }));
+                      setNewReview((prev) => ({ ...prev, description: e.target.value }));
                     }
                   }}
                   className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FFA62B] focus:border-transparent resize-none"
@@ -332,8 +307,8 @@ function StarRating({
                   <div className="text-xs text-gray-500">
                     Mínimo: 10 caracteres
                   </div>
-                  <div className={`text-xs ${newReview.comment.length > 450 ? 'text-red-500' : 'text-gray-500'}`}>
-                    {newReview.comment.length}/500 caracteres
+                  <div className={`text-xs ${newReview.description.length > 450 ? 'text-red-500' : 'text-gray-500'}`}>
+                    {newReview.description.length}/500 caracteres
                   </div>
                 </div>
               </div>
@@ -349,11 +324,11 @@ function StarRating({
               <Button
                 type="submit"
                 disabled={
-                  submitting || 
-                  !selectedReservation || 
-                  newReview.rating === 0 || 
-                  newReview.comment.trim().length < 10 ||
-                  newReview.comment.length > 500
+                  submitting ||
+                  !reservations.length ||
+                  newReview.rating === 0 ||
+                  newReview.description.trim().length < 10 ||
+                  newReview.description.length > 500
                 }
                 className="w-full bg-[#FFA62B] hover:bg-[#FF9500] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
               >
