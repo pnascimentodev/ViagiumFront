@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskExpiryMonth, maskExpiryYear, maskCEP } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
+import { useLocation } from "react-router-dom";
 
 const paymentMethods = [
   { id: "pix", name: "PIX", icon: FaPix },
@@ -32,6 +33,7 @@ export default function Payment() {
     const [errors, setErrors] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<"success" | "error" | "pending">("pending");
+    
 
     const paymentMethodMap: { [key: string]: number } = {
         "pix": 1,
@@ -52,23 +54,9 @@ export default function Payment() {
     ? FaBarcode
     : FaMoneyCheckAlt;
 
-    interface Reservation {
-      id: number;
-      startDate: Date;
-      totalPrice: string;
-    }
-
-    // TODO: Get reservation details from props or API
-    const [reservationDetails] = useState<Reservation | null>(null);
-
-    // TODO: Load reservation data on component mount
-    useEffect(() => {
-        // Example: Load reservation from URL params or props
-        // const reservationId = new URLSearchParams(window.location.search).get('reservationId');
-        // if (reservationId) {
-        //     loadReservationDetails(reservationId);
-        // }
-    }, []);
+    const location = useLocation();
+    const { reservationData } = location.state || {};
+    const reservationId = reservationData?.id;
 
     function handleCardInputChange(field: string, value: string) {
       // Aplica máscara de CEP
@@ -130,7 +118,7 @@ export default function Payment() {
             }
         }
 
-        if (!reservationDetails) {
+        if (!reservationData) {
             setErrors({ general: "Dados da reserva não encontrados" });
             setIsSubmitting(false);
             return;
@@ -143,7 +131,7 @@ export default function Payment() {
 
         // Prepare payment data for API
         const paymentData = {
-            reservationId: reservationDetails.id,
+            reservationId: reservationId,
             paymentMethod: paymentMethodMap[selectedMethod || ""],
             holderName: cardForm.holderName,
             cardNumber: cardForm.cardNumber.replace(/\s/g, ""), // Remove spaces
@@ -151,16 +139,19 @@ export default function Payment() {
             expiryYear: cardForm.expiryYear,
             ccv: cardForm.ccv,
             remoteIp: getRemoteIp(),
+            streetName: cardForm.streetName,
+            addressNumber: Number(cardForm.addressNumber),
+            neighborhood: cardForm.neighborhood,
+            city: cardForm.city,
+            state: cardForm.state,
+            zipCode: cardForm.zipCode,
+            country: cardForm.country
         };
 
         console.log("Payment data to be sent to API:", paymentData);
         
         try {
-            // TODO: Make actual API call
-            // const response = await paymentAPI.processPayment(paymentData);
-            // setPaymentStatus(response.success ? "success" : "error");
-            
-            // Placeholder - remove when implementing real API
+ 
             setPaymentStatus("pending");
         } catch (error) {
             console.error("Payment error:", error);
