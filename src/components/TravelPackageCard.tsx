@@ -1,6 +1,7 @@
 import Badge from "./Badge";
 import type { TravelPackage } from "../types/travelPackageTypes";
 import { LuCalendarDays } from "react-icons/lu";
+import { Link } from "react-router-dom";
 
 type TravelPackageCardProps = {
     pkg: TravelPackage;
@@ -10,8 +11,8 @@ const getNextSchedule = (pkg: TravelPackage) => {
     if (!pkg.schedules || pkg.schedules.length === 0) return null;
     const now = new Date();
     return pkg.schedules
-        .filter(s => s.startDate > now)
-        .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0] || null;
+        .filter(s => new Date(s.startDate) > now)
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] || null;
 };
 
 const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => {
@@ -28,10 +29,10 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => {
                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
 
-            {nextSchedule && nextSchedule.salesLeft < 10 && (
+            {nextSchedule && !nextSchedule.isAvailable && (
                 <div className="absolute bottom-3 left-3">
                     <Badge variant="red">
-                        Restam {nextSchedule.salesLeft} vagas para a próxima partida 🔥
+                        Últimas vagas disponíveis! 🔥
                     </Badge>
                 </div>
             )}
@@ -63,11 +64,11 @@ const TravelPackageCard = ({ pkg }: TravelPackageCardProps) => {
                     <span className="text-xl font-bold text-gray-900">{pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     <span className="text-sm text-gray-500 line-through ml-2">{pkg.originalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
-                <a href={`/package/${pkg.id}`} className="inline-block">
+                <Link to={`/package/${pkg.id}`} className="inline-block">
                     <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
                         Ver pacote
                     </button>
-                </a>
+                </Link>
             </div>
         </div>
     </div>

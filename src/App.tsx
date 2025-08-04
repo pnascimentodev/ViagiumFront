@@ -27,6 +27,9 @@ import PackageSearch from './pages/package-search/packageSearch.tsx'
 import Reservation from './pages/reservation/Reservation.tsx'
 import TravelHistoryPage from './pages/travelhistory/TravelHistoryPage.tsx'
 import AboutUsPage from './pages/about-us/aboutus.tsx'
+import RoomTypeManagement from "./pages/roomtype/RoomTypeManagement.tsx";
+import PrivacyPolicyPage from './pages/policyandprivate/privacy-policy.tsx'
+import TravelHistoryPage from './pages/travelhistory/TravelHistoryPage.tsx'
 
 function App() {
   return (
@@ -35,27 +38,29 @@ function App() {
       <Route path="/client" element={<LoginClient />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/affiliate" element={<LoginAffiliate />} />
-      <Route path="/register" element={<Register/>} />
+      <Route path="/register" element={<Register />} />
       <Route path="/affiliatepage" element={<AffiliatePage />} />
-      <Route path="/footer" element={<Footer/>}/>
+      <Route path="/footer" element={<Footer />} />
       <Route path="/resetpassword" element={<ResetPassword />} />
       <Route path="/forgotpassword" element={<ForgotPassword />} />
       <Route path="/forgotpassaffiliate" element={<ForgotPassAffiliate />} />
       <Route path="/forgotpassclient" element={<ForgotPassClient />} />
-      <Route path="/resetpassclient" element={<ResetClient />} />     
-      <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />         
+      <Route path="/resetpassclient" element={<ResetClient />} />
+      <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
       <Route path='/roomtype' element={<RoomType />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
-      <Route path="/package" element={<Package />} />
+      <Route path="/package/:packageId" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
       <Route path="/admindashboard" element={<AdminDashboard />} />
-      <Route path="/faq" element={<FAQSection/>} />
+      <Route path="/faq" element={<FAQSection />} />
       <Route path="/review" element={<Review />} />
       <Route path="/payment" element={<Payment />} />
       <Route path="/packagesearch" element={<PackageSearch />} />
       <Route path="/reservation" element={<Reservation />} />
+      <Route path="/roomtypemanagement" element={<RoomTypeManagement />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/travelhistory" element={<TravelHistoryPage />} />
       <Route path="/aboutus" element={<AboutUsPage />} />
     </Routes>

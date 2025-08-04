@@ -108,6 +108,7 @@ export function unmaskCurrency(maskedValue: string): string {
 }
 export function maskCardNumber(value: string){
     let v = value.replace(/\D/g, "");
+    if (v.length > 16) v = v.slice(0, 16); // Limita a 16 dígitos
     if (v.length > 12) {
         return `${v.slice(0, 4)} ${v.slice(4, 8)} ${v.slice(8, 12)} ${v.slice(12)}`;
     } else if (v.length > 8) {
@@ -125,5 +126,27 @@ export function maskValidateExpirationDate(value: string) {
     if (v.length > 2) {
         return `${v.slice(0, 2)}/${v.slice(2)}`;
     }
+    return v;
+}
+
+export function maskExpiryMonth(value: string) {
+    // Aceita apenas MM (01-12)
+    let v = value.replace(/\D/g, "");
+    if (v.length > 2) v = v.slice(0, 2);
+    
+    // Valida o mês (01-12)
+    if (v.length === 2) {
+        const month = parseInt(v);
+        if (month < 1 || month > 12) {
+            v = v.slice(0, 1);
+        }
+    }
+    return v;
+}
+
+export function maskExpiryYear(value: string) {
+    // Aceita apenas YY (últimos 2 dígitos do ano)
+    let v = value.replace(/\D/g, "");
+    if (v.length > 2) v = v.slice(0, 2);
     return v;
 }
