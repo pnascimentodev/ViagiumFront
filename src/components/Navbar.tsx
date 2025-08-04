@@ -30,7 +30,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
         { label: 'Parceiros', href: '/#parceiros' },
         { label: 'Área do Afiliado', href: '/affiliatepage' },
         { label: 'Acesso Admin', href: '/admin' },
-        { label: 'Sobre Nós', href: '#' },
+        { label: 'Sobre Nós', href: '/aboutus' },
     ];
     const navLinksAffiliate: NavLink[] = [
         { label: 'Vantagens', href: '/affiliatepage#vantagens' },
