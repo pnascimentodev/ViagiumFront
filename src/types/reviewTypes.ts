@@ -38,7 +38,8 @@ export interface Reservation {
     name: string;
     capacity: number;
   };
-}
+  reservationId: number;
+};
 
 export interface ReviewRequest {
   reservationId: number;
