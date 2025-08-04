@@ -4,6 +4,7 @@ import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDolla
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 import { formatBRL } from "../../utils/currency"
+import { maskCPF, maskPhone, unmaskCPF } from "../../utils/masks"
 
 interface MenuItem {
     id: string
@@ -27,8 +28,10 @@ interface UserFormData {
     phone: string
     documentNumber: string
     birthDate: string
-    role: string
+    role: number
     isActive: boolean
+    password?: string
+    confirmPassword?: string
 }
 
 interface AffiliateFormData {
@@ -51,6 +54,7 @@ interface AffiliateFormData {
 interface HotelFormData {
     name: string
     description: string
+    imageUrl?: string // URL da imagem, caso já exista
     street: string
     number: string
     neighborhood: string
@@ -137,7 +141,7 @@ function AdminDashboard() {
         return allClients.find((c: any) => c.userId === clientId);
     }
 
-    // Adicione um novo estado para controlar o modal de Criação de PACOTES E AFILIADOS
+    // Adicione um novo estado para controlar o modal de Criação de PACOTES E USUARIOS
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const openModal = (type: "pacotes" | "usuarios") => {
         setModalType(type)
@@ -180,8 +184,10 @@ function AdminDashboard() {
                 phone: "",
                 documentNumber: "",
                 birthDate: "",
-                role: "Cliente",
-                isActive: true
+                role: 2,
+                isActive: true,
+                password: "",
+                confirmPassword: ""
             })
         }
     }
@@ -210,7 +216,7 @@ function AdminDashboard() {
             deactivate: { url: id => `http://localhost:5028/api/hotel/${id}/desactivate`, method: "DELETE" }
         },
         usuarios: {
-            activate: { url: id => `http://localhost:5028/api/admin/${id}/activate`, method: "POST"},
+            activate: { url: id => `http://localhost:5028/api/admin/${id}/activate`, method: "POST" },
             deactivate: { url: id => `http://localhost:5028/api/admin/${id}`, method: "DELETE" }
         },
         clientes: {
@@ -218,7 +224,6 @@ function AdminDashboard() {
             deactivate: { url: id => `http://localhost:5028/api/user/${id}`, method: "DELETE" }
         }
     };
-
     // Função genérica para alterar status de qualquer item
     const handleToggleItemStatus = async (item: TableData, tabId: string) => {
         const actionType = item.status === "Ativo" ? "deactivate" : "activate";
@@ -248,7 +253,8 @@ function AdminDashboard() {
             console.error(error);
         }
     };
-    // Funções de visualização (somente leitura) para afiliados e hotéis
+
+    // Modais de Criação de PACOTES E USUARIOS ADMINS
     const renderModal = () => {
         if (!isModalOpen || !modalType) return null
 
@@ -520,17 +526,6 @@ function AdminDashboard() {
 
                                 <div className="mt-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
-                                    {/* Exibe a imagem atual do pacote, se houver */}
-                                    {packageForm && packageForm.image && (
-                                        <div className="mb-3">
-                                            <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
-                                            <img
-                                                src={URL.createObjectURL(packageForm.image)}
-                                                alt="Imagem atual do pacote"
-                                                className="w-32 h-32 object-cover rounded border"
-                                            />
-                                        </div>
-                                    )}
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -709,6 +704,31 @@ function AdminDashboard() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                                        <input
+                                            type="password"
+                                            required
+                                            value={userForm.password}
+                                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Digite a senha"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                                        <input
+                                            type="password"
+                                            required
+                                            value={userForm.confirmPassword}
+                                            onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Confirme a senha"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Telefone e CPF */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
@@ -716,7 +736,7 @@ function AdminDashboard() {
                                             type="tel"
                                             required
                                             value={userForm.phone}
-                                            onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                                            onChange={(e) => setUserForm({ ...userForm, phone: maskPhone(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="(11) 99999-9999"
                                         />
@@ -728,7 +748,7 @@ function AdminDashboard() {
                                             type="text"
                                             required
                                             value={userForm.documentNumber}
-                                            onChange={(e) => setUserForm({ ...userForm, documentNumber: e.target.value })}
+                                            onChange={(e) => setUserForm({ ...userForm, documentNumber: maskCPF(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="000.000.000-00"
                                         />
@@ -752,11 +772,16 @@ function AdminDashboard() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Função</label>
                                         <select
                                             value={userForm.role}
-                                            onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                                            onChange={(e) => {
+                                                const value = Number(e.target.value);
+                                                if (value === 2 || value === 3) {
+                                                    setUserForm({ ...userForm, role: value });
+                                                }
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="Administrador">Administrador</option>
-                                            <option value="Suporte">Suporte</option>
+                                            <option value={2}>Administrador</option>
+                                            <option value={3}>Suporte</option>
                                         </select>
                                     </div>
                                 </div>
@@ -821,7 +846,7 @@ function AdminDashboard() {
                     <div className="p-6 border-b border-gray-200">
                         <div className="flex justify-between items-center">
                             <h2 className="text-xl font-bold text-gray-900">
-                                Editar Pacote: {editingPackage.name}
+                                Editar Pacote: {editPackageForm.title}
                             </h2>
                             <button
                                 onClick={closeEditPackageModal}
@@ -834,7 +859,7 @@ function AdminDashboard() {
 
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                        <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6">
+                        <form id="package-form" onSubmit={handleEditPackageSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
                                 <input
@@ -856,6 +881,35 @@ function AdminDashboard() {
                                     rows={3}
                                     placeholder="Descrição detalhada do pacote..."
                                 />
+                            </div>
+
+                            <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Foto do pacote</label>
+                                {/* Exibe a imagem atual do pacote, se houver */}
+                                {editPackageForm && editPackageForm.imageUrl ? (
+                                    <div className="mb-3">
+                                        <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
+                                        <img
+                                            src={editPackageForm.imageUrl}
+                                            alt="Imagem atual do pacote"
+                                            className="w-full h-full object-cover rounded border"
+                                        />
+                                    </div>
+                                ) : (
+                                    <span className="block text-xs text-gray-500 mb-3">Nenhuma imagem cadastrada para este pacote.</span>
+                                )}
+                                <div className="mb-3">
+                                    <span className="block text-xs text-gray-500 mb-1">Upload de nova foto:</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, image: e.target.files?.[0] || null })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    />
+                                    {editPackageForm.image && (
+                                        <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {editPackageForm.image.name}</p>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Novo campo: Tipo de Pacote */}
@@ -1067,30 +1121,6 @@ function AdminDashboard() {
                                         placeholder="Ex: Brasil"
                                     />
                                 </div>
-                            </div>
-
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
-                                {/* Exibe a imagem atual do pacote, se houver */}
-                                {editPackageForm && editPackageForm.image && (
-                                    <div className="mb-3">
-                                        <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
-                                        <img
-                                            src={URL.createObjectURL(editPackageForm.image)}
-                                            alt="Imagem atual do pacote"
-                                            className="w-32 h-32 object-cover rounded border"
-                                        />
-                                    </div>
-                                )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => setEditPackageForm({ ...editPackageForm, image: e.target.files?.[0] || null })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                />
-                                {editPackageForm.image && (
-                                    <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {editPackageForm.image.name}</p>
-                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"> {/* Aumenta o espaço acima desta seção */}
@@ -1476,7 +1506,7 @@ function AdminDashboard() {
         })
     }
     // Função para lidar com o envio do formulário de edição
-    const handleEditSubmit = async (e: React.FormEvent) => {
+    const handleEditPackageSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!editingPackage) return;
@@ -1538,8 +1568,10 @@ function AdminDashboard() {
         phone: "",
         documentNumber: "",
         birthDate: "",
-        role: "Cliente",
-        isActive: true
+        role: 2,
+        isActive: true,
+        password: "",
+        confirmPassword: ""
     })
     const [editingUser, setEditingUser] = useState<TableData | null>(null);
     const [editUserForm, setEditUserForm] = useState<UserFormData>({
@@ -1549,13 +1581,39 @@ function AdminDashboard() {
         phone: "",
         documentNumber: "",
         birthDate: "",
-        role: "Cliente",
-        isActive: true
+        role: 2,
+        isActive: true,
+        password: "",
+        confirmPassword: ""
     });
-    const handleUserSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        console.log("Novo usuário:", userForm)
-        closeModal()
+    const handleUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Exemplo de senha fixa, pode ser ajustado para vir de um campo ou gerar aleatória
+        const defaultPassword = "SenhaForte!123";
+
+        // Monta o objeto conforme esperado pela API
+        const newUser = {
+            firstName: userForm.firstName,
+            lastName: userForm.lastName,
+            email: userForm.email,
+            password: defaultPassword,
+            phone: userForm.phone,
+            documentNumber: unmaskCPF(userForm.documentNumber),
+            birthDate: userForm.birthDate,
+            role: userForm.role
+        };
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.post("http://localhost:5028/api/admin/register", newUser);
+            alert("Usuário criado com sucesso!");
+            closeModal();
+            fetchUsers(); // Atualiza a lista de usuários
+        } catch (error) {
+            alert("Erro ao criar usuário. Verifique os dados e tente novamente.");
+            console.error(error);
+        }
     }
     const handleEditUser = (userItem: TableData) => {
 
@@ -1571,7 +1629,7 @@ function AdminDashboard() {
             phone: selectedUser.phone || "",
             documentNumber: selectedUser.documentNumber || "",
             birthDate: selectedUser.birthDate ? selectedUser.birthDate.split("T")[0] : "",
-            role: selectedUser.role || "",
+            role: selectedUser.role,
             isActive: selectedUser.isActive,
         });
 
@@ -1588,7 +1646,7 @@ function AdminDashboard() {
             phone: "",
             documentNumber: "",
             birthDate: "",
-            role: "",
+            role: 2,
             isActive: true
         })
     }
@@ -1670,6 +1728,29 @@ function AdminDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                                    <input
+                                        type="password"
+                                        value={editUserForm.password}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Digite a nova senha (opcional)"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                                    <input
+                                        type="password"
+                                        value={editUserForm.confirmPassword}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, confirmPassword: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Confirme a nova senha"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Telefone e CPF */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
@@ -1677,7 +1758,7 @@ function AdminDashboard() {
                                         type="tel"
                                         required
                                         value={editUserForm.phone}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, phone: e.target.value })}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, phone: maskPhone(e.target.value) })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="(11) 99999-9999"
                                     />
@@ -1689,7 +1770,7 @@ function AdminDashboard() {
                                         type="text"
                                         required
                                         value={editUserForm.documentNumber}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, documentNumber: e.target.value })}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, documentNumber: maskCPF(e.target.value) })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="000.000.000-00"
                                     />
@@ -1713,11 +1794,16 @@ function AdminDashboard() {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Função</label>
                                     <select
                                         value={editUserForm.role}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value })}
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            if (value === 2 || value === 3) {
+                                                setUserForm({ ...userForm, role: value });
+                                            }
+                                        }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="Administrador">Administrador</option>
-                                        <option value="Suporte">Suporte</option>
+                                        <option value={2}>Administrador</option>
+                                        <option value={3}>Suporte</option>
                                     </select>
                                 </div>
                             </div>
@@ -2079,6 +2165,7 @@ function AdminDashboard() {
     const [editHotelForm, setEditHotelForm] = useState<HotelFormData>({
         name: "",
         description: "",
+        imageUrl: "",
         street: "",
         number: "",
         neighborhood: "",
@@ -2101,6 +2188,7 @@ function AdminDashboard() {
         setEditHotelForm({
             name: hotel.name,
             description: hotel.description || "",
+            imageUrl: hotel.imageUrl || "",
             street: hotel.address?.streetName || "",
             number: hotel.address?.addressNumber || "",
             neighborhood: hotel.address?.neighborhood || "",
@@ -2191,6 +2279,19 @@ function AdminDashboard() {
                                     style={{ color: "#003194" }}
                                     rows={3}
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Imagem do Hotel</label>
+                                {editHotelForm?.imageUrl ? (
+                                    <img
+                                        src={editHotelForm.imageUrl}
+                                        alt="Imagem do Hotel"
+                                        className="w-full h-full object-cover rounded border mb-4"
+                                    />
+                                ) : (
+                                    <span className="text-xs text-gray-500">Sem imagem cadastrada</span>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2304,7 +2405,8 @@ function AdminDashboard() {
                                     <input
                                         value={editHotelForm.star}
                                         readOnly
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                                        style={{ color: "#003194" }}
                                     />
                                 </div>
                             </div>
