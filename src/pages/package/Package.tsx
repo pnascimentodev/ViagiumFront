@@ -10,8 +10,7 @@ import Footer from '../../components/Footer';
 
 function Package() {
 
-  // Interfaces para dados da API
-  interface TravelPackage {
+  interface TravelPackage { //A interface typescript serve para definir a estrutura dos dados que serão recebidos da API.
     id: number;
     travelPackageId?: number; 
     title: string;
@@ -25,7 +24,14 @@ function Package() {
     price: number;
     packageTax: number;
     discountValue: number;
-    duration: string | number;
+    duration: number;
+    packageSchedule?: {
+      startDate?: string | null;
+      endDate?: string | null;
+      duration?: number;
+      isFixed?: boolean;
+      isAvailable?: boolean;
+    };
     imageUrl?: string;
     images?: string;
     hotels?: Hotel[]; // Hotéis podem vir junto com o pacote
@@ -42,21 +48,6 @@ function Package() {
     roomTypes: RoomType[];
     amenities?: Amenity[]; // amenities do hotel
   }
-  // Função utilitária para formatar endereço do hotel
-  const renderHotelAddress = (address: any) => {
-    if (!address) return 'Endereço não disponível';
-    if (typeof address === 'string') return address;
-    // Se for objeto, monta string
-    return [
-      address.streetName,
-      address.addressNumber,
-      address.neighborhood,
-      address.city,
-      address.state,
-      address.zipCode,
-      address.country
-    ].filter(Boolean).join(', ');
-  };
 
   interface RoomType {
     roomTypeId: number;
@@ -86,12 +77,11 @@ function Package() {
     id: number;
     userId: number;
     userName: string;
-    userAvatar?: string;
     packageId: number;
     packageName: string;
     rating: number;
     title?: string;
-    comment: string;
+    description: string;
     createdAt: string;
     isVerified: boolean;
     helpfulCount?: number;
@@ -109,8 +99,8 @@ function Package() {
     };
   }
 
-    const navigate = useNavigate();
-    const { packageId } = useParams<{ packageId: string }>();
+    const navigate = useNavigate();//função (navigate) usada para redirecionar o usuário para outra rota, seja após uma ação (como clicar em um botão, finalizar um cadastro, aplicar um filtro, etc.) ou automaticamente após algum evento, useNavigate serve para mudar de página/rota via código, não apenas por links É muito útil para fluxos de checkout, login, pós-formulário, etc. Permite também passar dados para a próxima página usando o parâmetro state
+    const { packageId } = useParams<{ packageId: string }>(); //No React Router (v6+), o hook useParams sempre retorna os parâmetros da URL como string (ou undefined), porque tudo que vem da URL é texto. Mesmo que o valor represente um número (como um ID), ele chega como string. Aqui, você está dizendo ao TypeScript que espera que packageId seja uma string, o que está correto para o que o React Router retorna.
     const [numPessoas, setNumPessoas] = useState(1);
     const [cupomDiscountInput, setCupomDiscountInput] = useState('');
     const [hotelIndex, setHotelIndex] = useState(0);
@@ -126,13 +116,25 @@ function Package() {
     const closeHotelModal = () => setShowHotelModal(false);
     const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
     const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
+      // Função utilitária para formatar endereço do hotel
+   const renderHotelAddress = (address: any) => {
+    if (!address) return 'Endereço não disponível';
+    if (typeof address === 'string') return address;
+    return [
+      address.streetName,
+      address.addressNumber,
+      address.neighborhood,
+      address.city,
+      address.state,
+      address.zipCode,
+      address.country
+    ].filter(Boolean).join(', ');
+  };
 
-  // Funções para buscar dados da API
+  //No front-end moderno (especialmente em React), é convenção usar o prefixo fetch no nome de funções que buscam dados de uma API.
   const fetchTravelPackage = async (packageId: number) => {
   setLoading(true);
   setError('');
-  
-  console.log('Iniciando busca do pacote ID:', packageId);
   
   try {
     const response = await axios.get(`http://localhost:5028/api/TravelPackage/getById/${packageId}`, {
@@ -151,7 +153,6 @@ function Package() {
         setHotels(response.data.hotels);
         console.log('Hotéis carregados do pacote:', response.data.hotels.length);
       } else {
-        console.log('Pacote não inclui hotéis');
         setHotels([]); // Limpa hotéis se não houver
       }
       
@@ -170,11 +171,7 @@ function Package() {
   // useEffect para carregar dados quando o componente monta
     useEffect(() => {
     const id = packageId ? parseInt(packageId) : 1;
-    console.log('Package ID obtido:', id);
-    console.log('URL do packageId:', packageId);
-    
     fetchTravelPackage(id);
-    // Não buscar mais amenities separadamente
   }, [packageId]);
 
   useEffect(() => {
@@ -263,12 +260,11 @@ function Package() {
       id: 1,
       userId: 1,
       userName: "Maria Silva",
-      userAvatar: "MS",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 5,
       title: "Experiência incrível!",
-      comment: "O pacote superou todas as expectativas. Os hotéis eram excelentes e os passeios muito bem organizados. Recomendo para todos!",
+      description: "O pacote superou todas as expectativas. Os hotéis eram excelentes e os passeios muito bem organizados. Recomendo para todos!",
       createdAt: "2024-01-15T10:30:00Z",
       isVerified: true,
       helpfulCount: 12
@@ -277,12 +273,11 @@ function Package() {
       id: 2,
       userId: 2,
       userName: "João Santos",
-      userAvatar: "JS",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 4,
       title: "Muito bom!",
-      comment: "Apenas alguns pequenos atrasos nos voos, mas no geral foi uma viagem fantástica. A equipe de suporte foi muito prestativa.",
+      description: "Apenas alguns pequenos atrasos nos voos, mas no geral foi uma viagem fantástica. A equipe de suporte foi muito prestativa.",
       createdAt: "2024-01-08T14:22:00Z",
       isVerified: true,
       helpfulCount: 8
@@ -291,12 +286,11 @@ function Package() {
       id: 3,
       userId: 3,
       userName: "Ana Costa",
-      userAvatar: "AC",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 5,
       title: "Perfeito!",
-      comment: "Perfeito do início ao fim! Cada detalhe foi cuidadosamente planejado. As cidades visitadas eram deslumbrantes e os guias muito conhecedores.",
+      description: "Perfeito do início ao fim! Cada detalhe foi cuidadosamente planejado. As cidades visitadas eram deslumbrantes e os guias muito conhecedores.",
       createdAt: "2024-01-02T09:15:00Z",
       isVerified: true,
       helpfulCount: 15
@@ -305,12 +299,11 @@ function Package() {
       id: 4,
       userId: 4,
       userName: "Carlos Oliveira",
-      userAvatar: "CO",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 4,
       title: "Boa experiência",
-      comment: "Boa experiência geral. Os hotéis eram confortáveis e as refeições deliciosas. Apenas senti falta de mais tempo livre para explorar por conta própria.",
+      description: "Boa experiência geral. Os hotéis eram confortáveis e as refeições deliciosas. Apenas senti falta de mais tempo livre para explorar por conta própria.",
       createdAt: "2023-12-28T16:45:00Z",
       isVerified: true,
       helpfulCount: 6
@@ -319,12 +312,11 @@ function Package() {
       id: 5,
       userId: 5,
       userName: "Fernanda Lima",
-      userAvatar: "FL",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 5,
       title: "Simplesmente mágico!",
-      comment: "Veneza é realmente mágica! O passeio de gôndola foi inesquecível. A organização do pacote foi impecável e todos os detalhes foram cuidados.",
+      description: "Veneza é realmente mágica! O passeio de gôndola foi inesquecível. A organização do pacote foi impecável e todos os detalhes foram cuidados.",
       createdAt: "2024-01-20T11:15:00Z",
       isVerified: true,
       helpfulCount: 9
@@ -333,12 +325,11 @@ function Package() {
       id: 6,
       userId: 6,
       userName: "Roberto Mendes",
-      userAvatar: "RM",
       packageId: 1,
       packageName: "Pacote Veneza Mágica",
       rating: 4,
       title: "Muito satisfeito",
-      comment: "Excelente custo-benefício. Os hotéis tinham boa localização e o atendimento foi sempre cordial. Voltaria a viajar com esta empresa.",
+      description: "Excelente custo-benefício. Os hotéis tinham boa localização e o atendimento foi sempre cordial. Voltaria a viajar com esta empresa.",
       createdAt: "2024-01-12T15:45:00Z",
       isVerified: true,
       helpfulCount: 7
@@ -465,15 +456,27 @@ function Package() {
                         ? `${currentPackage.destinationCity}, ${currentPackage.destinationCountry}`
                         : 'Não informado'}
                     </div>
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h2 className="font-semibold">Duração</h2>
-                    </div>
-                    <div className="flex items-center space-x-3 mb-2">
-                      <FaRegCalendarAlt className=" text-xl" />
-                      <div className="w-full border rounded px-2 py-1">
-                        {currentPackage.duration}
+                    <div className="flex items-center space-x-3 mb-2 gap-2">
+                      <span className="font-semibold">Duração:</span>
+                      <div className="w-full rounded px-2 py-1 flex items-center justify-between">
+                        <span>{currentPackage.duration}</span>
+                        <FaRegCalendarAlt className="text-xl ml-2" />
                       </div>
                     </div>
+                      <div className="flex items-center space-x-3 mb-2">
+                          <span className="font-semibold ">Data de Início:&nbsp;</span>
+                          {currentPackage.packageSchedule?.startDate
+                            ? formatDate(currentPackage.packageSchedule.startDate)
+                            : 'Não informado'}
+                        </div>
+                          {/*
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="font-semibold ">Data de Término:&nbsp;</span>
+                            {currentPackage.packageSchedule?.endDate
+                              ? formatDate(currentPackage.packageSchedule.endDate)
+                              : 'Não informado'}
+                          </div>
+                          */}
                     <div className="flex items-center space-x-3 mb-2">
                       <h2 className="font-semibold">Número de viajantes</h2>
                     </div>
@@ -843,7 +846,7 @@ function Package() {
                         <div key={review.id} className="bg-[#F8FAFC] rounded-lg shadow p-6 border border-gray-100">
                           <div className="flex gap-4">
                             <div className=" rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                              {review.userAvatar || review.userName.charAt(0)}
+                              {review.userName.charAt(0)}
                             </div>
                             
                             <div className="flex-1 min-w-0">
@@ -872,7 +875,7 @@ function Package() {
                               </div>
                               
                               <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                                {review.comment}
+                                {review.description}
                               </p>
                               
                               <div className="flex items-center justify-between">
