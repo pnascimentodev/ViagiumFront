@@ -18,6 +18,23 @@ Frontend do Viagium, plataforma para pacotes de viagem, reservas, avaliações, 
 
 ---
 
+## 🧩 Padrão de Arquitetura
+
+O projeto adota predominantemente o padrão **Component-Based Architecture** (Arquitetura baseada em componentes), característico de aplicações em React.
+
+### Características principais:
+
+- **Componentização:** A interface é dividida em componentes reutilizáveis e independentes, facilitando manutenção e escalabilidade.
+- **Separação de páginas:** Cada funcionalidade principal está organizada em pastas específicas dentro de `src/pages`, promovendo clareza e modularidade.
+- **Hooks customizados:** Lógica compartilhada e reutilizável implementada em hooks próprios, centralizados em `src/hooks`.
+- **Utilitários e tipagem:** Funções auxiliares e tipos TypeScript em `src/utils` e `src/types`, garantindo código limpo e seguro.
+- **Estilização modular:** Uso de TailwindCSS, Styled Components e MUI para estilos desacoplados dos componentes.
+- **SPA com React Router:** Navegação fluida entre páginas sem recarregamento, reforçando o padrão de componentes.
+
+Esse padrão permite que cada parte da interface seja desenvolvida, testada e evoluída de forma independente, tornando o projeto mais robusto e preparado para crescimento.
+
+---
+
 ## 📁 Estrutura de Pastas
 
 ```
