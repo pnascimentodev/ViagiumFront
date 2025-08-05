@@ -1,92 +1,16 @@
 import { useState } from "react"
 import { FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa"
 import Navbar from "../../components/Navbar"
+import { useReservations, type Reservation } from "../../hooks/useReservations"
 
 function TravelHistoryPage() {
   const [activeFilter, setActiveFilter] = useState<"Ativas" | "Anteriores" | "Canceladas">("Ativas")
-  const [selectedTravel, setSelectedTravel] = useState<any>(null)
+  const [selectedTravel, setSelectedTravel] = useState<Reservation | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
-  const travels = [
-    {
-      id: "1",
-      title: "Escapada Romântica em Paris",
-      description: "Uma viagem inesquecível pela cidade do amor, incluindo visitas à Torre Eiffel, Louvre e passeios pelo Sena.",
-      destination: "Paris, França",
-      duration: "7 dias / 6 noites",
-      image: "https://images.pexels.com/photos/532826/pexels-photo-532826.jpeg",
-      startDate: "15/03/2023",
-      endDate: "22/03/2023",
-      status: "Concluída",
-      price: "R$ 5.500,00",
-      createdAt: "10/02/2023",
-    },
-    {
-      id: "2",
-      title: "Aventura Tropical em Cancún",
-      description: "Pacote completo com resort all-inclusive, mergulho em cenotes e visitas às ruínas maias.",
-      destination: "Cancún, México",
-      duration: "7 dias / 6 noites",
-      image: "https://images.pexels.com/photos/2598663/pexels-photo-2598663.jpeg",
-      startDate: "10/07/2024",
-      endDate: "17/07/2024",
-      status: "Próxima",
-      price: "R$ 4.800,00",
-      createdAt: "05/06/2024",
-    },
-    {
-      id: "3",
-      title: "Descobrindo o Japão Tradicional",
-      description: "Experiência única pela cultura japonesa, incluindo Tóquio, Kyoto e a temporada das cerejeiras.",
-      destination: "Tóquio, Japão",
-      duration: "9 dias / 8 noites",
-      image: "https://images.pexels.com/photos/30443953/pexels-photo-30443953.jpeg",
-      startDate: "01/09/2022",
-      endDate: "10/09/2022",
-      status: "Concluída",
-      price: "R$ 7.200,00",
-      createdAt: "20/07/2022",
-    },
-    {
-      id: "4",
-      title: "História e Cultura em Roma",
-      description: "Explore a cidade eterna com visitas ao Coliseu, Vaticano e degustação da autêntica culinária italiana.",
-      destination: "Roma, Itália",
-      duration: "7 dias / 6 noites",
-      image: "https://images.pexels.com/photos/2678456/pexels-photo-2678456.jpeg",
-      startDate: "05/05/2025",
-      endDate: "12/05/2025",
-      status: "Próxima",
-      price: "R$ 6.100,00",
-      createdAt: "15/03/2025",
-    },
-    {
-      id: "5",
-      title: "A Grande Maçã te Espera",
-      description: "Nova York completa: Broadway, Central Park, Estátua da Liberdade e as melhores atrações da cidade.",
-      destination: "Nova York, EUA",
-      duration: "7 dias / 6 noites",
-      image: "https://images.pexels.com/photos/32479333/pexels-photo-32479333.jpeg",
-      startDate: "20/11/2023",
-      endDate: "27/11/2023",
-      status: "Concluída",
-      price: "R$ 5.900,00",
-      createdAt: "25/09/2023",
-    },
-    {
-      id: "6",
-      title: "Londres Real e Histórica",
-      description: "Explore a capital britânica com seus palácio, museus renomados e a tradicional cultura inglesa.",
-      destination: "Londres, Reino Unido",
-      duration: "6 dias / 5 noites",
-      image: "https://images.pexels.com/photos/17649453/pexels-photo-17649453.jpeg",
-      startDate: "01/02/2024",
-      endDate: "08/02/2024",
-      status: "Cancelada",
-      price: "R$ 5.300,00",
-      createdAt: "10/12/2023",
-    },
-  ]
+  
+  // TODO: Pegar o ID do usuário do contexto/estado global
+  const userId = "1" // Por enquanto hardcoded, depois você pode pegar do contexto do usuário logado
+  const { reservations, loading, error, refetch } = useReservations(userId)
 
   const getButtonClasses = (isActive: boolean) => {
     return isActive
@@ -94,7 +18,7 @@ function TravelHistoryPage() {
       : "border border-[#003194] bg-white text-[#003194] hover:bg-blue-50" // Borda azul para inativo
   }
 
-  const openModal = (travel: any) => {
+  const openModal = (travel: Reservation) => {
     setSelectedTravel(travel)
     setIsModalOpen(true)
   }
@@ -104,13 +28,13 @@ function TravelHistoryPage() {
     setIsModalOpen(false)
   }
 
-  const filteredTravels = travels.filter((travel) => {
+  const filteredTravels = reservations.filter((reservation) => {
     if (activeFilter === "Ativas") {
-      return travel.status === "Próxima"
+      return reservation.status === "confirmed"
     } else if (activeFilter === "Anteriores") {
-      return travel.status === "Concluída"
+      return reservation.status === "finished"
     } else if (activeFilter === "Canceladas") {
-      return travel.status === "Cancelada"
+      return reservation.status === "cancelled"
     }
     return true
   })
@@ -124,29 +48,71 @@ function TravelHistoryPage() {
           <p className="mt-2 text-lg text-gray-600">Veja suas viagens passadas, futuras e canceladas.</p>
         </header>
 
-      <div className="mb-12 flex justify-center gap-4">
-        <button
-          className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Ativas")}`}
-          onClick={() => setActiveFilter("Ativas")}
-        >
-          Ativas
-        </button>
-        <button
-          className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Anteriores")}`}
-          onClick={() => setActiveFilter("Anteriores")}
-        >
-          Anteriores
-        </button>
-        <button
-          className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Canceladas")}`}
-          onClick={() => setActiveFilter("Canceladas")}
-        >
-          Canceladas
-        </button>
-      </div>
+        {/* Estados de Loading e Erro */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003194]"></div>
+            <span className="ml-3 text-lg text-gray-600">Carregando reservas...</span>
+          </div>
+        )}
 
-      <div className="flex justify-center">
-        <div className="flex flex-wrap justify-center gap-6 max-w-6xl">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Erro ao carregar reservas
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={refetch}
+                    className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="mb-12 flex justify-center gap-4">
+              <button
+                className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Ativas")}`}
+                onClick={() => setActiveFilter("Ativas")}
+              >
+                Ativas
+              </button>
+              <button
+                className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Anteriores")}`}
+                onClick={() => setActiveFilter("Anteriores")}
+              >
+                Anteriores
+              </button>
+              <button
+                className={`w-32 px-6 py-2 rounded-full font-medium transition-colors duration-200 ${getButtonClasses(activeFilter === "Canceladas")}`}
+                onClick={() => setActiveFilter("Canceladas")}
+              >
+                Canceladas
+              </button>
+            </div>
+
+            {filteredTravels.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-600">
+                  {activeFilter === "Ativas" && "Você não possui viagens ativas no momento."}
+                  {activeFilter === "Anteriores" && "Você ainda não possui viagens concluídas."}
+                  {activeFilter === "Canceladas" && "Você não possui viagens canceladas."}
+                </p>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="flex flex-wrap justify-center gap-6 max-w-6xl">
           {filteredTravels.map((travel) => (
           <div key={travel.id} className="flex flex-col overflow-hidden rounded-lg shadow-md bg-white w-80">
             <div className="relative h-48 w-full">
@@ -170,22 +136,24 @@ function TravelHistoryPage() {
               <div className="flex items-center justify-between">
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                    travel.status === "Concluída" 
+                    travel.status === "finished" 
                       ? "bg-[#FFA62B] text-[#000000] hover:bg-[#FFA62B]/90" 
-                      : travel.status === "Próxima"
+                      : travel.status === "confirmed"
                       ? "bg-[#003194] text-[#FFFFFF] hover:bg-[#003194]/90"
-                      : travel.status === "Cancelada"
+                      : travel.status === "cancelled"
                       ? "bg-red-500 text-white hover:bg-red-600"
                       : "border border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
                   }`}
                 >
-                  {travel.status}
+                  {travel.status === "confirmed" ? "Ativa" : 
+                   travel.status === "finished" ? "Concluída" : 
+                   travel.status === "cancelled" ? "Cancelada" : travel.status}
                 </span>
                 <span className="text-lg font-semibold">{travel.price}</span>
               </div>
             </div>
             <div className="flex justify-end gap-2 p-4 pt-0">
-              {travel.status === "Concluída" && (
+              {travel.status === "finished" && (
                 <button 
                   onClick={() => openModal(travel)}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition-colors duration-200"
@@ -193,7 +161,7 @@ function TravelHistoryPage() {
                   Ver Detalhes
                 </button>
               )}
-              {travel.status === "Próxima" && (
+              {travel.status === "confirmed" && (
                 <button 
                   onClick={() => openModal(travel)}
                   className="px-4 py-2 text-sm bg-[#003194] text-white rounded-md hover:bg-[#003194]/90 transition-colors duration-200"
@@ -201,7 +169,7 @@ function TravelHistoryPage() {
                   Ver detalhes
                 </button>
               )}
-              {travel.status === "Cancelada" && (
+              {travel.status === "cancelled" && (
                 <button 
                   onClick={() => openModal(travel)}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition-colors duration-200"
@@ -214,6 +182,9 @@ function TravelHistoryPage() {
         ))}
         </div>
       </div>
+            )}
+          </>
+        )}
 
       {/* Modal de Detalhes */}
       {isModalOpen && selectedTravel && (

@@ -1,17 +1,60 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer";
 import HotelCarousel from "../../components/HotelCarousel";
 import { Link } from "react-router-dom";
 import TravelPackageCard from "../../components/TravelPackageCard";
 import Badge from "../../components/Badge";
-import { travelPackages } from "../../mocks/travelPackagesMock";
+import axios from "axios";
+import type { TravelPackage } from "../../types/travelPackageTypes";
 
 // ...existing code...
 
 export default function HomePage() {
+    const [packages, setPackages] = useState<TravelPackage[]>([]);
+
+    // Pode ser usado diretamente no HomePage.tsx, na hora de setar os pacotes
+    function mapApiToTravelPackage(apiPkg: any): TravelPackage {
+    return {
+        id: apiPkg.travelPackageId,
+        title: apiPkg.title,
+        description: apiPkg.description,
+        vehicleType: apiPkg.vehicleType,
+        price: apiPkg.price,
+        originalPrice: apiPkg.originalPrice,
+        packageTax: apiPkg.packageTax,
+        duration: apiPkg.duration,
+        image: apiPkg.imageUrl,
+        rating: 5, // valor padrão
+        reviews: 10, // valor padrão
+        maxPeople: apiPkg.maxPeople,
+        originAddress: { 
+            city: apiPkg.originCity, 
+            country: apiPkg.originCountry 
+        },
+        destinationAddress: { 
+            city: apiPkg.destinationCity, 
+            country: apiPkg.destinationCountry 
+        },
+        isActive: apiPkg.packageSchedule?.isAvailable ?? true,
+        schedules: apiPkg.packageSchedule ? [apiPkg.packageSchedule] : [],
+        cupomDiscount: apiPkg.cupomDiscount,
+        discountValue: apiPkg.discountValue,
+        manualDiscountValue: apiPkg.manualDiscountValue,
+    };
+}
     useEffect(() => {
         document.title = "Viagium | Descubra o Mundo Com Quem Entende de Viagem";
+        
+        axios.get("http://localhost:5028/api/TravelPackage/list")
+            .then(res => {
+                const mappedPackages = res.data.map(mapApiToTravelPackage);
+                setPackages(mappedPackages);
+            })
+            .catch(err => {
+                console.error('Erro ao carregar pacotes:', err);
+                setPackages([]);
+            });
     }, []);
 
     return (
@@ -68,8 +111,28 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                        {travelPackages.slice(0,4).map((pkg) => (
-                            <TravelPackageCard key={pkg.id} pkg={pkg} />
+                        {packages.slice(0, 4).map((pkg) => (
+                            <TravelPackageCard
+                                key={pkg.id}
+                                pkg={{
+                                    id: pkg.id,
+                                    title: pkg.title,
+                                    description: pkg.description,
+                                    vehicleType: pkg.vehicleType,
+                                    price: pkg.price,
+                                    originalPrice: pkg.originalPrice,
+                                    packageTax: pkg.packageTax,
+                                    duration: pkg.duration,
+                                    image: pkg.image,
+                                    rating: pkg.rating,
+                                    reviews: pkg.reviews,
+                                    maxPeople: pkg.maxPeople,
+                                    originAddress: pkg.originAddress,
+                                    destinationAddress: pkg.destinationAddress,
+                                    isActive: pkg.isActive,
+                                    schedules: pkg.schedules,
+                                }}
+                            />
                         ))}
                     </div>
 

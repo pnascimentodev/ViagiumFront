@@ -1,8 +1,11 @@
 import { FaPlus, FaUser, FaStar, FaEllipsisV, FaEdit, FaPowerOff, FaBed, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import ModalHotel from "./components/ModalHotel"
-import axios from "axios"
+import ModalEditHotel from "./components/ModalEditHotel"
+import apiClient from "../../utils/apiClient"
+import { AuthService } from "../../utils/auth"
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -54,9 +57,148 @@ function AffiliateDashboard() {
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Ativo' | 'Inativo'>('Ativo');
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [affiliateName, setAffiliateName] = useState<string>("");
+  const [yourHotels, setYourHotels] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
 
   // Modal Hotel Handle Abrir e fechar
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Modal Edit Hotel Handle Abrir e fechar
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<any>(null);
+
+  // Função para buscar reservas da API
+  const fetchReservations = async () => {
+    try {
+      const response = await axios.get('http://localhost:5028/api/Reservation');
+
+      if (response.data && Array.isArray(response.data)) {
+        // Obter o ID do afiliado logado
+        const affiliateAuth = AuthService.getAffiliateAuth();
+        const affiliateId = affiliateAuth?.id;
+
+        console.log('Affiliate ID do logado:', affiliateId);
+        console.log('Total de reservas retornadas:', response.data.length);
+
+        if (!affiliateId) {
+          console.warn('ID do afiliado não encontrado');
+          setReservations([]);
+          return;
+        }
+
+        // Debug: Ver quais affiliateIds existem nas reservas
+        response.data.forEach((reservation: any, index: number) => {
+          console.log(`Reserva ${index}: Hotel=${reservation.hotel?.name}, AffiliateId=${reservation.hotel?.affiliateId}`);
+        });
+
+        // Filtrar reservas apenas dos hotéis do afiliado logado
+        const affiliateReservations = response.data.filter((reservation: any) => {
+          const hotelAffiliateId = reservation.hotel?.affiliateId;
+          console.log(`Comparando: ${hotelAffiliateId} (${typeof hotelAffiliateId}) === ${affiliateId} (${typeof affiliateId}) = ${hotelAffiliateId === affiliateId}`);
+          // Tentar comparação com conversão de tipos também
+          const match = hotelAffiliateId === affiliateId ||
+            hotelAffiliateId === parseInt(String(affiliateId)) ||
+            parseInt(String(hotelAffiliateId)) === parseInt(String(affiliateId)) ||
+            String(hotelAffiliateId) === String(affiliateId);
+          console.log(`Match com conversão de tipos: ${match}`);
+          return match;
+        });
+
+        console.log('Reservas filtradas para o afiliado:', affiliateReservations.length);
+
+        // Mapear as reservas filtradas para mostrar o status correto
+        const formattedReservations = affiliateReservations
+          .map((reservation: any) => {
+            // Formatação das datas do pacote
+            let dates = "Datas não informadas";
+            if (reservation.travelPackage?.packageSchedule && reservation.travelPackage?.duration) {
+              const startDate = new Date(reservation.travelPackage.packageSchedule);
+              const endDate = new Date(startDate.getTime() + (reservation.travelPackage.duration * 24 * 60 * 60 * 1000));
+              dates = `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+            }
+
+            // Formatação do preço
+            let price = "Preço não informado";
+            if (reservation.travelPackage?.price) {
+              price = `R$${reservation.travelPackage.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+
+            // Formatação da data de compra
+            let purchaseDate = "Data não informada";
+            if (reservation.hotel?.createdAt) {
+              const createdDate = new Date(reservation.hotel.createdAt);
+              purchaseDate = `Comprado no dia ${createdDate.toLocaleDateString('pt-BR')}`;
+            }
+
+            // Pegar o nome do primeiro viajante se não houver nome do usuário
+            let guestName = `${reservation.user?.firstName || ""} ${reservation.user?.lastName || ""}`.trim();
+            if (!guestName && reservation.travelers && reservation.travelers.length > 0) {
+              guestName = `${reservation.travelers[0].firstName || ""} ${reservation.travelers[0].lastName || ""}`.trim();
+            }
+            if (!guestName) {
+              guestName = "Hóspede não informado";
+            }
+
+            // Determinar status baseado no campo status do banco
+            let displayStatus = "Status não informado";
+            let statusColor = "bg-gray-100 text-gray-800";
+
+            //case no status da reserva pra setar o icone
+            if (reservation.status) {
+              const status = reservation.status.toLowerCase();
+              switch (status) {
+                case 'confirmed':
+                case 'confirmada':
+                  displayStatus = "Confirmada";
+                  statusColor = "bg-green-100 text-green-800";
+                  break;
+                case 'cancelled':
+                case 'cancelada':
+                  displayStatus = "Cancelada";
+                  statusColor = "bg-red-100 text-red-800";
+                  break;
+                case 'pending':
+                case 'pendente':
+                  displayStatus = "Pendente";
+                  statusColor = "bg-yellow-100 text-yellow-800";
+                  break;
+                case 'finished':
+                case 'finalizada':
+                  displayStatus = "Finalizada";
+                  statusColor = "bg-blue-100 text-blue-800";
+                  break;
+                default:
+                  displayStatus = reservation.status;
+                  statusColor = "bg-purple-100 text-purple-800";
+              }
+            } else {
+              // Fallback para isActive se status não existir
+              const isActive = reservation.isActive === true || reservation.isActive === 1;
+              displayStatus = isActive ? "Confirmada" : "Cancelada";
+              statusColor = isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+            }
+
+            return {
+              room: reservation.roomType?.name || "Quarto não informado",
+              hotel: reservation.hotel?.name || "Hotel não informado",
+              guest: guestName,
+              dates,
+              price,
+              purchaseDate,
+              status: displayStatus,
+              statusColor: statusColor,
+            };
+          })
+          .slice(0, 4); // Limitar a 4 reservas mais recentes
+
+        setReservations(formattedReservations);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar reservas:', error);
+      setReservations([]);
+    }
+  };
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -66,106 +208,73 @@ function AffiliateDashboard() {
     setIsModalOpen(false);
   };
 
-  const handleLogout = () => {
-    // Aqui você pode adicionar a lógica de logout
-    // Por exemplo: limpar localStorage, redirecionar para login, etc.
-    localStorage.clear();
-    window.location.href = '/login/affiliate';
+  const handleOpenEditModal = (hotel: any) => {
+    setSelectedHotel(hotel);
+    setIsEditModalOpen(true);
   };
 
-  const toggleUserDropdown = () => {
-    setIsUserDropdownOpen(!isUserDropdownOpen);
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedHotel(null);
   };
 
-  const [yourHotels, setYourHotels] = useState<any[]>([]);
-
-  const reservations = [
-    {
-      room: "Quarto Família",
-      hotel: "Grand Plaza Hotel",
-      guest: "Maria Silva",
-      dates: "19/07/2025 - 24/07/2025",
-      price: "R$1.200",
-      purchaseDate: "Comprado no dia 14/06/2025",
-      status: "Confirmada",
-      statusColor: "bg-green-100 text-green-800",
-    },
-    {
-      room: "Quarto Família",
-      hotel: "Grand Plaza Hotel",
-      guest: "Maria Silva",
-      dates: "19/07/2025 - 24/07/2025",
-      price: "R$1.200",
-      purchaseDate: "Comprado no dia 14/06/2025",
-      status: "Pendente",
-      statusColor: "bg-orange-100 text-orange-800",
-    },
-    {
-      room: "Quarto Família",
-      hotel: "Grand Plaza Hotel",
-      guest: "Maria Silva",
-      dates: "19/07/2025 - 24/07/2025",
-      price: "R$1.200",
-      purchaseDate: "Comprado no dia 14/06/2025",
-      status: "Confirmada",
-      statusColor: "bg-green-100 text-green-800",
-    },
-    {
-      room: "Quarto Família",
-      hotel: "Grand Plaza Hotel",
-      guest: "Maria Silva",
-      dates: "19/07/2025 - 24/07/2025",
-      price: "R$1.200",
-      purchaseDate: "Comprado no dia 14/06/2025",
-      status: "Confirmada",
-      statusColor: "bg-green-100 text-green-800",
-    },
-  ]
+  const handleSaveHotel = (updatedHotel: any) => {
+    setYourHotels(prevHotels =>
+      prevHotels.map(h => h.id === updatedHotel.id ? updatedHotel : h)
+    );
+  };
 
   const handleDropdownClick = (filteredIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setActiveDropdown(activeDropdown === filteredIndex ? null : filteredIndex);
   };
 
-  const handleActivateHotel = (hotel: any) => {
-    if (!hotel || !hotel.id) return;
-    axios.put(`http://localhost:5028/api/Hotel/${hotel.id}/activate`)
-      .then(() => {
-        setYourHotels(prevHotels => prevHotels.map(h =>
-          h.id === hotel.id ? { ...h, status: "Ativo" } : h
-        ));
-        setActiveDropdown(null);
-      })
-      .catch(() => {
-        alert("Erro ao ativar hotel.");
-        setActiveDropdown(null);
-      });
-  };
+  // Verificar autenticação no carregamento da página
+  useEffect(() => {
+    // Verifica se o afiliado está autenticado
+    if (!AuthService.isAffiliateAuthenticated()) {
+      // Se não estiver autenticado, redireciona para login
+      window.location.href = '/affiliate';
+      return;
+    }
 
-  const handleEditHotel = (hotel: typeof yourHotels[0]) => {
-    console.log('Editando hotel:', hotel.name);
-    setActiveDropdown(null);
-  };
+    // Recupera os dados de autenticação do afiliado
+    const affiliateAuth = AuthService.getAffiliateAuth();
+    if (affiliateAuth && affiliateAuth.id) {
+      // Busca dados do afiliado usando o apiClient (que já inclui o token automaticamente)
+      apiClient.get(`/Affiliate/${affiliateAuth.id}`)
+        .then(res => {
+          if (res.data) {
+            // Nome do afiliado
+            if (res.data.name) setAffiliateName(res.data.name);
+            // Monta o array de hotéis
+            if (res.data.hotels && Array.isArray(res.data.hotels)) {
+              const hotelsMapped = res.data.hotels.map((hotel: any) => ({
+                id: hotel.hotelId,
+                name: hotel.name || "",
+                location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
+                status: hotel.isActive ? "Ativo" : "Inativo",
+                image: hotel.imageUrl || ""
+              }));
+              setYourHotels(hotelsMapped);
+            } else {
+              setYourHotels([]);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados do afiliado:', error);
+          // Se for erro de autenticação, o interceptor já vai redirecionar
+          if (error.response?.status !== 401) {
+            setAffiliateName("");
+            setYourHotels([]);
+          }
+        });
+    }
 
-  const handleManageRooms = (hotel: typeof yourHotels[0]) => {
-    console.log('Gerenciando quartos:', hotel.name);
-    setActiveDropdown(null);
-  };
-
-  const handleDeactivateHotel = (hotel: any) => {
-    if (!hotel || !hotel.id) return;
-    axios.delete(`http://localhost:5028/api/Hotel/${hotel.id}/desactivate`)
-      .then(() => {
-        setYourHotels(prevHotels => prevHotels.map(h =>
-          h.id === hotel.id ? { ...h, status: "Inativo" } : h
-        ));
-        setActiveDropdown(null);
-      })
-      .catch(() => {
-        alert("Erro ao desativar hotel.");
-        setActiveDropdown(null);
-      });
-  };
+    // Buscar reservas
+    fetchReservations();
+  }, []);
 
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
@@ -180,46 +289,85 @@ function AffiliateDashboard() {
     };
   }, []);
 
-  const [affiliateName, setAffiliateName] = useState<string>("");
+  const handleLogout = () => {
+    // Pega o token atual para enviar na requisição de logout
+    const affiliateAuth = AuthService.getAffiliateAuth();
 
-  useEffect(() => {
-    // Recupera o affiliate do localStorage
-    const affiliateStr = localStorage.getItem("affiliate");
-    if (affiliateStr) {
-      try {
-        const affiliate = JSON.parse(affiliateStr);
-        if (affiliate && affiliate.id) {
-          axios.get(`http://localhost:5028/api/Affiliate/${affiliate.id}`)
-            .then(res => {
-              if (res.data) {
-                // Nome do afiliado
-                if (res.data.name) setAffiliateName(res.data.name);
-                // Monta o array de hotéis
-                if (res.data.hotels && Array.isArray(res.data.hotels)) {
-                  const hotelsMapped = res.data.hotels.map((hotel: any) => ({
-                    id: hotel.hotelId, // Garante que o id seja preenchido
-                    name: hotel.name || "",
-                    location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
-                    status: hotel.isActive ? "Ativo" : "Inativo",
-                    image: hotel.imageUrl || ""
-                  }));
-                  setYourHotels(hotelsMapped);
-                } else {
-                  setYourHotels([]);
-                }
-              }
-            })
-            .catch(() => {
-              setAffiliateName("");
-              setYourHotels([]);
-            });
-        }
-      } catch {
-        setAffiliateName("");
-        setYourHotels([]);
-      }
+    if (affiliateAuth && affiliateAuth.token) {
+      // Chama a API de logout primeiro
+      apiClient.post('/Affiliate/logout', {
+        token: affiliateAuth.token
+      })
+        .then(() => {
+          // Se o logout na API foi bem-sucedido, limpa os dados locais
+          AuthService.clearAffiliateAuth();
+          // Redireciona para login
+          window.location.href = '/affiliate';
+        })
+        .catch((error) => {
+          console.error('Erro ao fazer logout na API:', error);
+          // Mesmo se der erro na API, limpa os dados locais
+          AuthService.clearAffiliateAuth();
+          window.location.href = '/affiliate';
+        });
+    } else {
+      // Se não tiver token, apenas limpa os dados locais
+      AuthService.clearAffiliateAuth();
+      window.location.href = '/affiliate';
     }
-  }, []);
+  };
+
+  const handleActivateHotel = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+
+    // Usa o apiClient que já inclui automaticamente o token Bearer
+    apiClient.put(`/Hotel/${hotel.id}/activate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Ativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch((error) => {
+        console.error('Erro ao ativar hotel:', error);
+        alert("Erro ao ativar hotel.");
+        setActiveDropdown(null);
+      });
+  };
+
+  const handleEditHotel = (hotel: typeof yourHotels[0]) => {
+    console.log('Editando hotel:', hotel.name);
+    handleOpenEditModal(hotel);
+    setActiveDropdown(null);
+  };
+
+  const handleManageRooms = (hotelId?: number) => {
+    setActiveDropdown(null);
+    // Passa o hotelId como parâmetro na URL
+    if (hotelId) {
+      window.location.href = `/roomtypemanagement?hotelId=${hotelId}`;
+    } else {
+      window.location.href = "/roomtypemanagement";
+    }
+  };
+
+  const handleDeactivateHotel = (hotel: any) => {
+    if (!hotel || !hotel.id) return;
+
+    // Usa o apiClient que já inclui automaticamente o token Bearer
+    apiClient.delete(`/Hotel/${hotel.id}/desactivate`)
+      .then(() => {
+        setYourHotels(prevHotels => prevHotels.map(h =>
+          h.id === hotel.id ? { ...h, status: "Inativo" } : h
+        ));
+        setActiveDropdown(null);
+      })
+      .catch((error) => {
+        console.error('Erro ao desativar hotel:', error);
+        alert("Erro ao desativar hotel.");
+        setActiveDropdown(null);
+      });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b to-white p-6"
@@ -233,7 +381,7 @@ function AffiliateDashboard() {
           <div className="flex items-center gap-3">
             <div className="flex items-center flex-shrink-0">
               <img
-                src="/../src/assets/img/logo.svg"
+                src="/src/assets/img/logo.svg"
                 alt="Viagium Logo"
                 className="h-12"
               />
@@ -254,22 +402,32 @@ function AffiliateDashboard() {
               onClose={handleCloseModal}
             />
 
+            {/* Chamada do Modal de edição Hotel */}
+            <ModalEditHotel
+              isOpen={isEditModalOpen}
+              onClose={handleCloseEditModal}
+              hotel={selectedHotel}
+              onSave={handleSaveHotel}
+            />
+
             <div className="flex items-center gap-2 text-gray-600 relative">
               <span className="text-sm">Bem vindo{affiliateName ? ` ${affiliateName}` : ""}</span>
-              <button 
-                onClick={toggleUserDropdown}
+              <button
+                onClick={e => { e.stopPropagation(); setIsUserDropdownOpen((open) => !open); }}
                 className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                type="button"
               >
                 <FaUser className="w-4 h-4" />
               </button>
-              
+
               {/* Dropdown do usuário */}
               {isUserDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="py-2">
                     <button
-                      onClick={handleLogout}
+                      onClick={e => { e.stopPropagation(); handleLogout(); }}
                       className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      type="button"
                     >
                       <FaPowerOff className="w-4 h-4" />
                       Sair
@@ -434,7 +592,7 @@ function AffiliateDashboard() {
 
                                       <button
                                         className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-                                        onClick={() => handleManageRooms(hotel)}
+                                        onClick={() => handleManageRooms(hotel.id)}
                                       >
                                         <FaBed className="text-orange-600" />
                                         <span>Gerenciar tipos de quarto</span>
@@ -499,38 +657,44 @@ function AffiliateDashboard() {
               <p className="text-sm text-gray-500 mb-4">Últimas reservas e check-ins das hospedagens</p>
 
               <div className="space-y-3 flex flex-col gap-2">
-                {reservations.map((reservation, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border border-orange-300 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-blue-800">{reservation.room}</h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${reservation.statusColor}`}>
-                          {reservation.status}
-                        </span>
+                {reservations.length > 0 ? (
+                  reservations.map((reservation, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border border-orange-300 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-blue-800">{reservation.room}</h3>
+                          <span className={`px-2 py-1 text-xs rounded-full ${reservation.statusColor}`}>
+                            {reservation.status}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-1">
+                          <FaMapMarkerAlt className="w-3 h-3 text-blue-800" />
+                          <p className="text-sm text-blue-800">{reservation.hotel}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-1">
+                          <FaUser className="w-3 h-3 text-blue-800" />
+                          <p className="text-sm text-blue-800">{reservation.guest}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <FaCalendarAlt className="w-3 h-3 text-blue-800" />
+                          <p className="text-sm text-blue-800">{reservation.dates}</p>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 mb-1">
-                        <FaMapMarkerAlt className="w-3 h-3 text-blue-800" />
-                        <p className="text-sm text-blue-800">{reservation.hotel}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-1">
-                        <FaUser className="w-3 h-3 text-blue-800" />
-                        <p className="text-sm text-blue-800">{reservation.guest}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <FaCalendarAlt className="w-3 h-3 text-blue-800" />
-                        <p className="text-sm text-blue-800">{reservation.dates}</p>
+                      <div className="text-right">
+                        <p className="text-lg font-bold" style={{ color: '#003194' }}>{reservation.price}</p>
+                        <p className="text-xs text-blue-800">{reservation.purchaseDate}</p>
                       </div>
                     </div>
-
-                    <div className="text-right">
-                      <p className="text-lg font-bold" style={{ color: '#003194' }}>{reservation.price}</p>
-                      <p className="text-xs text-blue-800">{reservation.purchaseDate}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Nenhuma reserva encontrada</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

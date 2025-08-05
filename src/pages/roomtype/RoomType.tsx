@@ -5,6 +5,7 @@ import {
   FaUpload,
   FaUsers,
   FaHashtag,
+  FaArrowLeft,
 } from "react-icons/fa"
 
 import {
@@ -40,9 +41,11 @@ import {
 } from "react-icons/md"
 
 import { useState, useEffect, useRef } from "react"
-import axios from "axios"
 import { validateRequired } from "../../utils/validations"
 import { maskCurrency, unmaskCurrency } from "../../utils/masks"
+import { useNavigate } from "react-router-dom"
+import { AuthService } from "../../utils/auth"
+import apiClient from "../../utils/apiClient"
 
 // Interface para os adicionais vindos da API
 interface Amenity {
@@ -86,6 +89,12 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 }
 
 function RoomType() {
+  const navigate = useNavigate()
+
+  // Estado para armazenar o hotelId do afiliado
+  const [hotelId, setHotelId] = useState<number | null>(null)
+  const [isLoadingHotelData, setIsLoadingHotelData] = useState(true)
+
   const [roomNumbers, setRoomNumbers] = useState<string[]>([])
   const [availableRooms, setAvailableRooms] = useState("")
   const [activeTab, setActiveTab] = useState("range") // Estado para controlar a aba ativa (range ou manual)
@@ -108,6 +117,7 @@ function RoomType() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null) // Estado para o arquivo selecionado
   const [uploadingImage, setUploadingImage] = useState(false) // Estado para indicar se está enviando a imagem
   const [uploadError, setUploadError] = useState<string | null>(null) // Estado para erros de upload
+  const [, setUploadProgress] = useState<string>('') // Estado para progresso do upload
 
   const [displayPrice, setDisplayPrice] = useState('');
 
@@ -116,6 +126,7 @@ function RoomType() {
   const [rangeError, setRangeError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Referência para o input de arquivo (oculto)
   // Referência para o input de arquivo (oculto)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -139,6 +150,69 @@ function RoomType() {
       setCurrentAmenitiesPage(currentAmenitiesPage - 1) // Volta para a página anterior
     }
   }
+
+  // Verificar autenticação e buscar dados do afiliado ao carregar a página
+  useEffect(() => {
+    const loadAffiliateData = async () => {
+      // Verifica se o afiliado está autenticado
+      if (!AuthService.isAffiliateAuthenticated()) {
+        // Se não estiver autenticado, redireciona para login
+        navigate('/affiliate');
+        return;
+      }
+
+      // Recupera os dados de autenticação do afiliado
+      const affiliateAuth = AuthService.getAffiliateAuth();
+      if (!affiliateAuth || !affiliateAuth.id) {
+        console.error('Dados de autenticação do afiliado não encontrados');
+        navigate('/affiliate');
+        return;
+      }
+
+      try {
+        setIsLoadingHotelData(true);
+
+        // Busca dados do afiliado usando o apiClient (que já inclui o token automaticamente)
+        const response = await apiClient.get(`/Affiliate/${affiliateAuth.id}`);
+
+        if (response.data && response.data.hotels && Array.isArray(response.data.hotels)) {
+          const hotels = response.data.hotels;
+
+          if (hotels.length === 0) {
+            alert('Este afiliado não possui hotéis cadastrados. Cadastre um hotel primeiro.');
+            navigate('/affiliatedashboard');
+            return;
+          }
+
+          // Se o afiliado tem apenas um hotel, usar automaticamente
+          if (hotels.length === 1) {
+            setHotelId(hotels[0].hotelId);
+          } else {
+            // Se tem múltiplos hotéis, usar o primeiro ativo ou o primeiro da lista
+            const activeHotel = hotels.find((hotel: any) => hotel.isActive) || hotels[0];
+            setHotelId(activeHotel.hotelId);
+          }
+        } else {
+          console.error('Nenhum hotel encontrado para este afiliado');
+          alert('Este afiliado não possui hotéis cadastrados. Cadastre um hotel primeiro.');
+          navigate('/affiliatedashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do afiliado:', error);
+        if ((error as any).response?.status === 401) {
+          // Se for erro de autenticação, o interceptor já vai redirecionar
+          return;
+        }
+        alert('Erro ao carregar dados do afiliado. Tente novamente.');
+        navigate('/affiliatedashboard');
+      } finally {
+        setIsLoadingHotelData(false);
+      }
+    };
+
+    loadAffiliateData();
+  }, [navigate]);
 
   // Buscar amenities da API
   useEffect(() => {
@@ -346,7 +420,7 @@ function RoomType() {
   }
 
   // Função para processar arquivo selecionado
-  function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     setUploadError(null)
 
@@ -359,14 +433,39 @@ function RoomType() {
       return
     }
 
-    // Armazenar arquivo selecionado
-    setSelectedImage(file)
+    // Iniciar processo de upload
+    setUploadingImage(true)
+
+    try {
+      // Criar FormData para upload
+      const formData = new FormData()
+      formData.append('image', file)
+
+      // Fazer upload da imagem para um endpoint temporário ou diretamente
+      // Por enquanto, vamos simular o upload e apenas armazenar o arquivo
+      // Em uma implementação real, você faria uma requisição para o servidor aqui
+      
+      // Simular delay de upload
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Armazenar arquivo selecionado após "upload"
+      setSelectedImage(file)
+      setUploadError(null)
+      
+    } catch (error) {
+      console.error('Erro no upload:', error)
+      setUploadError('Erro ao fazer upload da imagem. Tente novamente.')
+      setSelectedImage(null)
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   // Função para remover imagem selecionada
   function removeSelectedImage() {
     setSelectedImage(null)
     setUploadError(null)
+    setUploadingImage(false) // Parar qualquer processo de upload em andamento
 
     // Limpar input file
     if (fileInputRef.current) {
@@ -458,15 +557,17 @@ function RoomType() {
       }
     }
 
-
     setErrors(newErrors)
-  };
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // INICIAR LOADING
-    // setIsSubmitting(true);
+    // Verificar se o hotelId foi carregado
+    if (!hotelId) {
+      alert('Erro: Não foi possível identificar o hotel. Tente recarregar a página.');
+      return;
+    }
 
     // Validar campos obrigatórios
     const newErrors: { [key: string]: string } = {};
@@ -506,73 +607,121 @@ function RoomType() {
     }
 
     setIsSubmitting(true);
+    setUploadProgress('Iniciando cadastro...');
 
-    const data = new FormData();
-    data.append('Name', form.name);
-    data.append('Description', form.description);
-    data.append('PricePerNight', form.pricePerNight); // como string
-    data.append('MaxOccupancy', form.maxOccupancy.toString());
-    data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
-    data.append('HotelId', "2"); // id mockado para teste
-    data.append('Image', selectedImage);
+    try {
+      const data = new FormData();
+      data.append('Name', form.name);
+      data.append('Description', form.description);
+      data.append('PricePerNight', form.pricePerNight);
+      data.append('MaxOccupancy', form.maxOccupancy.toString());
+      data.append('NumberOfRoomsAvailable', form.numberOfRoomsAvailable.toString());
+      data.append('HotelId', hotelId.toString());
+      data.append('Image', selectedImage);
 
-    // ADICIONAR OS AMENITIES SELECIONADOS COMO LISTA
-    selectedAmenities.forEach((amenityId, index) => {
-      data.append(`Amenities[${index}]`, amenityId.toString());
-    });
-
-    //  ADICIONAR OS NÚMEROS DOS QUARTOS
-    roomNumbers.forEach((roomNumber, index) => {
-      data.append(`RoomsNumber[${index}]`, roomNumber);
-    });
-
-    axios.post('http://localhost:5028/api/roomtype', data, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-      .then(() => {
-        setShowSuccess(true); // ← MOSTRAR MENSAGEM DE SUCESSO
-
-        // RESETAR TODOS OS ESTADOS PARA O ESTADO INICIAL
-        setForm({
-          name: '',
-          description: '',
-          pricePerNight: '',
-          maxOccupancy: '',
-          numberOfRoomsAvailable: '',
-          imageUrl: '',
-        });
-
-        setDisplayPrice('');
-        setAvailableRooms('');
-        setRoomNumbers([]);
-        setSelectedAmenities([]);
-        setSelectedImage(null);
-        setErrors({});
-        setUploadError(null);
-        setRangeError(null);
-
-        // Resetar campos de geração de quartos
-        setStartNumber('');
-        setEndNumber('');
-        setCurrentRoomNumber('');
-
-        // Limpar input file
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-
-        setTimeout(() => {
-          setShowSuccess(false);
-        }, 4000); // ← OCULTAR MENSAGEM DE SUCESSO APÓS 4 SEGUNDOS
-      })
-      .catch(error => {
-        setShowSuccess(false); // Garantir que não mostra sucesso em caso de erro
-        const msg = error.response?.data?.error || error.message || 'Erro ao cadastrar tipo de quarto.';
-        alert(msg);
-      })
-      .finally(() => {
-        setIsSubmitting(false); // ← SEMPRE PARAR LOADING NO FINAL
+      // ADICIONAR OS AMENITIES SELECIONADOS COMO LISTA
+      selectedAmenities.forEach((amenityId, index) => {
+        data.append(`Amenities[${index}]`, amenityId.toString());
       });
+
+      //  ADICIONAR OS NÚMEROS DOS QUARTOS
+      roomNumbers.forEach((roomNumber, index) => {
+        data.append(`RoomsNumber[${index}]`, roomNumber);
+      });
+
+      setUploadProgress('Fazendo upload da imagem...');
+
+      // Usar apiClient que já inclui o token de autenticação
+      await apiClient.post('/roomtype', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 90000, // 90 segundos para esta requisição específica
+      });
+
+      setUploadProgress('Cadastro concluído!');
+      setShowSuccess(true);
+
+      // RESETAR TODOS OS ESTADOS PARA O ESTADO INICIAL
+      setForm({
+        name: '',
+        description: '',
+        pricePerNight: '',
+        maxOccupancy: '',
+        numberOfRoomsAvailable: '',
+        imageUrl: '',
+      });
+
+      setDisplayPrice('');
+      setAvailableRooms('');
+      setRoomNumbers([]);
+      setSelectedAmenities([]);
+      setSelectedImage(null);
+      setErrors({});
+      setUploadError(null);
+      setRangeError(null);
+      setUploadProgress('');
+
+      // Resetar campos de geração de quartos
+      setStartNumber('');
+      setEndNumber('');
+      setCurrentRoomNumber('');
+
+      // Limpar input file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 4000);
+    } catch (error: any) {
+      setShowSuccess(false);
+      setUploadProgress('');
+      console.error('Erro ao cadastrar tipo de quarto:', error);
+
+      if (error.response?.status === 401) {
+        // Token expirado ou inválido - o interceptor já vai redirecionar
+        return;
+      }
+
+      let errorMessage = 'Erro ao cadastrar tipo de quarto.';
+
+      // Tratamento específico para diferentes tipos de erro
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessage = 'O upload da imagem está demorando mais que o esperado. Isso pode ser devido ao tamanho da imagem ou conexão lenta. Tente com uma imagem menor ou aguarde alguns minutos e tente novamente.';
+      } else if (error.response?.status === 504) {
+        errorMessage = 'Timeout no servidor ao processar a imagem. Tente usar uma imagem menor (máximo 2MB) ou tente novamente em alguns minutos.';
+      } else if (error.response?.status === 413) {
+        errorMessage = 'A imagem é muito grande. Tente usar uma imagem menor que 5MB.';
+      } else {
+        errorMessage = error.response?.data?.error ||
+                     error.response?.data?.message ||
+                     error.message ||
+                     'Erro ao cadastrar tipo de quarto.';
+      }
+
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+      setUploadProgress('');
+    }
+  }
+
+  // Se ainda está carregando dados do hotel, mostrar loading
+  if (isLoadingHotelData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4"
+        style={{
+          background: 'linear-gradient(to bottom, #003194, black)',
+        }}>
+        <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <h2 className="text-xl font-bold text-gray-900">Carregando dados do hotel...</h2>
+            <p className="text-gray-600">Aguarde enquanto verificamos as informações do seu hotel.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -581,7 +730,14 @@ function RoomType() {
         background: 'linear-gradient(to bottom, #003194, black)',
       }}>
       <div className="w-full max-w-4xl bg-white rounded-lg shadow-xl">
-        <div className="text-center p-6">
+        <div className="text-center p-6 relative">
+          <button
+            className="absolute left-6 top-6 text-blue-600 hover:text-blue-800"
+            onClick={() => navigate("/roomtypemanagement")}
+            aria-label="Voltar para Gerenciar Tipos de Quarto"
+          >
+            <FaArrowLeft />
+          </button>
           <h1 className="text-2xl font-bold text-gray-900">Cadastrar Tipo de Quarto</h1>
           <p className="text-gray-600 mt-2">Registre um novo tipo de quarto no sistema de pacotes de viagem</p>
         </div>
@@ -1112,7 +1268,6 @@ function RoomType() {
             </div>
           )}
         </form>
-
       </div>
     </div>
   )
