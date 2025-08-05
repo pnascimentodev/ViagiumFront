@@ -265,4 +265,26 @@ export const travelPackages: TravelPackage[] = [
             { startDate: new Date("2026-01-15"), isFixed: false, isAvailable: true, salesLeft: 5 }
         ]
     },
+    {
+    id: 13,
+    title: "Praias e Cultura em Florianópolis",
+    description: "Desfrute das melhores praias do Brasil, trilhas ecológicas e a gastronomia típica da Ilha da Magia.",
+    vehicleType: "Ônibus",
+    price: 1199,
+    originalPrice: 1399,
+    packageTax: 90,
+    duration: 7,
+    image: "https://images.pexels.com/photos/18090774/pexels-photo-18090774.jpeg",
+    rating: 4.6,
+    reviews: 87,
+    maxPeople: 20,
+    qtySold: 6,
+    originAddress: { country: "Brasil", city: "Curitiba" },
+    destinationAddress: { country: "Brasil", city: "Florianópolis" },
+    isActive: true,
+    schedules: [
+        { startDate: new Date("2025-12-10"), isFixed: true, isAvailable: true, salesLeft: 14 },
+        { startDate: new Date("2026-01-20"), isFixed: false, isAvailable: true, salesLeft: 10 }
+    ]
+},
 ];
