@@ -1111,7 +1111,7 @@ function AdminDashboard() {
 
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
+            await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data"
                 }
