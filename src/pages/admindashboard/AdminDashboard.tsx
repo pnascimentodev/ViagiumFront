@@ -4,7 +4,7 @@ import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDolla
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 import { formatBRL } from "../../utils/currency"
-import { maskCPF, maskPhone, unmaskCPF } from "../../utils/masks"
+import { maskCPF, maskCurrency, maskPhone, unmaskCPF, unmaskCurrency } from "../../utils/masks"
 
 interface MenuItem {
     id: string
@@ -465,7 +465,12 @@ function AdminDashboard() {
                                                 type="text"
                                                 required
                                                 value={packageForm.originalPrice}
-                                                onChange={(e) => setPackageForm({ ...packageForm, originalPrice: e.target.value })}
+                                                onChange={(e) => {
+                                                    setPackageForm({
+                                                        ...packageForm,
+                                                        originalPrice: maskCurrency(e.target.value)
+                                                    });
+                                                }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: R$ 1.999,99"
                                             />
@@ -479,7 +484,7 @@ function AdminDashboard() {
                                                 type="text"
                                                 required
                                                 value={packageForm.packageTax}
-                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: e.target.value })}
+                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: maskCurrency(e.target.value)})}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: R$ 150,00"
                                             />
@@ -761,7 +766,7 @@ function AdminDashboard() {
                                     <img
                                         src={editPackageForm.imageUrl}
                                         alt="Imagem do pacote"
-                                        className="mt-2 w-full h-auto rounded-md"
+                                        className="w-full h-48 object-cover rounded border mb-4"
                                     />
                                 )}
                             </div>
@@ -939,7 +944,7 @@ function AdminDashboard() {
                                             type="text"
                                             required
                                             value={editPackageForm.originalPrice}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: maskCurrency(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: R$ 1.999,99"
                                         />
@@ -953,7 +958,7 @@ function AdminDashboard() {
                                             type="text"
                                             required
                                             value={editPackageForm.packageTax}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: e.target.value })}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: maskCurrency(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: R$ 150,00"
                                         />
@@ -1090,12 +1095,10 @@ function AdminDashboard() {
         formData.append("vehicleType", packageForm.vehicleType);
         formData.append("duration", packageForm.duration);
         formData.append("maxPeople", packageForm.maxPeople);
-        formData.append("originalPrice", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("price", packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("packageTax", packageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("originalPrice", unmaskCurrency(packageForm.originalPrice));
+        formData.append("packageTax", unmaskCurrency(packageForm.packageTax));
         formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
         formData.append("discountValue", packageForm.discountValue);
-        formData.append("manualDiscountValue", "0");
         formData.append("originAddress.City", packageForm.originAddress.city);
         formData.append("originAddress.Country", packageForm.originAddress.country);
         formData.append("destinationAddress.City", packageForm.destinationAddress.city);
@@ -1213,12 +1216,10 @@ function AdminDashboard() {
         formData.append("vehicleType", editPackageForm.vehicleType);
         formData.append("duration", editPackageForm.duration);
         formData.append("maxPeople", editPackageForm.maxPeople);
-        formData.append("originalPrice", String(editPackageForm.originalPrice).replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("price", String(editPackageForm.originalPrice).replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("packageTax", String(editPackageForm.packageTax).replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("cupomDiscount", String(editPackageForm.cupomDiscount).replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("discountValue", String(editPackageForm.discountValue).replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("manualDiscountValue", "0");
+        formData.append("originalPrice", unmaskCurrency(editPackageForm.originalPrice));
+        formData.append("packageTax", unmaskCurrency(editPackageForm.packageTax));
+        formData.append("cupomDiscount", editPackageForm.cupomDiscount);
+        formData.append("discountValue", editPackageForm.discountValue);
         formData.append("originCity", editPackageForm.originAddress.city);
         formData.append("originCountry", editPackageForm.originAddress.country);
         formData.append("destinationCity", editPackageForm.destinationAddress.city);
@@ -1973,7 +1974,7 @@ function AdminDashboard() {
                                     <img
                                         src={editHotelForm.imageUrl}
                                         alt="Imagem do Hotel"
-                                        className="w-full h-full object-cover rounded border mb-4"
+                                        className="w-full h-48 object-cover rounded border mb-4"
                                     />
                                 ) : (
                                     <span className="text-xs text-gray-500">Sem imagem cadastrada</span>
