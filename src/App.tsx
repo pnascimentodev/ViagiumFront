@@ -29,6 +29,7 @@ import TravelHistoryPage from './pages/travelhistory/TravelHistoryPage.tsx'
 import AboutUsPage from './pages/about-us/aboutus.tsx'
 import RoomTypeManagement from "./pages/roomtype/RoomTypeManagement.tsx";
 import PrivacyPolicyPage from './pages/policyandprivate/privacy-policy.tsx'
+import NotFound from './pages/not-found/NotFound.tsx'
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/travelhistory" element={<TravelHistoryPage />} />
       <Route path="/aboutus" element={<AboutUsPage />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
