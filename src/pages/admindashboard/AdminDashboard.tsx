@@ -182,13 +182,12 @@ function AdminDashboard() {
     }> = {
         // AS AÇÕES DO PACOTE NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
         pacotes: {
-            activate: { url: id => `http://localhost:5028/api/TravelPackage/activate/${id}`, method: "POST" },
-            deactivate: { url: id => `http://localhost:5028/api/TravelPackage/deactivate/${id}`, method: "DELETE" }
+            activate: { url: id => `http://localhost:5028/api/TravelPackage/activate?id=${id}`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/TravelPackage/deactivate?id=${id}`, method: "POST" }
         },
-        // AS AÇÕES DO AFILIADO NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
         afiliados: {
-            activate: { url: id => `http://localhost:5028/api/Affiliate/activateById/${id}`, method: "GET" },
-            deactivate: { url: id => `http://localhost:5028/api/Affiliate/${id}`, method: "DELETE" }
+            activate: { url: id => `http://localhost:5028/api/Affiliate/activate/${id}`, method: "PUT" },
+            deactivate: { url: id => `http://localhost:5028/api/Affiliate/deactivate/${id}`, method: "DELETE" }
         },
         hoteis: {
             activate: { url: id => `http://localhost:5028/api/Hotel/${id}/activate`, method: "PUT" },
