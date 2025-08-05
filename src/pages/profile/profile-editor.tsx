@@ -9,7 +9,6 @@ import {
     FaKey,
     FaExclamationTriangle,
     FaTimes,
-    FaStar,
     FaUserEdit,
     FaShieldAlt, FaPassport,
 } from "react-icons/fa"
