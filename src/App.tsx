@@ -48,7 +48,7 @@ function App() {
       <Route path="/resetpassaffiliate" element={<ResetAffiliate />} />
       <Route path="/emailclient" element={<EmailClient />} />
       <Route path="/emailaffiliate" element={<EmailAffiliate />} />
-      <Route path='/roomtype' element={<RoomType />} />
+      <Route path="/roomtype" element={<RoomType />} />
       <Route path="/affiliatedashboard" element={<AffiliateDashboard />} />
       <Route path="/package/:packageId" element={<Package />} />
       <Route path="/profile" element={<ProfileEditor />} />
