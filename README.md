@@ -4,7 +4,7 @@ Frontend do Viagium, plataforma para pacotes de viagem, reservas, avaliações, 
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Tecnologias Utilizadas
 
 - **React + TypeScript**: Componentes funcionais, tipagem forte.
 - **Vite**: Build e desenvolvimento rápido.
