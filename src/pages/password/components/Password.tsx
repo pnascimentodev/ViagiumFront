@@ -121,7 +121,7 @@ function Password({actualPassword}: ForgotProps) {
         }
 
         if (actualPassword) {
-            axios.put('http://localhost:5028/api/User/reset-password', {
+            axios.put(`http://localhost:5028/api/User/${userId}/reset-password`, {
                 currentPassword,
                 newPassword,
             }).then(() => {

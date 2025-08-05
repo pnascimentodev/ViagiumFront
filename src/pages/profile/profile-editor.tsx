@@ -1,28 +1,20 @@
 "use client"
 
-import React, {type ChangeEvent, type ReactNode, useState } from "react"
+import React, {type ChangeEvent, type ReactNode, useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { AuthService } from "../../utils/auth"
 import {
     FaUser,
     FaKey,
     FaExclamationTriangle,
     FaTimes,
-    FaEye,
-    FaEyeSlash,
     FaStar,
     FaUserEdit,
     FaShieldAlt, FaPassport,
 } from "react-icons/fa"
 import { MdLocationOn, MdEmail, MdPhone, MdDateRange, MdAccountCircle } from "react-icons/md"
 
-const mockUser = {
-    firstName: "Maria",
-    lastName: "Silva",
-    email: "maria@email.com",
-    phone: "11999999999",
-    documentNumber: "12345678900",
-    birthDate: "1988-05-20",
-    isActive: true,
-}
+
 
 // Custom Button Component
 type ButtonProps = {
@@ -153,55 +145,61 @@ const ModalContent = ({ children }: ModalContentProps) => {
 }
 
 export default function ProfileEditor() {
-    const [user, setUser] = useState(mockUser)
+    const [user, setUser] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(false)
-    const [showChangePassword, setShowChangePassword] = useState(false)
     const [showDeactivateAccount, setShowDeactivateAccount] = useState(false)
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-    const [showNewPassword, setShowNewPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const navigate = useNavigate()
 
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-    })
+    // Buscar dados do usuário autenticado ao carregar
+    useEffect(() => {
+        const auth = AuthService.getUserAuth();
+        if (!auth || !auth.id) return;
+        const fetchUser = async () => {
+            try {
+                const res = await fetch(`http://localhost:5028/api/User/${auth.id}`)
+                if (!res.ok) throw new Error("Erro ao buscar usuário")
+                const data = await res.json()
+                setUser(data)
+            } catch (err) {
+                // Pode exibir erro se quiser
+            }
+        }
+        fetchUser()
+    }, [])
 
-    const handleInputChange = (field: keyof typeof mockUser, value: string) => {
-        setUser((prev) => ({ ...prev, [field]: value }))
-    }
-    const handlePasswordChange = (field: keyof typeof passwordData, value: string) => {
-        setPasswordData((prev) => ({ ...prev, [field]: value }))
+    const handleInputChange = (field: string, value: string) => {
+        setUser((prev: any) => ({ ...prev, [field]: value }))
     }
 
     const handleSaveProfile = async () => {
+        if (!user) return;
         setIsLoading(true)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        try {
+            const auth = AuthService.getUserAuth();
+            if (!auth || !auth.id) throw new Error("Usuário não autenticado");
+            const payload = {
+                userId: user.userId || auth.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                birthDate: user.birthDate,
+                password: user.password || "",
+                phone: user.phone,
+            }
+            const res = await fetch(`http://localhost:5028/api/User/${auth.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            })
+            if (!res.ok) throw new Error("Erro ao atualizar usuário")
+            alert("Perfil atualizado com sucesso!")
+        } catch (err) {
+            alert("Erro ao atualizar perfil!")
+        }
         setIsLoading(false)
-        alert("Perfil atualizado com sucesso!")
     }
 
-    const handleChangePassword = async () => {
-        if (!passwordData.currentPassword) {
-            alert("Por favor, insira sua senha atual")
-            return
-        }
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert("As novas senhas não coincidem")
-            return
-        }
-        if (passwordData.newPassword.length < 6) {
-            alert("A nova senha deve ter pelo menos 6 caracteres")
-            return
-        }
 
-        setIsLoading(true)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setIsLoading(false)
-        setShowChangePassword(false)
-        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
-        alert("Senha alterada com sucesso!")
-    }
 
     const handleDeactivateAccount = async () => {
         setIsLoading(true)
@@ -211,11 +209,15 @@ export default function ProfileEditor() {
         alert("Conta desativada com sucesso!")
     }
 
-    const isPasswordValid =
-        passwordData.currentPassword &&
-        passwordData.newPassword &&
-        passwordData.confirmPassword &&
-        passwordData.newPassword === passwordData.confirmPassword
+
+
+    if (!user) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <span className="text-lg text-gray-600">Carregando dados do usuário...</span>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-blue-900 p-8">
@@ -398,7 +400,7 @@ export default function ProfileEditor() {
                                                     label={null}
                                                     error={null}
                                                     type="date"
-                                                    value={user.birthDate}
+                                                    value={user.birthDate ? user.birthDate.slice(0, 10) : ""}
                                                     onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("birthDate", e.target.value)}
                                                     className="h-12"
                                                 />
@@ -415,7 +417,7 @@ export default function ProfileEditor() {
                                                 />
                                                 <p className="text-xs text-gray-500 mt-1">Este campo não pode ser alterado</p>
                                             </div>
-                                        </div>
+                                        </div>                        
                                     </div>
 
                                     {/* Security Section */}
@@ -428,7 +430,7 @@ export default function ProfileEditor() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Button
                                                 variant="outline"
-                                                onClick={() => setShowChangePassword(true)}
+                                                onClick={() => navigate("/resetpassclient")}
                                                 className="justify-start border-blue-200 hover:bg-blue-50 text-blue-700 py-4 px-6 h-14 text-base"
                                             >
                                                 <FaKey className="w-5 h-5 mr-3 text-blue-700" style={{ color: '#2563eb', fill: '#2563eb' }} />
@@ -458,92 +460,7 @@ export default function ProfileEditor() {
                     </div>
                 </div>
 
-                {/* Change Password Modal */}
-                <Modal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)}>
-                    <ModalHeader onClose={() => setShowChangePassword(false)}>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
-                            <FaKey className="w-6 h-6 text-orange-500" />
-                            <span>Alterar Senha</span>
-                        </h2>
-                    </ModalHeader>
-                    <ModalContent>
-                        <div className="space-y-6">
-                            <div>
-                                <Label htmlFor="currentPassword">Senha Atual</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="currentPassword"
-                                        label={null}
-                                        error={null}
-                                        type={showCurrentPassword ? "text" : "password"}
-                                        value={passwordData.currentPassword}
-                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("currentPassword", e.target.value)}
-                                        placeholder="Digite sua senha atual"
-                                        className="h-12 pr-12"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
-                                    >
-                                        {showCurrentPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <Label htmlFor="newPassword">Nova Senha</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="newPassword"
-                                        label={null}
-                                        error={null}
-                                        type={showNewPassword ? "text" : "password"}
-                                        value={passwordData.newPassword}
-                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("newPassword", e.target.value)}
-                                        placeholder="Digite a nova senha"
-                                        className="h-12 pr-12"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowNewPassword(!showNewPassword)}
-                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
-                                    >
-                                        {showNewPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        label={null}
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        value={passwordData.confirmPassword}
-                                        onChange={(e: { target: { value: string } }) => handlePasswordChange("confirmPassword", e.target.value)}
-                                        placeholder="Confirme a nova senha"
-                                        className="h-12 pr-12"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
-                                    >
-                                        {showConfirmPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-                            {passwordData.newPassword &&
-                                passwordData.confirmPassword &&
-                                passwordData.newPassword !== passwordData.confirmPassword && (
-                                    <p className="text-red-500 text-sm">As senhas não coincidem</p>
-                                )}
-                            <Button onClick={handleChangePassword} disabled={!isPasswordValid || isLoading} className="w-full h-12">
-                                {isLoading ? "Alterando..." : "Alterar Senha"}
-                            </Button>
-                        </div>
-                    </ModalContent>
-                </Modal>
+
 
                 {/* Deactivate Account Modal */}
                 <Modal isOpen={showDeactivateAccount} onClose={() => setShowDeactivateAccount(false)}>
