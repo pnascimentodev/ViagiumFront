@@ -458,16 +458,16 @@ function Package() {
                     </div>
                     <div className="flex items-center space-x-3 mb-2 gap-2">
                       <span className="font-semibold">Duração:</span>
-                      <div className="w-full rounded px-2 py-1 flex items-center justify-between">
-                        <span>{currentPackage.duration}</span>
-                        <FaRegCalendarAlt className="text-xl ml-2" />
+                      <div className="w-full rounded px-2 py-1 flex items-center">
+                        <FaRegCalendarAlt className="text-xl mr-2" />
+                        <span>{currentPackage.duration} dias</span>
                       </div>
                     </div>
-                      <div className="flex items-center space-x-3 mb-2">
-                          <span className="font-semibold ">Data de Início:&nbsp;</span>
-                          {currentPackage.packageSchedule?.startDate
-                            ? formatDate(currentPackage.packageSchedule.startDate)
-                            : 'Não informado'}
+                        <div className="flex items-center mb-2 gap-1 flex-wrap">
+                            <span className="font-semibold">Data de Início:</span>
+                            <span>{currentPackage.packageSchedule?.startDate
+                              ? formatDate(currentPackage.packageSchedule.startDate)
+                              : 'Não informado'}</span>
                         </div>
                           {/*
                           <div className="flex items-center space-x-3 mb-2">
@@ -554,7 +554,7 @@ function Package() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-[#FFFFFF] rounded-lg shadow-md mt-7 transition duration-300 hover:scale-105 p-4">
+                {/* <div className="bg-[#FFFFFF] rounded-lg shadow-md mt-7 transition duration-300 hover:scale-105 p-4">
                     <h3 className='font-bold mb-4 text-lg'>Avaliações do pacote</h3>
                       <Button
                         className="text-sm  px-4 py-2 rounded shadow font-bold hover:scale-101 transition-all duration-200 mb-4 "
@@ -562,7 +562,7 @@ function Package() {
                       >
                         Ver avaliações
                       </Button>
-                </div>
+                </div>  */}
               </div>
             </div>
             {/* Right Column - Hotel and Room */}
@@ -613,14 +613,16 @@ function Package() {
                         <p className="text-sm text-gray-600 text-center mb-2">
                           {renderHotelAddress(hotels[hotelIndex]?.address)}
                         </p>
-                        {/* Informações do hotel */}
+                        {/* Informações do hotel 
                         <div className="p-6 pt-8">
                           <Button
                             className="w-full text-white font-bold py-4 text-lg shadow-lg hover:scale-105 transition-all duration-200" 
                           >
                             Ver no mapa
                           </Button>
+                          
                         </div>
+                        */}
                       </div>
                     </div>
                     {/* Quarto */}
@@ -762,6 +764,15 @@ function Package() {
               >
                   Ver no mapa
               </Button>
+              {/* 
+              <div className="flex items-center justify-center mt-4">
+                <Button
+                  className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
+                >
+                  Reservar Agora
+                </Button>
+              </div>
+              */}
             </div>
             </div>
           </div>
