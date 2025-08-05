@@ -1,7 +1,8 @@
 "use client"
 
-import React, {type ChangeEvent, type ReactNode, useState, useEffect } from "react"
+import React, { type ChangeEvent, type ReactNode, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 import { AuthService } from "../../utils/auth"
 import {
     FaUser,
@@ -21,7 +22,7 @@ type ButtonProps = {
     children: ReactNode;
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
     disabled?: boolean;
-    variant?: "primary" | "outline" | "ghost" | "danger";
+    variant?: "primary" | "outline" | "ghost" | "danger" | "custom";
     className?: string;
     type?: "button" | "submit" | "reset";
     [key: string]: any;
@@ -44,6 +45,7 @@ const Button = ({
         outline: "border-2 bg-white hover:bg-gray-50 focus:ring-gray-500",
         ghost: "hover:bg-gray-100 focus:ring-gray-500",
         danger: "bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl focus:ring-red-500",
+        custom: "text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] focus:ring-blue-500",
     }
 
     const disabledClasses = disabled ? "opacity-50 cursor-not-allowed transform-none" : ""
@@ -203,10 +205,29 @@ export default function ProfileEditor() {
 
     const handleDeactivateAccount = async () => {
         setIsLoading(true)
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setIsLoading(false)
-        setShowDeactivateAccount(false)
-        alert("Conta desativada com sucesso!")
+        try {
+            const auth = AuthService.getUserAuth();
+            if (!auth || !auth.id) {
+                throw new Error("Usuário não autenticado");
+            }
+
+            // Fazer a chamada DELETE para desativar a conta
+            const response = await axios.delete(`http://localhost:5028/api/User/${auth.id}`);
+
+            if (response.status === 200 || response.status === 204) {
+                // Fazer logout do usuário após desativação
+                AuthService.logout();
+
+                // Redirecionar para a página inicial ou login
+                navigate("/");
+            }
+        } catch (error) {
+            console.error("Erro ao desativar conta:", error);
+            alert("Erro ao desativar conta. Tente novamente.");
+        } finally {
+            setIsLoading(false)
+            setShowDeactivateAccount(false)
+        }
     }
 
 
@@ -275,8 +296,8 @@ export default function ProfileEditor() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm font-medium text-gray-700">Status da Conta</span>
                                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Ativo
-                    </span>
+                                            Ativo
+                                        </span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -285,33 +306,28 @@ export default function ProfileEditor() {
                         {/* Travel Stats Card */}
                         <Card className="mt-6">
                             <CardContent>
-                                <div className="bg-blue-50 rounded-2xl p-4 mb-4">
+                                <div className="">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center space-x-2">
                                             <MdLocationOn className="w-5 h-5 text-blue-600" />
-                                            <span className="font-semibold text-blue-900">Estatísticas de Viagem</span>
+                                            <span className="font-semibold">Históricos de Viagem</span>
                                         </div>
-                                        <div className="flex items-center space-x-1">
-                                            <FaStar className="w-4 h-4 star-yellow" style={{ color: '#facc15', fill: '#facc15' }} />                                            <span className="text-blue-900 font-bold">4.8</span>
-                                        </div>
+
                                     </div>
-                                    <p className="text-blue-700 text-sm">Avaliação média dos destinos</p>
+                                    <div>
+                                        <Button
+                                            variant="custom"
+                                            className="h-12 w-full rounded-[10px] shadow-lg"
+                                            style={{ backgroundColor: '#003194' }}
+                                            onClick={() => navigate("/travel-history")}
+                                        >
+                                            Ver Histórico
+                                        </Button>
+                                    </div>
+
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">Viagens Realizadas</span>
-                                        <span className="font-bold text-orange-600 text-lg">12</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">Países Visitados</span>
-                                        <span className="font-bold text-orange-600 text-lg">8</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">Próxima Viagem</span>
-                                        <span className="font-bold text-blue-600">Mar/2024</span>
-                                    </div>
-                                </div>
+
                             </CardContent>
                         </Card>
                     </div>
@@ -417,7 +433,7 @@ export default function ProfileEditor() {
                                                 />
                                                 <p className="text-xs text-gray-500 mt-1">Este campo não pode ser alterado</p>
                                             </div>
-                                        </div>                        
+                                        </div>
                                     </div>
 
                                     {/* Security Section */}
