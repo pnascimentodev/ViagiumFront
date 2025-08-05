@@ -177,4 +177,92 @@ export const travelPackages: TravelPackage[] = [
             { startDate: new Date("2025-09-20"), isFixed: false, isAvailable: true, salesLeft: 5 }
         ]
     },
+    {
+        id: 9,
+        title: "Aventura nos Alpes Suíços",
+        description: "Descubra paisagens deslumbrantes, trilhas de montanha e vilarejos encantadores nos Alpes Suíços.",
+        vehicleType: "Trem",
+        price: 3199,
+        originalPrice: 3499,
+        packageTax: 180,
+        duration: 10,
+        image: "https://images.pexels.com/photos/18331843/pexels-photo-18331843.jpeg",
+        rating: 4.8,
+        reviews: 120,
+        maxPeople: 16,
+        qtySold: 7,
+        originAddress: { country: "Brasil", city: "São Paulo" },
+        destinationAddress: { country: "Suíça", city: "Interlaken" },
+        isActive: true,
+        schedules: [
+            { startDate: new Date("2025-09-05"), isFixed: true, isAvailable: true, salesLeft: 10 },
+            { startDate: new Date("2025-10-10"), isFixed: false, isAvailable: true, salesLeft: 6 }
+        ]
+    },
+    {
+        id: 10,
+        title: "Exploração Urbana em Sydney",
+        description: "Conheça os ícones australianos, praias famosas e a vibrante vida cultural de Sydney.",
+        vehicleType: "Avião",
+        price: 2599,
+        originalPrice: 2799,
+        packageTax: 170,
+        duration: 8,
+        image: "https://images.pexels.com/photos/2193300/pexels-photo-2193300.jpeg",
+        rating: 4.7,
+        reviews: 134,
+        maxPeople: 20,
+        qtySold: 11,
+        originAddress: { country: "Brasil", city: "Rio de Janeiro" },
+        destinationAddress: { country: "Austrália", city: "Sydney" },
+        isActive: true,
+        schedules: [
+            { startDate: new Date("2025-10-05"), isFixed: true, isAvailable: true, salesLeft: 12 },
+            { startDate: new Date("2025-11-15"), isFixed: false, isAvailable: true, salesLeft: 8 }
+        ]
+    },
+    {
+        id: 11,
+        title: "Experiência Urbana em Nova York",
+        description: "Viva o ritmo da cidade que nunca dorme com passeios guiados, shows da Broadway e visita aos principais pontos turísticos.",
+        vehicleType: "Avião",
+        price: 2899,
+        originalPrice: 3199,
+        packageTax: 200,
+        duration: 7,
+        image: "https://images.pexels.com/photos/2422588/pexels-photo-2422588.jpeg",
+        rating: 4.9,
+        reviews: 210,
+        maxPeople: 18,
+        qtySold: 14,
+        originAddress: { country: "Brasil", city: "Rio de Janeiro" },
+        destinationAddress: { country: "Estados Unidos", city: "Nova York" },
+        isActive: true,
+        schedules: [
+            { startDate: new Date("2025-11-10"), isFixed: true, isAvailable: true, salesLeft: 8 },
+            { startDate: new Date("2025-12-05"), isFixed: false, isAvailable: true, salesLeft: 10 }
+        ]
+    },
+    {
+        id: 12,
+        title: "Aventura na Cidade do Cabo",
+        description: "Explore praias incríveis, trilhas na Table Mountain e vinícolas renomadas na África do Sul.",
+        vehicleType: "Avião",
+        price: 2399,
+        originalPrice: 2599,
+        packageTax: 160,
+        duration: 9,
+        image: "https://images.pexels.com/photos/625414/pexels-photo-625414.jpeg",
+        rating: 4.7,
+        reviews: 156,
+        maxPeople: 15,
+        qtySold: 9,
+        originAddress: { country: "Brasil", city: "Brasil" },
+        destinationAddress: { country: "África do Sul", city: "Cidade do Cabo" },
+        isActive: true,
+        schedules: [
+            { startDate: new Date("2025-12-01"), isFixed: true, isAvailable: true, salesLeft: 10 },
+            { startDate: new Date("2026-01-15"), isFixed: false, isAvailable: true, salesLeft: 5 }
+        ]
+    },
 ];
