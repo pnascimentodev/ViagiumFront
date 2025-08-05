@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 import { formatBRL } from "../../utils/currency"
 import { maskCPF, maskCurrency, maskPhone, unmaskCPF, unmaskCurrency } from "../../utils/masks"
+import LoadingModal from "../../components/LoadingModal"
 
 interface MenuItem {
     id: string
@@ -107,7 +108,6 @@ function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
-
 
     // Funções utilitárias para buscar dados específicos, ao clicar no botão de visualizar ou editar da tabela
     function getPackageById(packageId: number) {
@@ -483,7 +483,7 @@ function AdminDashboard() {
                                                 type="text"
                                                 required
                                                 value={packageForm.packageTax}
-                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: maskCurrency(e.target.value)})}
+                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: maskCurrency(e.target.value) })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 placeholder="Ex: R$ 150,00"
                                             />
@@ -1153,10 +1153,10 @@ function AdminDashboard() {
             duration: selectedPackage.duration || "",
             maxPeople: selectedPackage.maxPeople || "",
             vehicleType: selectedPackage.vehicleType || "",
-            originalPrice: selectedPackage.originalPrice || "",
+            originalPrice: formatBRL(selectedPackage.originalPrice) || "",
             isActive: selectedPackage.isActive || "",
             // Novos campos
-            packageTax: selectedPackage.packageTax || "",
+            packageTax: formatBRL(selectedPackage.packageTax) || "",
             cupomDiscount: selectedPackage.cupomDiscount || "",
             discountValue: selectedPackage.discountValue || "",
             startDate: selectedPackage.packageSchedule && selectedPackage.packageSchedule.startDate && selectedPackage.packageSchedule.startDate !== "0001-01-01T00:00:00"
@@ -1312,8 +1312,8 @@ function AdminDashboard() {
             firstName: selectedUser.firstName || "",
             lastName: selectedUser.lastName || "",
             email: selectedUser.email || "",
-            phone: selectedUser.phone || "",
-            documentNumber: selectedUser.documentNumber || "",
+            phone: maskPhone(selectedUser.phone) || "",
+            documentNumber: maskCPF(selectedUser.documentNumber) || "",
             birthDate: selectedUser.birthDate ? selectedUser.birthDate.split("T")[0] : "",
             role: selectedUser.role,
             isActive: selectedUser.isActive,
@@ -2321,7 +2321,8 @@ function AdminDashboard() {
         "Ônibus",
         "Avião",
         "Trem",
-        "Navio"
+        "Navio",
+        "Barco"
     ]
 
     // Renderiza os dashboards principais
@@ -2909,6 +2910,7 @@ function AdminDashboard() {
     useEffect(() => {
         async function fetchAll() {
             setIsLoading(true);
+            
             await Promise.all([
                 fetchPackages(),
                 fetchAffiliates(),
@@ -2916,42 +2918,51 @@ function AdminDashboard() {
                 fetchClients(),
                 fetchUsers()
             ]);
+
+            setTimeout(() => {
             setIsLoading(false);
+        }, 1000); // aguarda 1 segundo antes de fechar o loading
         }
         fetchAll();
     }, []);
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            {/* Sidebar */}
-            <Sidebar
-                menuItems={menuItems}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-            />
+        <>
+            <LoadingModal isOpen={isLoading} />
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <Header activeTab={activeTab} />
+            {/* Main Dashboard Layout */}
+            <div className="flex h-screen bg-gray-100">
+                {/* Sidebar */}
+                <Sidebar
+                    menuItems={menuItems}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
 
-                {/* Content */}
-                <main
-                    className="flex-1 overflow-auto p-10"
-                    style={{ background: `linear-gradient(to bottom right, #003194, #003194)` }}
-                >
-                    {activeTab === "dashboard" ? renderDashboard() : renderTable(activeTab)}
-                </main>
+                {/* Main Content */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Header */}
+                    <Header activeTab={activeTab} />
+
+                    {/* Content */}
+                    <main
+                        className="flex-1 overflow-auto p-10"
+                        style={{ background: `linear-gradient(to bottom right, #003194, #003194)` }}
+                    >
+                        {activeTab === "dashboard" ? renderDashboard() : renderTable(activeTab)}
+                    </main>
+                </div>
+
+                {/* Modals */}
+                {renderModal()}
+                {renderEditModal()}
+                {renderEditUserModal()}
+                {renderEditAffiliateModal()}
+                {renderEditHotelModal()}
+                {renderEditClientModal()}
             </div>
 
-            {/* Modals */}
-            {renderModal()}
-            {renderEditModal()}
-            {renderEditUserModal()}
-            {renderEditAffiliateModal()}
-            {renderEditHotelModal()}
-            {renderEditClientModal()}
-        </div>
+        </>
     )
 }
 
