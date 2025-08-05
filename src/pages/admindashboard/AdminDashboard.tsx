@@ -69,6 +69,7 @@ interface HotelFormData {
 }
 
 interface PackageFormData {
+    travelPackageId?: string;
     title: string;
     description: string;
     originAddress: { city: string; country: string };
@@ -80,23 +81,11 @@ interface PackageFormData {
     vehicleType: string;
     originalPrice: string;
     isActive: boolean;
-    // Novos campos para os tipos de pacote
-    packageType: "fixed" | "seasonal" | "recurring";
     packageTax: string;
     cupomDiscount: string;
     discountValue: string;
-    // Campos para pacote com data fixa
-    fixedStartDate: string;
-    // Campos para pacote sazonal (2x ao ano)
-    seasonalPeriods: Array<{
-        startDate: string;
-        endDate: string;
-        isAvailable: boolean;
-    }>;
-    // Campos para pacote recorrente
-    recurrenceStartDate: string;
-    recurrenceEndDate: string;
-    intervalDays: string;
+    startDate: string;
+    endDate: string;
 }
 
 interface ClientFormData {
@@ -160,21 +149,11 @@ function AdminDashboard() {
                 originalPrice: "",
                 isActive: true,
                 // Novos campos
-                packageType: "fixed",
                 packageTax: "",
                 cupomDiscount: "",
                 discountValue: "",
-                // Campos para pacote com data fixa
-                fixedStartDate: "",
-                // Campos para pacote sazonal
-                seasonalPeriods: [
-                    { startDate: "", endDate: "", isAvailable: true },
-                    { startDate: "", endDate: "", isAvailable: true }
-                ],
-                // Campos para pacote recorrente
-                recurrenceStartDate: "",
-                recurrenceEndDate: "",
-                intervalDays: ""
+                startDate: "",
+                endDate: ""
             })
         } else {
             setUserForm({
@@ -289,9 +268,9 @@ function AdminDashboard() {
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {modalType === "pacotes" ? (
-                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6">
+                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6 flex flex-col gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
+                                    <label className="block text-sm font-medium text-gray-700">Título do Pacote</label>
                                     <input
                                         type="text"
                                         required
@@ -302,7 +281,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <label className="block text-sm font-medium text-gray-700">Descrição</label>
                                     <textarea
                                         required
                                         value={packageForm.description}
@@ -313,162 +292,22 @@ function AdminDashboard() {
                                     />
                                 </div>
 
-                                {/* Novo campo: Tipo de Pacote */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pacote</label>
-                                    <select
-                                        required
-                                        value={packageForm.packageType}
-                                        onChange={(e) => setPackageForm({
-                                            ...packageForm,
-                                            packageType: e.target.value as "fixed" | "seasonal" | "recurring"
-                                        })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="fixed">Data Fixa</option>
-                                        <option value="seasonal">Sazonal - 2x ao ano</option>
-                                        <option value="recurring">Recorrente - O ano todo</option>
-                                    </select>
+                                    <label className="block text-sm font-medium text-gray-700">Upload de Imagem</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setPackageForm({ ...packageForm, image: e.target.files?.[0] || null })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    />
+                                    {packageForm.image && (
+                                        <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {packageForm.image.name}</p>
+                                    )}
                                 </div>
 
-                                {/* Campos condicionais baseados no tipo de pacote */}
-                                {packageForm.packageType === "fixed" && (
-                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                        <h4 className="text-sm font-medium text-blue-900 mb-3">Configuração de Data Fixa</h4>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                                            <input
-                                                type="date"
-                                                required
-                                                value={packageForm.fixedStartDate}
-                                                onChange={(e) => setPackageForm({ ...packageForm, fixedStartDate: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {packageForm.packageType === "seasonal" && (
-                                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                        <h4 className="text-sm font-medium text-green-900 mb-3">Configuração Sazonal (2 períodos por ano)</h4>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">1º Período</label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={packageForm.seasonalPeriods[0]?.startDate || ""}
-                                                            onChange={(e) => {
-                                                                const newPeriods = [...packageForm.seasonalPeriods];
-                                                                newPeriods[0] = { ...newPeriods[0], startDate: e.target.value };
-                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
-                                                            }}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={packageForm.seasonalPeriods[0]?.endDate || ""}
-                                                            onChange={(e) => {
-                                                                const newPeriods = [...packageForm.seasonalPeriods];
-                                                                newPeriods[0] = { ...newPeriods[0], endDate: e.target.value };
-                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
-                                                            }}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">2º Período</label>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={packageForm.seasonalPeriods[1]?.startDate || ""}
-                                                            onChange={(e) => {
-                                                                const newPeriods = [...packageForm.seasonalPeriods];
-                                                                newPeriods[1] = { ...newPeriods[1], startDate: e.target.value };
-                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
-                                                            }}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
-                                                        <input
-                                                            type="date"
-                                                            required
-                                                            value={packageForm.seasonalPeriods[1]?.endDate || ""}
-                                                            onChange={(e) => {
-                                                                const newPeriods = [...packageForm.seasonalPeriods];
-                                                                newPeriods[1] = { ...newPeriods[1], endDate: e.target.value };
-                                                                setPackageForm({ ...packageForm, seasonalPeriods: newPeriods });
-                                                            }}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {packageForm.packageType === "recurring" && (
-                                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                        <h4 className="text-sm font-medium text-purple-900 mb-3">Configuração Recorrente</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                                                <input
-                                                    type="date"
-                                                    required
-                                                    value={packageForm.recurrenceStartDate}
-                                                    onChange={(e) => setPackageForm({ ...packageForm, recurrenceStartDate: e.target.value })}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Fim</label>
-                                                <input
-                                                    type="date"
-                                                    required
-                                                    value={packageForm.recurrenceEndDate}
-                                                    onChange={(e) => setPackageForm({ ...packageForm, recurrenceEndDate: e.target.value })}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Intervalo (dias)</label>
-                                                <select
-                                                    required
-                                                    value={packageForm.intervalDays}
-                                                    onChange={(e) => setPackageForm({ ...packageForm, intervalDays: e.target.value })}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <option value="">Selecione</option>
-                                                    <option value="7">A cada 7 dias</option>
-                                                    <option value="14">A cada 14 dias</option>
-                                                    <option value="15">A cada 15 dias</option>
-                                                    <option value="30">A cada 30 dias</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Origem</label>
+                                        <label className="block text-sm font-medium text-gray-700">Cidade de Origem</label>
                                         <input
                                             type="text"
                                             required
@@ -480,7 +319,7 @@ function AdminDashboard() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Origem</label>
+                                        <label className="block text-sm font-medium text-gray-700">País de Origem</label>
                                         <input
                                             type="text"
                                             required
@@ -494,7 +333,7 @@ function AdminDashboard() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Destino</label>
+                                        <label className="block text-sm font-medium text-gray-700">Cidade de Destino</label>
                                         <input
                                             type="text"
                                             required
@@ -509,7 +348,7 @@ function AdminDashboard() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Destino</label>
+                                        <label className="block text-sm font-medium text-gray-700">País de Destino</label>
                                         <input
                                             type="text"
                                             required
@@ -524,119 +363,154 @@ function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="mt-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setPackageForm({ ...packageForm, image: e.target.files?.[0] || null })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                    />
-                                    {packageForm.image && (
-                                        <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {packageForm.image.name}</p>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"> {/* Aumenta o espaço acima desta seção */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Duração</label>
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <h4 className="text-md font-medium text-blue-900 mb-2">Viagem</h4>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Duração em dias</label>
                                         <input
                                             type="text"
                                             required
                                             value={packageForm.duration}
-                                            onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
+                                            onChange={(e) => {
+                                                const duration = e.target.value;
+                                                let endDate = "";
+                                                if (packageForm.startDate && duration) {
+                                                    const start = new Date(packageForm.startDate);
+                                                    const days = parseInt(duration, 10);
+                                                    if (!isNaN(days)) {
+                                                        start.setDate(start.getDate() + days);
+                                                        endDate = start.toISOString().split("T")[0];
+                                                    }
+                                                }
+                                                setPackageForm({
+                                                    ...packageForm,
+                                                    duration,
+                                                    endDate
+                                                });
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Máx. Pessoas</label>
+                                        <label className="block text-sm font-medium text-gray-700">Data de partida</label>
                                         <input
-                                            type="number"
+                                            type="date"
                                             required
-                                            min="1"
-                                            value={packageForm.maxPeople}
-                                            onChange={(e) => setPackageForm({ ...packageForm, maxPeople: e.target.value })}
+                                            value={packageForm.startDate}
+                                            onChange={(e) => {
+                                                const startDate = e.target.value;
+                                                let endDate = "";
+                                                if (startDate && packageForm.duration) {
+                                                    const start = new Date(startDate);
+                                                    const days = parseInt(packageForm.duration, 10);
+                                                    if (!isNaN(days)) {
+                                                        start.setDate(start.getDate() + days);
+                                                        endDate = start.toISOString().split("T")[0];
+                                                    }
+                                                }
+                                                setPackageForm({
+                                                    ...packageForm,
+                                                    startDate,
+                                                    endDate
+                                                });
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
-                                    </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Veículo</label>
-                                        <select
-                                            required
-                                            value={packageForm.vehicleType}
-                                            onChange={(e) => setPackageForm({ ...packageForm, vehicleType: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">Selecione o veículo</option>
-                                            {vehicleTypes.map((vehicle) => (
-                                                <option key={vehicle} value={vehicle}>
-                                                    {vehicle}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Preço Original</label>
+                                        <label className="block text-sm font-medium text-gray-700">Data de retorno</label>
                                         <input
-                                            type="text"
-                                            required
-                                            value={packageForm.originalPrice}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originalPrice: e.target.value })}
+                                            type="date"
+                                            disabled
+                                            value={packageForm.endDate}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 1.999,99"
                                         />
-                                    </div>
-                                </div>
 
-                                <div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Pacote</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={packageForm.packageTax}
-                                            onChange={(e) => setPackageForm({ ...packageForm, packageTax: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 150,00"
-                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{/* Aumenta o espaço acima desta seção */}
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Número de vagas</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    min="1"
+                                                    value={packageForm.maxPeople}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, maxPeople: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Tipo de Veículo</label>
+                                                <select
+                                                    required
+                                                    value={packageForm.vehicleType}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, vehicleType: e.target.value })}
+                                                    className="w-full px-3 py-[11px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="">Selecione o veículo</option>
+                                                    {vehicleTypes.map((vehicle) => (
+                                                        <option key={vehicle} value={vehicle}>
+                                                            {vehicle}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="w-full space-y-4">
+                                    <div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                max={100}
-                                                step={1}
-                                                value={packageForm.discountValue}
-                                                onChange={(e) => setPackageForm({ ...packageForm, discountValue: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Digite a porcentagem do cupom"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
+                                            <label className="block text-sm font-medium text-gray-700">Preço do pacote</label>
                                             <input
                                                 type="text"
-                                                value={packageForm.cupomDiscount}
-                                                onChange={(e) => setPackageForm({ ...packageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                                required
+                                                value={packageForm.originalPrice}
+                                                onChange={(e) => setPackageForm({ ...packageForm, originalPrice: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Ex: CARNAVAL10"
+                                                placeholder="Ex: R$ 1.999,99"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="w-full">
-                                        {/* Espaço vazio para manter o layout */}
+                                    <div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Taxa do Pacote</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={packageForm.packageTax}
+                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Ex: R$ 150,00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Porcentagem do Cupom de Desconto (%)</label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            value={packageForm.discountValue}
+                                            onChange={(e) => setPackageForm({ ...packageForm, discountValue: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Digite a porcentagem do cupom"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Código do Cupom</label>
+                                        <input
+                                            type="text"
+                                            value={packageForm.cupomDiscount}
+                                            onChange={(e) => setPackageForm({ ...packageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: CARNAVAL10"
+                                        />
                                     </div>
                                 </div>
 
@@ -652,8 +526,6 @@ function AdminDashboard() {
                                         <span className="ml-3 text-sm font-medium text-gray-900">Pacote Ativo</span>
                                     </label>
                                 </div>
-
-
                             </form>
                         ) : (
                             <form id="user-form" onSubmit={handleUserSubmit} className="space-y-10"> {/* Aumentado de 8 para 10 para mais espaço vertical */}
@@ -859,9 +731,9 @@ function AdminDashboard() {
 
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                        <form id="package-form" onSubmit={handleEditPackageSubmit} className="space-y-6">
+                        <form id="edit-package-form" onSubmit={handleEditPackageSubmit} className="space-y-6 flex flex-col gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
+                                <label className="block text-sm font-medium text-gray-700">Título do Pacote</label>
                                 <input
                                     type="text"
                                     required
@@ -872,7 +744,7 @@ function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                <label className="block text-sm font-medium text-gray-700">Descrição</label>
                                 <textarea
                                     required
                                     value={editPackageForm.description}
@@ -883,191 +755,33 @@ function AdminDashboard() {
                                 />
                             </div>
 
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Foto do pacote</label>
-                                {/* Exibe a imagem atual do pacote, se houver */}
-                                {editPackageForm && editPackageForm.imageUrl ? (
-                                    <div className="mb-3">
-                                        <span className="block text-xs text-gray-500 mb-1">Imagem atual:</span>
-                                        <img
-                                            src={editPackageForm.imageUrl}
-                                            alt="Imagem atual do pacote"
-                                            className="w-full h-full object-cover rounded border"
-                                        />
-                                    </div>
-                                ) : (
-                                    <span className="block text-xs text-gray-500 mb-3">Nenhuma imagem cadastrada para este pacote.</span>
-                                )}
-                                <div className="mb-3">
-                                    <span className="block text-xs text-gray-500 mb-1">Upload de nova foto:</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, image: e.target.files?.[0] || null })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                    />
-                                    {editPackageForm.image && (
-                                        <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {editPackageForm.image.name}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Novo campo: Tipo de Pacote */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Pacote</label>
-                                <select
-                                    required
-                                    value={editPackageForm.packageType}
-                                    onChange={(e) => setEditPackageForm({
-                                        ...editPackageForm,
-                                        packageType: e.target.value as "fixed" | "seasonal" | "recurring"
-                                    })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="fixed">Data Fixa</option>
-                                    <option value="seasonal">Sazonal - 2x ao ano</option>
-                                    <option value="recurring">Recorrente - O ano todo</option>
-                                </select>
+                                <label className="block text-sm font-medium text-gray-700">Imagem atual</label>
+                                {editPackageForm.imageUrl && (
+                                    <img
+                                        src={editPackageForm.imageUrl}
+                                        alt="Imagem do pacote"
+                                        className="mt-2 w-full h-auto rounded-md"
+                                    />
+                                )}
                             </div>
 
-                            {/* Campos condicionais baseados no tipo de pacote */}
-                            {editPackageForm.packageType === "fixed" && (
-                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <h4 className="text-sm font-medium text-blue-900 mb-3">Configuração de Data Fixa</h4>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                                        <input
-                                            type="date"
-                                            required
-                                            value={editPackageForm.fixedStartDate}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, fixedStartDate: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Upload de Imagem</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setEditPackageForm({ ...editPackageForm, image: e.target.files?.[0] || null })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {editPackageForm.image && (
+                                    <p className="mt-1 text-sm text-gray-500">Arquivo selecionado: {editPackageForm.image.name}</p>
+                                )}
+                            </div>
 
-                            {packageForm.packageType === "seasonal" && (
-                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                                    <h4 className="text-sm font-medium text-green-900 mb-3">Configuração Sazonal (2 períodos por ano)</h4>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">1º Período</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
-                                                    <input
-                                                        type="date"
-                                                        required
-                                                        value={editPackageForm.seasonalPeriods[0]?.startDate || ""}
-                                                        onChange={(e) => {
-                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
-                                                            newPeriods[0] = { ...newPeriods[0], startDate: e.target.value };
-                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
-                                                        }}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
-                                                    <input
-                                                        type="date"
-                                                        required
-                                                        value={editPackageForm.seasonalPeriods[0]?.endDate || ""}
-                                                        onChange={(e) => {
-                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
-                                                            newPeriods[0] = { ...newPeriods[0], endDate: e.target.value };
-                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
-                                                        }}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">2º Período</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">Data de Início</label>
-                                                    <input
-                                                        type="date"
-                                                        required
-                                                        value={editPackageForm.seasonalPeriods[1]?.startDate || ""}
-                                                        onChange={(e) => {
-                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
-                                                            newPeriods[1] = { ...newPeriods[1], startDate: e.target.value };
-                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
-                                                        }}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-600 mb-1">Data de Fim</label>
-                                                    <input
-                                                        type="date"
-                                                        required
-                                                        value={editPackageForm.seasonalPeriods[1]?.endDate || ""}
-                                                        onChange={(e) => {
-                                                            const newPeriods = [...editPackageForm.seasonalPeriods];
-                                                            newPeriods[1] = { ...newPeriods[1], endDate: e.target.value };
-                                                            setEditPackageForm({ ...editPackageForm, seasonalPeriods: newPeriods });
-                                                        }}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {packageForm.packageType === "recurring" && (
-                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                    <h4 className="text-sm font-medium text-purple-900 mb-3">Configuração Recorrente</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                                            <input
-                                                type="date"
-                                                required
-                                                value={editPackageForm.recurrenceStartDate}
-                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, recurrenceStartDate: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Fim</label>
-                                            <input
-                                                type="date"
-                                                required
-                                                value={editPackageForm.recurrenceEndDate}
-                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, recurrenceEndDate: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Intervalo (dias)</label>
-                                            <select
-                                                required
-                                                value={editPackageForm.intervalDays}
-                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, intervalDays: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <option value="">Selecione</option>
-                                                <option value="7">A cada 7 dias</option>
-                                                <option value="14">A cada 14 dias</option>
-                                                <option value="15">A cada 15 dias</option>
-                                                <option value="30">A cada 30 dias</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Origem</label>
+                                    <label className="block text-sm font-medium text-gray-700">Cidade de Origem</label>
                                     <input
                                         type="text"
                                         required
@@ -1079,7 +793,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">País de Origem</label>
+                                    <label className="block text-sm font-medium text-gray-700">País de Origem</label>
                                     <input
                                         type="text"
                                         required
@@ -1093,7 +807,7 @@ function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Destino</label>
+                                    <label className="block text-sm font-medium text-gray-700">Cidade de Destino</label>
                                     <input
                                         type="text"
                                         required
@@ -1108,7 +822,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">País de Destino</label>
+                                    <label className="block text-sm font-medium text-gray-700">País de Destino</label>
                                     <input
                                         type="text"
                                         required
@@ -1123,106 +837,154 @@ function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"> {/* Aumenta o espaço acima desta seção */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração</label>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h4 className="text-md font-medium text-blue-900 mb-2">Viagem</h4>
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração em dias</label>
                                     <input
                                         type="text"
                                         required
                                         value={editPackageForm.duration}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, duration: e.target.value })}
+                                        onChange={(e) => {
+                                            const duration = e.target.value;
+                                            let endDate = "";
+                                            if (editPackageForm.startDate && duration) {
+                                                const start = new Date(editPackageForm.startDate);
+                                                const days = parseInt(duration, 10);
+                                                if (!isNaN(days)) {
+                                                    start.setDate(start.getDate() + days);
+                                                    endDate = start.toISOString().split("T")[0];
+                                                }
+                                            }
+                                            setEditPackageForm({
+                                                ...editPackageForm,
+                                                duration,
+                                                endDate
+                                            });
+                                        }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Máx. Pessoas</label>
+                                    <label className="block text-sm font-medium text-gray-700">Data de partida</label>
                                     <input
-                                        type="number"
+                                        type="date"
                                         required
-                                        min="1"
-                                        value={editPackageForm.maxPeople}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, maxPeople: e.target.value })}
+                                        value={editPackageForm.startDate}
+                                        onChange={(e) => {
+                                            const startDate = e.target.value;
+                                            let endDate = "";
+                                            if (startDate && editPackageForm.duration) {
+                                                const start = new Date(startDate);
+                                                const days = parseInt(editPackageForm.duration, 10);
+                                                if (!isNaN(days)) {
+                                                    start.setDate(start.getDate() + days);
+                                                    endDate = start.toISOString().split("T")[0];
+                                                }
+                                            }
+                                            setEditPackageForm({
+                                                ...editPackageForm,
+                                                startDate,
+                                                endDate
+                                            });
+                                        }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Veículo</label>
-                                    <select
-                                        required
-                                        value={editPackageForm.vehicleType}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, vehicleType: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">Selecione o veículo</option>
-                                        {vehicleTypes.map((vehicle) => (
-                                            <option key={vehicle} value={vehicle}>
-                                                {vehicle}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preço Original</label>
+                                    <label className="block text-sm font-medium text-gray-700">Data de retorno</label>
                                     <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.originalPrice}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
+                                        type="date"
+                                        disabled
+                                        value={editPackageForm.endDate}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 1.999,99"
                                     />
-                                </div>
-                            </div>
 
-                            <div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Pacote</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.packageTax}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 150,00"
-                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{/* Aumenta o espaço acima desta seção */}
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Número de vagas</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                value={editPackageForm.maxPeople}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, maxPeople: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Tipo de Veículo</label>
+                                            <select
+                                                required
+                                                value={editPackageForm.vehicleType}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, vehicleType: e.target.value })}
+                                                className="w-full px-3 py-[11px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <option value="">Selecione o veículo</option>
+                                                {vehicleTypes.map((vehicle) => (
+                                                    <option key={vehicle} value={vehicle}>
+                                                        {vehicle}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="w-full space-y-4">
+                                <div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={100}
-                                            step={1}
-                                            value={editPackageForm.discountValue}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, discountValue: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Digite a porcentagem do cupom"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Código do Cupom</label>
+                                        <label className="block text-sm font-medium text-gray-700">Preço do pacote</label>
                                         <input
                                             type="text"
-                                            value={editPackageForm.cupomDiscount}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                            required
+                                            value={editPackageForm.originalPrice}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: CARNAVAL10"
+                                            placeholder="Ex: R$ 1.999,99"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="w-full">
-                                    {/* Espaço vazio para manter o layout */}
+                                <div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Taxa do Pacote</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editPackageForm.packageTax}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: R$ 150,00"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Porcentagem do Cupom de Desconto (%)</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        step={1}
+                                        value={editPackageForm.discountValue}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, discountValue: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Digite a porcentagem do cupom"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Código do Cupom</label>
+                                    <input
+                                        type="text"
+                                        value={editPackageForm.cupomDiscount}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, cupomDiscount: e.target.value.toUpperCase() })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: CARNAVAL10"
+                                    />
                                 </div>
                             </div>
 
@@ -1238,8 +1000,6 @@ function AdminDashboard() {
                                     <span className="ml-3 text-sm font-medium text-gray-900">Pacote Ativo</span>
                                 </label>
                             </div>
-
-
                         </form>
                     </div>
 
@@ -1272,6 +1032,7 @@ function AdminDashboard() {
     // Estados para criação e edição de pacotes
     const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
     const [packageForm, setPackageForm] = useState<PackageFormData>({
+        travelPackageId: "",
         title: "",
         description: "",
         originAddress: { city: "", country: "" },
@@ -1282,24 +1043,14 @@ function AdminDashboard() {
         vehicleType: "",
         originalPrice: "",
         isActive: true,
-        // Novos campos
-        packageType: "fixed",
         packageTax: "",
         cupomDiscount: "",
         discountValue: "",
-        // Campos para pacote com data fixa
-        fixedStartDate: "",
-        // Campos para pacote sazonal
-        seasonalPeriods: [
-            { startDate: "", endDate: "", isAvailable: true },
-            { startDate: "", endDate: "", isAvailable: true }
-        ],
-        // Campos para pacote recorrente
-        recurrenceStartDate: "",
-        recurrenceEndDate: "",
-        intervalDays: ""
+        startDate: "",
+        endDate: ""
     })
     const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
+        travelPackageId: "",
         title: "",
         description: "",
         originAddress: { city: "", country: "" },
@@ -1311,22 +1062,11 @@ function AdminDashboard() {
         vehicleType: "",
         originalPrice: "",
         isActive: true,
-        // Novos campos
-        packageType: "fixed",
         packageTax: "",
         cupomDiscount: "",
         discountValue: "",
-        // Campos para pacote com data fixa
-        fixedStartDate: "",
-        // Campos para pacote sazonal
-        seasonalPeriods: [
-            { startDate: "", endDate: "", isAvailable: true },
-            { startDate: "", endDate: "", isAvailable: true }
-        ],
-        // Campos para pacote recorrente
-        recurrenceStartDate: "",
-        recurrenceEndDate: "",
-        intervalDays: ""
+        startDate: "",
+        endDate: ""
     });
     const handlePackageSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1339,53 +1079,9 @@ function AdminDashboard() {
             alert("Por favor, insira uma descrição para o pacote");
             return;
         }
-        // Validação baseada no tipo de pacote
-        if (packageForm.packageType === "fixed" && !packageForm.fixedStartDate) {
-            alert("Por favor, defina a data de início para o pacote de data fixa");
-            return;
-        }
-        if (packageForm.packageType === "seasonal") {
-            const period1Valid = packageForm.seasonalPeriods[0]?.startDate && packageForm.seasonalPeriods[0]?.endDate;
-            const period2Valid = packageForm.seasonalPeriods[1]?.startDate && packageForm.seasonalPeriods[1]?.endDate;
-            if (!period1Valid || !period2Valid) {
-                alert("Por favor, defina ambos os períodos sazonais");
-                return;
-            }
-        }
-        if (packageForm.packageType === "recurring") {
-            if (!packageForm.recurrenceStartDate || !packageForm.recurrenceEndDate || !packageForm.intervalDays) {
-                alert("Por favor, defina o período e intervalo para o pacote recorrente");
-                return;
-            }
-        }
-
-        // Montar o objeto conforme esperado pela API
-        let packageSchedule: any = {};
-        if (packageForm.packageType === "fixed") {
-            packageSchedule = {
-                startDate: packageForm.fixedStartDate,
-                isFixed: true,
-                isAvailable: true
-            };
-        } else if (packageForm.packageType === "seasonal") {
-            // Envia o primeiro período como exemplo
-            packageSchedule = {
-                startDate: packageForm.seasonalPeriods[0].startDate,
-                endDate: packageForm.seasonalPeriods[0].endDate,
-                isFixed: false,
-                isAvailable: packageForm.seasonalPeriods[0].isAvailable
-            };
-        } else if (packageForm.packageType === "recurring") {
-            packageSchedule = {
-                startDate: packageForm.recurrenceStartDate,
-                endDate: packageForm.recurrenceEndDate,
-                isFixed: false,
-                isAvailable: true
-            };
-        }
-
 
         const formData = new FormData();
+        formData.append("userId", "1");
         formData.append("title", packageForm.title.trim());
         formData.append("description", packageForm.description.trim());
         if (packageForm.image) {
@@ -1404,9 +1100,14 @@ function AdminDashboard() {
         formData.append("originAddress.Country", packageForm.originAddress.country);
         formData.append("destinationAddress.City", packageForm.destinationAddress.city);
         formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
-        formData.append("userId", "2");
+        formData.append("packageSchedule.StartDate", packageForm.startDate);
+        formData.append("packageSchedule.EndDate", packageForm.endDate);
+        formData.append("packageSchedule.IsFixed", "true");
+        formData.append("packageSchedule.IsAvailable", packageForm.isActive ? "true" : "false");
 
-        formData.append("packageSchedule", JSON.stringify(packageSchedule));
+        for (let pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
 
         try {
             const axios = (await import("axios")).default;
@@ -1416,6 +1117,7 @@ function AdminDashboard() {
                 }
             });
             alert(`Pacote "${packageForm.title}" criado com sucesso!`);
+            fetchPackages();
             closeModal();
         } catch (error: any) {
             for (let pair of formData.entries()) {
@@ -1432,9 +1134,8 @@ function AdminDashboard() {
 
         setEditingPackage(selectedPackage);
 
-        // Pré-preencher o formulário com os dados do pacote selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
         setEditPackageForm({
+            travelPackageId: selectedPackage.travelPackageId || "",
             title: selectedPackage.title || "",
             description: selectedPackage.description || "",
             originAddress: {
@@ -1453,21 +1154,15 @@ function AdminDashboard() {
             originalPrice: selectedPackage.originalPrice || "",
             isActive: selectedPackage.isActive || "",
             // Novos campos
-            packageType: selectedPackage.duration || "",
             packageTax: selectedPackage.packageTax || "",
             cupomDiscount: selectedPackage.cupomDiscount || "",
             discountValue: selectedPackage.discountValue || "",
-            // Campos para pacote com data fixa
-            fixedStartDate: selectedPackage.fixedStartDate || "",
-            // Campos para pacote sazonal
-            seasonalPeriods: [
-                { startDate: "ainda não existe na API", endDate: "ainda não existe na API", isAvailable: true },
-                { startDate: "ainda não existe na API", endDate: "ainda não existe na API", isAvailable: true }
-            ],
-            // Campos para pacote recorrente
-            recurrenceStartDate: "ainda não existe na API",
-            recurrenceEndDate: "ainda não existe na API",
-            intervalDays: "ainda não existe na API"
+            startDate: selectedPackage.packageSchedule && selectedPackage.packageSchedule.startDate && selectedPackage.packageSchedule.startDate !== "0001-01-01T00:00:00"
+                ? selectedPackage.packageSchedule.startDate.split("T")[0]
+                : "",
+            endDate: selectedPackage.packageSchedule && selectedPackage.packageSchedule.endDate
+                ? selectedPackage.packageSchedule.endDate.split("T")[0]
+                : "",
         });
 
         setIsEditModalOpen(true);
@@ -1477,32 +1172,23 @@ function AdminDashboard() {
         setEditingPackage(null)
         // Limpar o formulário de edição
         setEditPackageForm({
+            travelPackageId: "",
             title: "",
             description: "",
             originAddress: { city: "", country: "" },
             destinationAddress: { city: "", country: "" },
             image: null,
+            imageUrl: "",
             duration: "",
             maxPeople: "",
             vehicleType: "",
             originalPrice: "",
             isActive: true,
-            // Novos campos
-            packageType: "fixed",
             packageTax: "",
             cupomDiscount: "",
             discountValue: "",
-            // Campos para pacote com data fixa
-            fixedStartDate: "",
-            // Campos para pacote sazonal
-            seasonalPeriods: [
-                { startDate: "", endDate: "", isAvailable: true },
-                { startDate: "", endDate: "", isAvailable: true }
-            ],
-            // Campos para pacote recorrente
-            recurrenceStartDate: "",
-            recurrenceEndDate: "",
-            intervalDays: ""
+            startDate: "",
+            endDate: ""
         })
     }
     // Função para lidar com o envio do formulário de edição
@@ -1513,34 +1199,34 @@ function AdminDashboard() {
 
         // Monta o objeto conforme esperado pela API
         const formData = new FormData();
-        formData.append("travelPackageId", String(editingPackage.id));
+        if (editPackageForm.travelPackageId) {
+            formData.append("imageFile", editPackageForm.travelPackageId); // arquivo real
+        };
         formData.append("title", editPackageForm.title);
         formData.append("description", editPackageForm.description);
         if (editPackageForm.image) {
             formData.append("imageFile", editPackageForm.image); // arquivo real
-        }
+        };
+        if (editPackageForm.imageUrl) {
+            formData.append("imageUrl", editPackageForm.imageUrl); // arquivo real
+        };
         formData.append("vehicleType", editPackageForm.vehicleType);
         formData.append("duration", editPackageForm.duration);
         formData.append("maxPeople", editPackageForm.maxPeople);
-        formData.append("originalPrice", editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("price", editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("packageTax", editPackageForm.packageTax.replace(/[^\d.,]/g, '').replace(',', '.'));
-        formData.append("cupomDiscount", editPackageForm.cupomDiscount);
-        formData.append("discountValue", editPackageForm.discountValue);
+        formData.append("originalPrice", String(editPackageForm.originalPrice).replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("price", String(editPackageForm.originalPrice).replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("packageTax", String(editPackageForm.packageTax).replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("cupomDiscount", String(editPackageForm.cupomDiscount).replace(/[^\d.,]/g, '').replace(',', '.'));
+        formData.append("discountValue", String(editPackageForm.discountValue).replace(/[^\d.,]/g, '').replace(',', '.'));
         formData.append("manualDiscountValue", "0");
         formData.append("originCity", editPackageForm.originAddress.city);
         formData.append("originCountry", editPackageForm.originAddress.country);
         formData.append("destinationCity", editPackageForm.destinationAddress.city);
         formData.append("destinationCountry", editPackageForm.destinationAddress.country);
-
-        const packageSchedule = {
-            startDate: editPackageForm.fixedStartDate,
-            endDate: null,
-            duration: 0,
-            isFixed: true,
-            isAvailable: editPackageForm.isActive
-        };
-        formData.append("packageSchedule", JSON.stringify(packageSchedule));
+        formData.append("packageSchedule.StartDate", editPackageForm.startDate);
+        formData.append("packageSchedule.EndDate", editPackageForm.endDate);
+        formData.append("packageSchedule.IsFixed", "true");
+        formData.append("packageSchedule.IsAvailable", editPackageForm.isActive ? "true" : "false");
 
 
         try {
@@ -2790,7 +2476,7 @@ function AdminDashboard() {
                             { name: "Pacote Romântico", percentage: 68 },
                         ].map((pacote, index) => (
                             <div key={index}>
-                                <div className="flex justify-between text-sm mb-1 mb-2">
+                                <div className="flex justify-between text-sm mb-2">
                                     <span className="text-gray-700">{pacote.name}</span>
                                     <span className="text-gray-900 font-medium">{pacote.percentage}%</span>
                                 </div>
@@ -2998,7 +2684,7 @@ function AdminDashboard() {
                             </span>
                         </td>
                         <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500 font-medium text-green-600">{item.value}</td>
+                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-green-600">{item.value}</td>
                         <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">
                             <span className={`font-medium ${item.remainingSlots && item.remainingSlots <= 5 ? 'text-red-600' : 'text-blue-600'}`}>
                                 {item.remainingSlots || 0} vagas
@@ -3096,7 +2782,7 @@ function AdminDashboard() {
                         </button>
                     )}
                 </div>
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             {getTableHeaders()}
