@@ -28,15 +28,15 @@ function Navbar({ navType = 'default' }: NavbarProps) {
         { label: 'Pacotes', href: '/#pacotes' },
         { label: 'Vantagens', href: '/#vantagens' },
         { label: 'Parceiros', href: '/#parceiros' },
-        { label: 'Área do Afiliado', href: '/affiliatepage' },
+        { label: 'Área do afiliado', href: '/affiliatepage' },
         { label: 'Acesso Admin', href: '/admin' },
-        { label: 'Sobre Nós', href: '#' },
+        { label: 'Sobre Nós', href: '/aboutus' },
     ];
     const navLinksAffiliate: NavLink[] = [
         { label: 'Vantagens', href: '/affiliatepage#vantagens' },
         { label: 'Nossos Parceiros', href: '/affiliatepage#nossos-parceiros' },
         { label: 'Cadastre-se', href: '/affiliatepage#cadastre-se' },
-        { label: 'Sobre Nós', href: '#' },
+        { label: 'Sobre Nós', href: '/aboutus' },
     ];
     const navLinksAdmin: NavLink[] = [
         { label: 'Painel', href: '/admin' },
@@ -119,7 +119,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
                     }>
                         <button className={`group flex items-center  bg-transparent transition-colors duration-200 font-bold text-lg cursor-pointer hover:text-orange-300 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
                             <FaUser className={`w-4 h-4 mr-2 group-hover:fill-orange-300 transition-colors duration-200 ${navType === 'affiliatePage' ? 'fill-white' : ''}`} />
-                            {navType === 'affiliatePage' ? 'Login Afiliado' : navType === 'admin' ? 'Login Admin' : 'Login Cliente'}
+                            {navType === 'affiliatePage' ? 'Entrar no sistema' : navType === 'admin' ? 'Login Admin' : 'Login Cliente'}
                         </button>
                     </Link>
                 </div>
