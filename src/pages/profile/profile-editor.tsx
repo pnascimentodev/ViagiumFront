@@ -319,7 +319,7 @@ export default function ProfileEditor() {
                                             variant="custom"
                                             className="h-12 w-full rounded-[10px] shadow-lg"
                                             style={{ backgroundColor: '#003194' }}
-                                            onClick={() => navigate("/travel-history")}
+                                            onClick={() => navigate("/travelhistory")}
                                         >
                                             Ver Histórico
                                         </Button>
