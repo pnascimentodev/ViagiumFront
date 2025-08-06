@@ -25,12 +25,12 @@ function Footer(){
                                 </a>
                             </li>
                             <li>
-                                <a href="/pacotes" className="text-[#FFFFFF] hover:text-[#FFA62B] transition-colors duration-200">
+                                <a href="/packagesearch" className="text-[#FFFFFF] hover:text-[#FFA62B] transition-colors duration-200">
                                     Pacotes
                                 </a>
                             </li>
                             <li>
-                                <a href="/sobre" className="text-[#FFFFFF] hover:text-[#FFA62B] transition-colors duration-200">
+                                <a href="/aboutus" className="text-[#FFFFFF] hover:text-[#FFA62B] transition-colors duration-200">
                                     Sobre nós
                                 </a>
                             </li>

@@ -1,4 +1,3 @@
-
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react"
@@ -6,14 +5,16 @@ import { FaUser, FaMapMarkerAlt, FaUsers, FaDollarSign } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import { validateCPF, validateCNPJ, validateRequired } from "../../utils/validations";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { AuthService } from "../../utils/auth"
 
-interface Client {
+interface User {
   id: number
   firstName: string
   lastName: string
   documentNumber: string
-  phoneNumber: string
   dateOfBirth: string 
+  phone: string
 }
 
 interface Passenger {
@@ -24,16 +25,6 @@ interface Passenger {
   dateOfBirth: string
 }
 
-interface PackageDetails {
-  id: number
-  packageName: string
-  origin: string
-  destination: string
-  duration: string
-  startDate: Date
-  totalValue: string
-}
-
 interface Reservation{
   id: number
   startDate: Date
@@ -41,29 +32,67 @@ interface Reservation{
 }
 
 export default function Reservation() {
-  // Mock client data
-  const [client] = useState<Client>({
-    id: 1,
-    firstName: "Maria",
-    lastName: "Silva Santos",
-    documentNumber: "123.456.789-00",
-    phoneNumber: "(11) 99999-8888",
-    dateOfBirth: "1990-01-01",
-  })
-
-  // Mock package data
-  const [packageDetails] = useState<PackageDetails>({
-    id: 1,
-    packageName: "Pacote Viagem Rio de Janeiro",
-    origin: "São Paulo",
-    destination: "Rio de Janeiro",
-    duration: "7 dias",
-    startDate: new Date("2023-10-01"),
-    totalValue: "R$ 9.824,00",
-  })
-
   const location = useLocation();
-  const numPessoas = location.state?.numPessoas || 1;
+  const { reservationData, displayData } = location.state || {};
+  const numPessoas = displayData?.numPessoas || 1;
+
+  // Estado do usuário autenticado
+  const [user, setUser] = useState<User | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Busca dados completos do usuário autenticado ao montar
+    const userAuth = AuthService.getUserAuth();
+    let detectedUserId: number | null = null;
+    if (userAuth?.id) {
+      detectedUserId = Number(userAuth.id);
+      setUserId(detectedUserId);
+      axios.get(`http://localhost:5028/api/User/${userAuth.id}`)
+        .then(res => {
+          const data = res.data;
+          setUser({
+            id: data.id,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            documentNumber: data.documentNumber || '',
+            dateOfBirth: data.dateOfBirth || '',
+            phone: data.phone || '',
+          });
+        })
+        .catch(() => setUser(null));
+    } else {
+      // fallback: tenta pegar do localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.id) {
+            detectedUserId = Number(parsed.id);
+            setUserId(detectedUserId);
+          }
+        } catch {}
+      }
+      setUser(null);
+    }
+  }, []);
+
+
+  // Data de retorno pode vir de displayData ou reservationData
+  const returnDate = displayData?.returnDate || reservationData?.returnDate;
+  const packageDetails = {
+    id: reservationData?.travelPackageId || 1,
+    packageName: displayData?.packageTitle || "Pacote não informado",
+    origin: displayData?.originCity && displayData?.originCountry 
+      ? `${displayData.originCity}, ${displayData.originCountry}` 
+      : "Origem não informada",
+    destination: displayData?.destinationCity && displayData?.destinationCountry 
+      ? `${displayData.destinationCity}, ${displayData.destinationCountry}` 
+      : "Destino não informada",
+    duration: displayData?.duration?.toString() || "Duração não informada",
+    startDate: reservationData?.startDate ? new Date(reservationData.startDate) : new Date(),
+    totalValue: `R$ ${displayData?.finalValue?.toLocaleString('pt-BR') || '0'},00`,
+    returnDate: returnDate ? new Date(returnDate) : null
+  }
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: Math.max(numPessoas - 1, 0) }, (_, idx) => ({
       id: idx,
@@ -86,62 +115,102 @@ export default function Reservation() {
     })));
   }, [numPessoas]);
   
-  const reservationPayload = {
-  userId: client.id,
-  travelPackageId: packageDetails.id, // Adicione o campo id ao seu estado
-  startDate: new Date().toISOString(), // ou a data escolhida pelo usuário
-  totalPrice: parseFloat(packageDetails.totalValue.replace(/[^\d,]/g, '').replace(',', '.')), // ajuste conforme formato
-  status: "Pending",
-  isActive: true,
-  travelers: [
-    {
-      firstName: client.firstName,
-      lastName: client.lastName,
-      documentNumber: client.documentNumber,
-      dateOfBirth: client.dateOfBirth // adicione ao seu estado client
-    },
-    ...passengers.map(p => ({
-      firstName: p.firstName,
-      lastName: p.lastName,
-      documentNumber: p.documentNumber,
-      dateOfBirth: p.dateOfBirth
-    }))
-  ],
-  // Adicione reservationRooms se houver
-};
-
+  // Função para criar o payload da reserva
+  const createReservationPayload = () => {
+    const finalUserId = userId || user?.id;
+    if (!finalUserId) return null;
+    const travelPackageId = reservationData?.travelPackageId || packageDetails.id;
+    let hotelId = reservationData?.hotelId ?? displayData?.hotelId;
+    let roomTypeId = reservationData?.roomTypeId ?? displayData?.roomTypeId;
+    if ((hotelId === undefined || hotelId === 0) && displayData?.hotels?.length > 0) {
+      hotelId = displayData.hotels[0].hotelId || displayData.hotels[0].id;
+      if ((roomTypeId === undefined || roomTypeId === 0) && displayData.hotels[0].roomTypes?.length > 0) {
+        roomTypeId = displayData.hotels[0].roomTypes[0].roomTypeId;
+      }
+    }
+    if (!hotelId || !roomTypeId || hotelId === 0 || roomTypeId === 0) {
+      alert("Não foi possível identificar hotel/quarto válido para a reserva. Tente novamente.");
+      return null;
+    }
+    return {
+      userId: finalUserId,
+      travelPackageId,
+      hotelId,
+      roomTypeId,
+      travelers: passengers.map(p => ({
+        firstName: p.firstName,
+        lastName: p.lastName,
+        documentNumber: p.documentNumber,
+        dateOfBirth: p.dateOfBirth
+      }))
+    };
+  };
   const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
-    setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
-  }
+    setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+  };
 
   function validatePassengers() {
-  const errors: { [key: string]: string } = {};
-  passengers.forEach((p, idx) => {
-    if (!validateRequired(p.firstName)) errors[`firstName${idx}`] = "Nome obrigatório";
-    if (!validateRequired(p.lastName)) errors[`lastName${idx}`] = "Sobrenome obrigatório";
-    if (!validateRequired(p.documentNumber)) {
-      errors[`documentNumber${idx}`] = "Documento obrigatório";
-    } else if (!validateCPF(p.documentNumber) && !validateCNPJ(p.documentNumber)) {
-      errors[`documentNumber${idx}`] = "Documento deve ser CPF ou CNPJ válido";
-    }
-    if (!validateRequired(p.dateOfBirth)) errors[`dateOfBirth${idx}`] = "Data de nascimento obrigatória";
-  });
-  return errors;
+    const errors: { [key: string]: string } = {};
+    passengers.forEach((p, idx) => {
+      if (!validateRequired(p.firstName)) errors[`firstName${idx}`] = "Nome obrigatório";
+      if (!validateRequired(p.lastName)) errors[`lastName${idx}`] = "Sobrenome obrigatório";
+      if (!validateRequired(p.documentNumber)) {
+        errors[`documentNumber${idx}`] = "Documento obrigatório";
+      } else if (!validateCPF(p.documentNumber) && !validateCNPJ(p.documentNumber)) {
+        errors[`documentNumber${idx}`] = "Documento deve ser CPF ou CNPJ válido";
+      }
+      if (!validateRequired(p.dateOfBirth)) errors[`dateOfBirth${idx}`] = "Data de nascimento obrigatória";
+    });
+    return errors;
   }
-    const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
+  const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
 
-    function handleConfirmReservation() {
-    const errors = validatePassengers();
-    setPassengerErrors(errors);
-    if (Object.keys(errors).length === 0) {
-      navigate("/payment");
+    async function handleConfirmReservation() {
+      const errors = validatePassengers();
+      setPassengerErrors(errors);
+      if (Object.keys(errors).length === 0) {
+        try {
+          const payload = createReservationPayload();
+          if (!payload) {
+            alert("Dados do usuário não encontrados.");
+            return;
+          }
+          // O backend espera o payload diretamente
+          const response = await axios.post(
+            "http://localhost:5028/api/Reservation",
+            payload,
+            { headers: { "Content-Type": "application/json" } }
+          );
+
+          // Se sucesso, navega para pagamento com os dados da reserva criada
+              if (response.data) {
+                // Garante que o CPF/documentNumber está disponível diretamente em reservationData
+                const reservationDataWithCpf = {
+                  ...response.data,
+                  cpf: response.data.user?.documentNumber // ou 'documentNumber' se for passaporte
+                };
+
+                navigate("/payment", {
+                  state: {
+                    reservationData: reservationDataWithCpf,
+                    displayData,
+                    passengerData: passengers,
+                    clientData: user,
+                    packageDetails,
+                    createReservationPayload: payload
+                  }
+                });
+              } console.log("Reserva criada com sucesso:", response.data);
+        } catch (error) {
+          alert("Erro ao criar reserva. Tente novamente.");
+          console.error(error);
+        }
+      }
     }
-  }
 
   return (
     <div>
       <Navbar />
-
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -158,22 +227,28 @@ export default function Reservation() {
               </div>
               <div className="grid md:grid-cols-2 gap-4 ml-6">
                 <div className="space-y-3">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Nome:</span>
-                    <p className="text-gray-900 font-medium">{client.firstName} {client.lastName}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Sobrenome:</span>
-                    <p className="text-gray-900 font-medium">{client.lastName}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">CPF ou Passaporte:</span>
-                    <p className="text-gray-900">{client.documentNumber}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Contato:</span>
-                    <p className="text-gray-900">{client.phoneNumber}</p>
-                  </div>
+                  {user ? (
+                    <>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Nome:</span>
+                        <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Sobrenome:</span>
+                        <p className="text-gray-900 font-medium">{user.lastName}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">CPF ou Passaporte:</span>
+                        <p className="text-gray-900">{user.documentNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Contato:</span>
+                        <p className="text-gray-900">{user.phone}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-gray-500">Carregando dados do cliente...</div>
+                  )}
                 </div>
               </div>
 
@@ -202,6 +277,10 @@ export default function Reservation() {
                     <div>
                       <span className="text-sm font-medium text-gray-700">Duração:</span>
                       <p className="text-gray-900">{packageDetails.duration}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Data de Retorno:</span>
+                      <p className="text-gray-900">{packageDetails.returnDate ? packageDetails.returnDate.toLocaleDateString() : 'Não informada'}</p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-gray-700">Valor Total:</span>
@@ -305,6 +384,10 @@ export default function Reservation() {
                         <span className="text-gray-700">Data de Início:</span>
                         <span className="font-medium">{packageDetails.startDate.toLocaleDateString()}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Data de Retorno:</span>
+                        <span className="font-medium">{packageDetails.returnDate ? packageDetails.returnDate.toLocaleDateString() : 'Não informada'}</span>
+                      </div>
                       <hr className="my-3" />
                       <div className="flex justify-between text-lg">
                         <span className="font-semibold text-gray-900">Valor Total:</span>
@@ -316,7 +399,8 @@ export default function Reservation() {
                         className="w-full bg-[#FFA62B] text-white py-3 px-6 rounded-md font-semibold text-lg hover:bg-[#e8941f] transition-colors duration-200 shadow-md hover:shadow-lg"
                         onClick={handleConfirmReservation}
                       >
-                        Confirmar Reserva
+                        Prosseguir para Pagamento
+
                       </button>
                   </div>
                 </div>

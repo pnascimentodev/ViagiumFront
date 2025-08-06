@@ -12,6 +12,10 @@ export function maskCPF(value: string) {
     return v;
 }
 
+export function unmaskCPF(maskedCPF: string): string {
+    return maskedCPF.replace(/\D/g, "");
+}
+
 // Máscara para Passaporte: retorna tudo em maiúsculo, permite letras e números
 export function maskPassaporte(value: string) {
     return value.toUpperCase();
@@ -75,16 +79,16 @@ export function maskCadasturNumber(value: string) {
 export function maskCurrency(value: string) {
     // Remove tudo que não é número
     let v = value.replace(/\D/g, "");
-    
+
     // Se não há números, retorna vazio
     if (!v) return "";
-    
+
     // Limita a valores até R$ 999.999,99 (remove se muito grande)
     if (parseInt(v) > 99999999) v = v.slice(0, 8);
-    
+
     // Converte para número e divide por 100 para ter centavos
     const number = parseInt(v) / 100;
-    
+
     // Formata como moeda brasileira
     return number.toLocaleString('pt-BR', {
         style: 'currency',
@@ -95,19 +99,19 @@ export function maskCurrency(value: string) {
 
 // Função auxiliar para extrair valor numérico da máscara
 export function unmaskCurrency(maskedValue: string): string {
-    // Remove R$, espaços, pontos de milhares e substitui vírgula por ponto
-    if (!maskedValue) return "";
-
+    if (!maskedValue) return "0,00";
     let numericString = maskedValue
         .replace(/[R$\s]/g, '')
         .replace(/\./g, '')
-
-    numericString = numericString.replace(',', '.');
-    
-    return numericString;
+        .replace(',', '.');
+    const number = parseFloat(numericString);
+    // Retorna string com vírgula como separador decimal
+    return number.toFixed(2).replace('.', ',');
 }
-export function maskCardNumber(value: string){
+
+export function maskCardNumber(value: string) {
     let v = value.replace(/\D/g, "");
+    if (v.length > 16) v = v.slice(0, 16); // Limita a 16 dígitos
     if (v.length > 12) {
         return `${v.slice(0, 4)} ${v.slice(4, 8)} ${v.slice(8, 12)} ${v.slice(12)}`;
     } else if (v.length > 8) {
@@ -125,5 +129,27 @@ export function maskValidateExpirationDate(value: string) {
     if (v.length > 2) {
         return `${v.slice(0, 2)}/${v.slice(2)}`;
     }
+    return v;
+}
+
+export function maskExpiryMonth(value: string) {
+    // Aceita apenas MM (01-12)
+    let v = value.replace(/\D/g, "");
+    if (v.length > 2) v = v.slice(0, 2);
+    
+    // Valida o mês (01-12)
+    if (v.length === 2) {
+        const month = parseInt(v);
+        if (month < 1 || month > 12) {
+            v = v.slice(0, 1);
+        }
+    }
+    return v;
+}
+
+export function maskExpiryYear(value: string) {
+    // Aceita apenas YY (últimos 2 dígitos do ano)
+    let v = value.replace(/\D/g, "");
+    if (v.length > 2) v = v.slice(0, 2);
     return v;
 }

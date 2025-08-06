@@ -1,9 +1,12 @@
 import type React from "react"
-import { useState } from "react"
-import {FaChartBar,FaBox,FaUsers,FaUserTie,FaHotel,FaPlus,FaEdit,FaDollarSign,FaMoneyBill,FaBolt,FaShoppingCart,FaTimes,FaToggleOn,FaToggleOff,FaEye} from "react-icons/fa"
-import type { PackageFormData } from "./components/PackageForm"
+import { useEffect, useState } from "react"
+import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, FaToggleOn, FaToggleOff, FaEye } from "react-icons/fa"
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
+import { formatBRL } from "../../utils/currency"
+import { maskCPF, maskCurrency, maskPhone, unmaskCPF, unmaskCurrency } from "../../utils/masks"
+import LoadingModal from "../../components/LoadingModal"
+import { calculateEndDate } from "../../utils/dates"
 
 interface MenuItem {
     id: string
@@ -27,8 +30,10 @@ interface UserFormData {
     phone: string
     documentNumber: string
     birthDate: string
-    role: string
+    role: number
     isActive: boolean
+    password?: string
+    confirmPassword?: string
 }
 
 interface AffiliateFormData {
@@ -36,8 +41,7 @@ interface AffiliateFormData {
     tradeName: string
     cnpj: string
     stateRegistration: string
-    phone1: string
-    phone2: string
+    phone: string
     email: string
     cep: string
     street: string
@@ -52,6 +56,7 @@ interface AffiliateFormData {
 interface HotelFormData {
     name: string
     description: string
+    imageUrl?: string // URL da imagem, caso já exista
     street: string
     number: string
     neighborhood: string
@@ -62,6 +67,28 @@ interface HotelFormData {
     phone: string
     email: string
     isActive: boolean
+    star: number
+}
+
+interface PackageFormData {
+    travelPackageId: string;
+    title: string;
+    description: string;
+    originAddress: { city: string; country: string };
+    destinationAddress: { city: string; country: string };
+    image: File | null;
+    imageUrl?: string; // caso de edição, pode já ter uma imagem carregada no banco
+    duration: string;
+    maxPeople: string;
+    vehicleType: string;
+    startPrice: string;
+    promoDiscount: string;
+    isActive: boolean;
+    packageTax: string;
+    cupomDiscount: string;
+    discountValue: string;
+    startDate: string;
+    endDate: string;
 }
 
 interface ClientFormData {
@@ -79,194 +106,59 @@ const PRIMARY_COLOR = "#003194";
 const MODAL_OVERLAY_GRADIENT = `linear-gradient(135deg, rgba(0, 49, 148, 0.9), rgba(247, 126, 40, 0.9))`;
 
 function AdminDashboard() {
+    const [isLoading, setIsLoading] = useState(true);
+    const [promoActive, setPromoActive] = useState(false);
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
 
-    // Form states
-    const [packageForm, setPackageForm] = useState<PackageFormData>({
-        title: "",
-        description: "",
-        originCity: "",
-        originCountry: "",
-        destinationCity: "",
-        destinationCountry: "",
-        image: null,
-        duration: "",
-        maxPeople: "",
-        vehicleType: "",
-        originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
-        selectedHotels: [],
-        isActive: true,
-    })
+    // Funções utilitárias para buscar dados específicos, ao clicar no botão de visualizar ou editar da tabela
+    function getPackageById(packageId: number) {
+        return allPackages.find((p: any) => p.travelPackageId === packageId);
+    }
 
-    const [userForm, setUserForm] = useState<UserFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        role: "Cliente",
-        isActive: true
-    })
+    function getUserById(userId: number) {
+        return allUsers.find((u: any) => u.userId === userId);
+    }
 
-    // Adicione um novo estado para controlar o modal de edição
+    function getAffiliateById(affiliateId: number) {
+        return allAffiliates.find((a: any) => a.affiliateId === affiliateId);
+    }
+
+    function getHotelById(hotelId: number) {
+        return allHotels.find((h: any) => h.hotelId === hotelId);
+    }
+
+    function getClientById(clientId: number) {
+        return allClients.find((c: any) => c.userId === clientId);
+    }
+
+    // Adicione um novo estado para controlar o modal de Criação de PACOTES E USUARIOS
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
-    
-    // Estado para o formulário de edição
-    const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
-        title: "",
-        description: "",
-        originCity: "",
-        originCountry: "",
-        destinationCity: "",
-        destinationCountry: "",
-        image: null,
-        duration: "",
-        maxPeople: "",
-        vehicleType: "",
-        originalPrice: "",
-        packageFee: "",
-        discountCoupon: "",
-        selectedHotels: [],
-        isActive: true,
-    });
-
-    // Estados para edição de usuários
-    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<TableData | null>(null);
-    const [editUserForm, setEditUserForm] = useState<UserFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        role: "Cliente",
-        isActive: true
-    });
-
-    // Estados para edição de afiliados
-    const [isEditAffiliateModalOpen, setIsEditAffiliateModalOpen] = useState(false);
-    const [editingAffiliate, setEditingAffiliate] = useState<TableData | null>(null);
-    const [editAffiliateForm, setEditAffiliateForm] = useState<AffiliateFormData>({
-        corporateName: "",
-        tradeName: "",
-        cnpj: "",
-        stateRegistration: "",
-        phone1: "",
-        phone2: "",
-        email: "",
-        cep: "",
-        street: "",
-        number: "",
-        neighborhood: "",
-        city: "",
-        state: "",
-        country: "",
-        isActive: true
-    });
-
-    // Estados para edição de hotéis
-    const [isEditHotelModalOpen, setIsEditHotelModalOpen] = useState(false);
-    const [editingHotel, setEditingHotel] = useState<TableData | null>(null);
-    const [editHotelForm, setEditHotelForm] = useState<HotelFormData>({
-        name: "",
-        description: "",
-        street: "",
-        number: "",
-        neighborhood: "",
-        city: "",
-        cep: "",
-        state: "",
-        country: "",
-        phone: "",
-        email: "",
-        isActive: true
-    });
-
-    // Estados para edição de clientes
-    const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
-    const [editingClient, setEditingClient] = useState<TableData | null>(null);
-    const [editClientForm, setEditClientForm] = useState<ClientFormData>({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        documentNumber: "",
-        birthDate: "",
-        isActive: true
-    });
-
-    const menuItems: MenuItem[] = [
-        { id: "dashboard", label: "Dashboard", icon: <FaChartBar style={{ color: "white", fill: "white" }} /> },
-        { id: "pacotes", label: "Pacotes", icon: <FaBox style={{ color: "white", fill: "white" }} /> },
-        { id: "afiliados", label: "Afiliados", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
-        { id: "hoteis", label: "Hotéis", icon: <FaHotel style={{ color: "white", fill: "white" }} /> },
-        { id: "clientes", label: "Clientes", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
-        { id: "usuarios", label: "Usuários Adm", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
-    ]
-
-    // Estado para os dados das tabelas
-    const [sampleData, setSampleData] = useState<Record<string, TableData[]>>({
-        pacotes: [
-            { id: 1, name: "Pacote Praia Deluxe", status: "Ativo", date: "2024-01-15", value: "R$ 1.200", remainingSlots: 8 },
-            { id: 2, name: "Pacote Montanha Premium", status: "Ativo", date: "2024-01-10", value: "R$ 890", remainingSlots: 12 },
-            { id: 3, name: "Pacote Cidade Histórica", status: "Inativo", date: "2024-01-05", value: "R$ 650", remainingSlots: 15 },
-        ],
-        afiliados: [
-            { id: 1, name: "Viagens Premium Ltda", status: "Ativo", date: "2024-01-20", value: "11.222.333/0001-44" },
-            { id: 2, name: "Turismo Express Eireli", status: "Ativo", date: "2024-01-18", value: "22.333.444/0001-55" },
-            { id: 3, name: "Aventuras & Cia S.A.", status: "Pendente", date: "2024-01-15", value: "33.444.555/0001-66" },
-        ],
-        hoteis: [
-            { id: 1, name: "Grand Plaza Hotel", status: "Ativo", date: "2024-01-25", value: "Viagens Premium Ltda" },
-            { id: 2, name: "Hotel Copacabana", status: "Ativo", date: "2024-01-22", value: "Turismo Express Eireli" },
-            { id: 3, name: "Resort Paradise", status: "Manutenção", date: "2024-01-20", value: "Aventuras & Cia S.A." },
-        ],
-        clientes: [
-            { id: 1, name: "Maria Silva Santos", status: "Ativo", date: "2024-01-28", value: "maria.santos@email.com" },
-            { id: 2, name: "João Pedro Oliveira", status: "Ativo", date: "2024-01-26", value: "joao.oliveira@email.com" },
-            { id: 3, name: "Ana Carolina Lima", status: "Inativo", date: "2024-01-24", value: "ana.lima@email.com" },
-        ],
-        usuarios: [
-            { id: 1, name: "Ana Oliveira", status: "Ativo", date: "2024-01-28", value: "Admin" },
-            { id: 2, name: "Carlos Mendes", status: "Ativo", date: "2024-01-26", value: "Suporte" },
-            { id: 3, name: "Lucia Ferreira", status: "Inativo", date: "2024-01-24", value: "Admin" },
-        ],
-    });
-
-
-    const vehicleTypes = [
-        "Ônibus",
-        "Avião"
-    ]
-
     const openModal = (type: "pacotes" | "usuarios") => {
         setModalType(type)
         setIsModalOpen(true)
         // Reset forms
         if (type === "pacotes") {
             setPackageForm({
+                travelPackageId: "",
                 title: "",
                 description: "",
-                originCity: "",
-                originCountry: "",
-                destinationCity: "",
-                destinationCountry: "",
+                originAddress: { city: "", country: "" },
+                destinationAddress: { city: "", country: "" },
                 image: null,
                 duration: "",
                 maxPeople: "",
                 vehicleType: "",
-                originalPrice: "",
-                packageFee: "",
-                discountCoupon: "",
-                selectedHotels: [],
+                startPrice: "",
+                promoDiscount: "",
                 isActive: true,
+                // Novos campos
+                packageTax: "",
+                cupomDiscount: "",
+                discountValue: "",
+                startDate: "",
+                endDate: ""
             })
         } else {
             setUserForm({
@@ -276,323 +168,76 @@ function AdminDashboard() {
                 phone: "",
                 documentNumber: "",
                 birthDate: "",
-                role: "Cliente",
-                isActive: true
+                role: 2,
+                isActive: true,
+                password: "",
+                confirmPassword: ""
             })
         }
     }
-
     const closeModal = () => {
         setIsModalOpen(false)
         setModalType(null)
     }
 
-    const handlePackageSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-
-        const packageData = {
-            Title: packageForm.title,
-            Description: packageForm.description,
-            OriginCity: packageForm.originCity,
-            OriginCountry: packageForm.originCountry,
-            DestinationCity: packageForm.destinationCity,
-            DestinationCountry: packageForm.destinationCountry,
-            Image: packageForm.image,
-            Duration: packageForm.duration,
-            MaxPeople: parseInt(packageForm.maxPeople),
-            VehicleType: packageForm.vehicleType,
-            OriginalPrice: parseFloat(packageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
-            PackageFee: parseFloat(packageForm.packageFee.replace(/[^\d.,]/g, '').replace(',', '.')),
-            DiscountCoupon: packageForm.discountCoupon,
-            SelectedHotels: packageForm.selectedHotels,
-            IsActive: packageForm.isActive,
+    // Configuração genérica para ações de ativação/desativação de entidades
+    const statusActions: Record<string, {
+        activate: { url: (id: number) => string, method: "GET" | "PUT" | "POST" | "DELETE" },
+        deactivate: { url: (id: number) => string, method: "GET" | "PUT" | "POST" | "DELETE" }
+    }> = {
+        // AS AÇÕES DO PACOTE NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
+        pacotes: {
+            activate: { url: id => `http://localhost:5028/api/TravelPackage/activate?id=${id}`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/TravelPackage/deactivate?id=${id}`, method: "POST" }
+        },
+        afiliados: {
+            activate: { url: id => `http://localhost:5028/api/Affiliate/activate/${id}`, method: "PUT" },
+            deactivate: { url: id => `http://localhost:5028/api/Affiliate/deactivate/${id}`, method: "DELETE" }
+        },
+        hoteis: {
+            activate: { url: id => `http://localhost:5028/api/Hotel/${id}/activate`, method: "PUT" },
+            deactivate: { url: id => `http://localhost:5028/api/hotel/${id}/desactivate`, method: "DELETE" }
+        },
+        usuarios: {
+            activate: { url: id => `http://localhost:5028/api/admin/${id}/activate`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/admin/${id}`, method: "DELETE" }
+        },
+        clientes: {
+            activate: { url: id => `http://localhost:5028/api/user/activate/${id}`, method: "POST" },
+            deactivate: { url: id => `http://localhost:5028/api/user/${id}`, method: "DELETE" }
         }
-
-        console.log("Dados do pacote para envio:", packageData)
-        console.log("Hotéis selecionados:", packageForm.selectedHotels)
-
-        closeModal()
-    }
-
-    const handleUserSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        console.log("Novo usuário:", userForm)
-        closeModal()
-    }
-
-    const handleEditPackage = (packageItem: TableData) => {
-        setEditingPackage(packageItem);
-        
-        // Pré-preencher o formulário com os dados do pacote selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
-        setEditPackageForm({
-            title: packageItem.name,
-            description: `Descrição do ${packageItem.name}`,
-            originCity: "São Paulo",
-            originCountry: "Brasil",
-            destinationCity: "Rio de Janeiro",
-            destinationCountry: "Brasil",
-            image: null,
-            duration: "3 dias",
-            maxPeople: "4",
-            vehicleType: "Ônibus",
-            originalPrice: packageItem.value || "R$ 0,00",
-            packageFee: "R$ 50,00",
-            discountCoupon: "0",
-            selectedHotels: [1, 3], // Hotéis já selecionados como exemplo
-            isActive: packageItem.status === "Ativo",
-        });
-        
-        setIsEditModalOpen(true);
     };
-
-    const handleEditUser = (userItem: TableData) => {
-        setEditingUser(userItem);
-        
-        // Pré-preencher o formulário com os dados do usuário selecionado
-        // Como os dados da tabela são limitados, vamos simular dados mais completos
-        const [firstName, ...lastNameParts] = userItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-        
-        setEditUserForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: `${firstName.toLowerCase()}@example.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            role: "",
-            isActive: userItem.status === "Ativo",
-        });
-        
-        setIsEditUserModalOpen(true);
-    };
-
-    // Funções de visualização (somente leitura) para afiliados e hotéis
-    const handleViewAffiliate = (affiliateItem: TableData) => {
-        setEditingAffiliate(affiliateItem);
-        
-        // Pré-preencher o formulário com os dados do afiliado selecionado para visualização
-        const tradeName = affiliateItem.name.replace(/\s+(Ltda|Eireli|S\.A\.|ME|EPP)$/i, '').trim();
-        
-        setEditAffiliateForm({
-            corporateName: affiliateItem.name,
-            tradeName: tradeName,
-            cnpj: affiliateItem.value || "00.000.000/0001-00",
-            stateRegistration: "123456789",
-            phone1: "(11) 99999-9999",
-            phone2: "(11) 88888-8888",
-            email: `contato@${tradeName.toLowerCase().replace(/\s+/g, '')}.com`,
-            cep: "01234-567",
-            street: "Rua Exemplo",
-            number: "123",
-            neighborhood: "Centro",
-            city: "São Paulo",
-            state: "SP",
-            country: "Brasil",
-            isActive: affiliateItem.status === "Ativo",
-        });
-        
-        setIsEditAffiliateModalOpen(true);
-    };
-
-    const handleViewHotel = (hotelItem: TableData) => {
-        setEditingHotel(hotelItem);
-        
-        setEditHotelForm({
-            name: hotelItem.name,
-            description: `Descrição do ${hotelItem.name}`,
-            street: "Rua Exemplo",
-            number: "123",
-            neighborhood: "Copacabana",
-            city: "Rio de Janeiro",
-            cep: "22070-900",
-            state: "RJ",
-            country: "Brasil",
-            phone: "(21) 99999-9999",
-            email: `contato@${hotelItem.name.toLowerCase().replace(/\s+/g, '')}.com`,
-            isActive: hotelItem.status === "Ativo",
-        });
-        
-        setIsEditHotelModalOpen(true);
-    };
-
-    const handleViewClient = (clientItem: TableData) => {
-        setEditingClient(clientItem);
-        
-        // Pré-preencher o formulário com os dados do cliente selecionado para visualização
-        const [firstName, ...lastNameParts] = clientItem.name.split(' ');
-        const lastName = lastNameParts.join(' ');
-        
-        setEditClientForm({
-            firstName: firstName || "",
-            lastName: lastName || "",
-            email: clientItem.value || `${firstName.toLowerCase()}@email.com`,
-            phone: "(11) 99999-9999",
-            documentNumber: "000.000.000-00",
-            birthDate: "1990-01-01",
-            isActive: clientItem.status === "Ativo",
-        });
-        
-        setIsEditClientModalOpen(true);
-    };
-
-    const closeEditModal = () => {
-        setIsEditModalOpen(false)
-        setEditingPackage(null)
-        // Limpar o formulário de edição
-        setEditPackageForm({
-            title: "",
-            description: "",
-            originCity: "",
-            originCountry: "",
-            destinationCity: "",
-            destinationCountry: "",
-            image: null,
-            duration: "",
-            maxPeople: "",
-            vehicleType: "",
-            originalPrice: "",
-            packageFee: "",
-            discountCoupon: "",
-            selectedHotels: [],
-            isActive: true,
-        })
-    }
-
-    const closeEditUserModal = () => {
-        setIsEditUserModalOpen(false)
-        setEditingUser(null)
-        // Limpar o formulário de edição de usuário
-        setEditUserForm({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            documentNumber: "",
-            birthDate: "",
-            role: "",
-            isActive: true
-        })
-    }
-
-    const closeEditAffiliateModal = () => {
-        setIsEditAffiliateModalOpen(false)
-        setEditingAffiliate(null)
-        // Limpar o formulário de edição de afiliado
-        setEditAffiliateForm({
-            corporateName: "",
-            tradeName: "",
-            cnpj: "",
-            stateRegistration: "",
-            phone1: "",
-            phone2: "",
-            email: "",
-            cep: "",
-            street: "",
-            number: "",
-            neighborhood: "",
-            city: "",
-            state: "",
-            country: "",
-            isActive: true
-        })
-    }
-
-    const closeEditHotelModal = () => {
-        setIsEditHotelModalOpen(false)
-        setEditingHotel(null)
-        // Limpar o formulário de edição de hotel
-        setEditHotelForm({
-            name: "",
-            description: "",
-            street: "",
-            number: "",
-            neighborhood: "",
-            city: "",
-            cep: "",
-            state: "",
-            country: "",
-            phone: "",
-            email: "",
-            isActive: true
-        })
-    }
-
-    const closeEditClientModal = () => {
-        setIsEditClientModalOpen(false)
-        setEditingClient(null)
-        // Limpar o formulário de edição de cliente
-        setEditClientForm({
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            documentNumber: "",
-            birthDate: "",
-            isActive: true
-        })
-    }
-
     // Função genérica para alterar status de qualquer item
-    const handleToggleItemStatus = (item: TableData, tabId: string) => {
-        // Determinar o novo status baseado no status atual e tipo de entidade
-        let newStatus: string;
-        
-        // Lógica específica para cada tipo de entidade
-        switch (tabId) {
-            case "pacotes":
-            case "usuarios":
-            case "clientes":
-                // Para pacotes, usuários e clientes: Ativo <-> Inativo
-                newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
-                break;
-                
-            case "afiliados":
-                // Para afiliados: Ativo <-> Inativo (Pendente vira Ativo)
-                if (item.status === "Ativo") {
-                    newStatus = "Inativo";
-                } else {
-                    newStatus = "Ativo"; // Pendente ou Inativo vira Ativo
-                }
-                break;
-                
-            case "hoteis":
-                // Para hotéis: Ativo <-> Inativo (Manutenção vira Ativo)
-                if (item.status === "Ativo") {
-                    newStatus = "Inativo";
-                } else {
-                    newStatus = "Ativo"; // Manutenção ou Inativo vira Ativo
-                }
-                break;
-                
-            default:
-                // Padrão para qualquer outro tipo
-                newStatus = item.status === "Ativo" ? "Inativo" : "Ativo";
+    const handleToggleItemStatus = async (item: TableData, tabId: string) => {
+        const actionType = item.status === "Ativo" ? "deactivate" : "activate";
+        const config = statusActions[tabId]?.[actionType];
+        if (!config) {
+            alert("Ação não configurada para esta entidade.");
+            return;
         }
-        
-        // Atualizar o estado local
-        setSampleData(prevData => ({
-            ...prevData,
-            [tabId]: prevData[tabId].map((dataItem: TableData) => 
-                dataItem.id === item.id 
-                    ? { ...dataItem, status: newStatus }
-                    : dataItem
-            )
-        }));
 
-        // Log para debug com informações mais detalhadas
-        const entityName = {
-            pacotes: "pacote",
-            usuarios: "usuário", 
-            clientes: "cliente",
-            afiliados: "afiliado",
-            hoteis: "hotel"
-        }[tabId] || "item";
-        
-        console.log(`Alterando status do ${entityName} "${item.name}" (ID: ${item.id}) de "${item.status}" para "${newStatus}"`);
-    }
+        try {
+            const axios = (await import("axios")).default;
+            await axios.request({
+                url: config.url(item.id),
+                method: config.method
+            });
+            alert("Status alterado com sucesso!");
+            // Atualiza a tabela
+            switch (tabId) {
+                case "pacotes": fetchPackages(); break;
+                case "afiliados": fetchAffiliates(); break;
+                case "hoteis": fetchHotels(); break;
+                case "usuarios": fetchUsers(); break;
+                case "clientes": fetchClients(); break;
+            }
+        } catch (error) {
+            alert("Erro ao alterar status.");
+            console.error(error);
+        }
+    };
 
+    // Modais de Criação de PACOTES E USUARIOS ADMINS
     const renderModal = () => {
         if (!isModalOpen || !modalType) return null
 
@@ -627,9 +272,9 @@ function AdminDashboard() {
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {modalType === "pacotes" ? (
-                            <form onSubmit={handlePackageSubmit} className="space-y-6">
+                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6 flex flex-col gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Título do Pacote</label>
+                                    <label className="block text-sm font-medium text-gray-700">Título do Pacote</label>
                                     <input
                                         type="text"
                                         required
@@ -640,7 +285,7 @@ function AdminDashboard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <label className="block text-sm font-medium text-gray-700">Descrição</label>
                                     <textarea
                                         required
                                         value={packageForm.description}
@@ -651,66 +296,8 @@ function AdminDashboard() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Origem</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={packageForm.originCity}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originCity: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: São Paulo"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Origem</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={packageForm.originCountry}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originCountry: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: Brasil"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cidade de Destino</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={packageForm.destinationCity}
-                                            onChange={(e) => {
-                                                const newValue = e.target.value;
-                                                setPackageForm({ ...packageForm, destinationCity: newValue });
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: Rio de Janeiro"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Destino</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={packageForm.destinationCountry}
-                                            onChange={(e) => {
-                                                const newValue = e.target.value;
-                                                setPackageForm({ ...packageForm, destinationCountry: newValue });
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: Brasil"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mt-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload de Imagem</label>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Upload de Imagem</label>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -722,95 +309,236 @@ function AdminDashboard() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8"> {/* Aumenta o espaço acima desta seção */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Duração</label>
+                                        <label className="block text-sm font-medium text-gray-700">Cidade de Origem</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={packageForm.originAddress.city}
+                                            onChange={(e) => setPackageForm({ ...packageForm, originAddress: { ...packageForm.originAddress, city: e.target.value } })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: São Paulo"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">País de Origem</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={packageForm.originAddress.country}
+                                            onChange={(e) => setPackageForm({ ...packageForm, originAddress: { ...packageForm.originAddress, country: e.target.value } })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: Brasil"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Cidade de Destino</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={packageForm.destinationAddress.city}
+                                            onChange={(e) => {
+                                                const newValue = e.target.value;
+                                                setPackageForm({ ...packageForm, destinationAddress: { ...packageForm.destinationAddress, city: newValue } });
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: Rio de Janeiro"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">País de Destino</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={packageForm.destinationAddress.country}
+                                            onChange={(e) => {
+                                                const newValue = e.target.value;
+                                                setPackageForm({ ...packageForm, destinationAddress: { ...packageForm.destinationAddress, country: newValue } });
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: Brasil"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <h4 className="text-md font-medium text-blue-900 mb-2">Viagem</h4>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Duração em dias</label>
                                         <input
                                             type="text"
                                             required
                                             value={packageForm.duration}
-                                            onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
+                                            onChange={(e) => {
+                                                const duration = e.target.value;
+                                                let endDate = "";
+                                                if (packageForm.startDate && duration) {
+                                                    const start = new Date(packageForm.startDate);
+                                                    const days = parseInt(duration, 10);
+                                                    if (!isNaN(days)) {
+                                                        start.setDate(start.getDate() + days);
+                                                        endDate = start.toISOString().split("T")[0];
+                                                    }
+                                                }
+                                                setPackageForm({
+                                                    ...packageForm,
+                                                    duration,
+                                                    endDate
+                                                });
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
+                                        <label className="block text-sm font-medium text-gray-700">Data de partida</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={packageForm.startDate}
+                                            onChange={(e) => {
+                                                const startDate = e.target.value;
+                                                let endDate = "";
+                                                if (startDate && packageForm.duration) {
+                                                    const start = new Date(startDate);
+                                                    const days = parseInt(packageForm.duration, 10);
+                                                    if (!isNaN(days)) {
+                                                        start.setDate(start.getDate() + days);
+                                                        endDate = start.toISOString().split("T")[0];
+                                                    }
+                                                }
+                                                setPackageForm({
+                                                    ...packageForm,
+                                                    startDate,
+                                                    endDate
+                                                });
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+
+                                        <label className="block text-sm font-medium text-gray-700">Data de retorno</label>
+                                        <input
+                                            type="date"
+                                            disabled
+                                            value={packageForm.endDate}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{/* Aumenta o espaço acima desta seção */}
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Número de vagas</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    min="1"
+                                                    value={packageForm.maxPeople}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, maxPeople: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Tipo de Veículo</label>
+                                                <select
+                                                    required
+                                                    value={packageForm.vehicleType}
+                                                    onChange={(e) => setPackageForm({ ...packageForm, vehicleType: e.target.value })}
+                                                    className="w-full px-3 py-[11px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="">Selecione o veículo</option>
+                                                    {vehicleTypes.map((vehicle) => (
+                                                        <option key={vehicle} value={vehicle}>
+                                                            {vehicle}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Preço do pacote</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={packageForm.startPrice}
+                                                onChange={(e) => {
+                                                    setPackageForm({
+                                                        ...packageForm,
+                                                        startPrice: maskCurrency(e.target.value)
+                                                    });
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Ex: R$ 1.999,99"
+                                            />
+                                        </div>
+                                    </div>
+
+
+
+                                    <div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Taxa do Pacote</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={packageForm.packageTax}
+                                                onChange={(e) => setPackageForm({ ...packageForm, packageTax: maskCurrency(e.target.value) })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Ex: R$ 150,00"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Máx. Pessoas</label>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto promocional (opcional)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                step={1}
+                                                value={packageForm.promoDiscount || ""}
+                                                onChange={(e) => setPackageForm({ ...packageForm, promoDiscount: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Digite a porcentagem do desconto"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded-lg border border-blue-200">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto do cupom</label>
                                         <input
                                             type="number"
-                                            required
-                                            min="1"
-                                            value={packageForm.maxPeople}
-                                            onChange={(e) => setPackageForm({ ...packageForm, maxPeople: e.target.value })}
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            value={packageForm.discountValue}
+                                            onChange={(e) => setPackageForm({ ...packageForm, discountValue: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Digite a porcentagem do cupom"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Veículo</label>
-                                        <select
-                                            required
-                                            value={packageForm.vehicleType}
-                                            onChange={(e) => setPackageForm({ ...packageForm, vehicleType: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">Selecione o veículo</option>
-                                            {vehicleTypes.map((vehicle) => (
-                                                <option key={vehicle} value={vehicle}>
-                                                    {vehicle}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Preço Original</label>
+                                        <label className="block text-sm font-medium text-gray-700">Código do Cupom</label>
                                         <input
                                             type="text"
-                                            required
-                                            value={packageForm.originalPrice}
-                                            onChange={(e) => setPackageForm({ ...packageForm, originalPrice: e.target.value })}
+                                            value={packageForm.cupomDiscount}
+                                            onChange={(e) => setPackageForm({ ...packageForm, cupomDiscount: e.target.value.toUpperCase() })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 1.200,00"
+                                            placeholder="Ex: CARNAVAL10"
                                         />
                                     </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Taxa do Serviço</label>
-                                        <input
-                                            type="text"
-                                            value={packageForm.packageFee}
-                                            onChange={(e) => setPackageForm({ ...packageForm, packageFee: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Ex: R$ 50,00"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem do Cupom de Desconto (%)</label>
-                                        <select
-                                            value={packageForm.discountCoupon}
-                                            onChange={(e) => setPackageForm({ ...packageForm, discountCoupon: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="0">Sem desconto</option>
-                                            <option value="5">5%</option>
-                                            <option value="10">10%</option>
-                                            <option value="15">15%</option>
-                                            <option value="20">20%</option>
-                                            <option value="25">25%</option>
-                                            <option value="30">30%</option>
-                                            <option value="35">35%</option>
-                                            <option value="40">40%</option>
-                                            <option value="45">45%</option>
-                                            <option value="50">50%</option>
-                                        </select>
-                                    </div>
-                                    <div></div>
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-4 mb-4">
@@ -825,11 +553,9 @@ function AdminDashboard() {
                                         <span className="ml-3 text-sm font-medium text-gray-900">Pacote Ativo</span>
                                     </label>
                                 </div>
-
-
                             </form>
                         ) : (
-                            <form onSubmit={handleUserSubmit} className="space-y-10"> {/* Aumentado de 8 para 10 para mais espaço vertical */}
+                            <form id="user-form" onSubmit={handleUserSubmit} className="space-y-10"> {/* Aumentado de 8 para 10 para mais espaço vertical */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Nome e Sobrenome */}
                                     <div>
@@ -877,6 +603,31 @@ function AdminDashboard() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                                        <input
+                                            type="password"
+                                            required
+                                            value={userForm.password}
+                                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Digite a senha"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                                        <input
+                                            type="password"
+                                            required
+                                            value={userForm.confirmPassword}
+                                            onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Confirme a senha"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Telefone e CPF */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
@@ -884,7 +635,7 @@ function AdminDashboard() {
                                             type="tel"
                                             required
                                             value={userForm.phone}
-                                            onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                                            onChange={(e) => setUserForm({ ...userForm, phone: maskPhone(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="(11) 99999-9999"
                                         />
@@ -896,7 +647,7 @@ function AdminDashboard() {
                                             type="text"
                                             required
                                             value={userForm.documentNumber}
-                                            onChange={(e) => setUserForm({ ...userForm, documentNumber: e.target.value })}
+                                            onChange={(e) => setUserForm({ ...userForm, documentNumber: maskCPF(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="000.000.000-00"
                                         />
@@ -920,11 +671,16 @@ function AdminDashboard() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Função</label>
                                         <select
                                             value={userForm.role}
-                                            onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                                            onChange={(e) => {
+                                                const value = Number(e.target.value);
+                                                if (value === 2 || value === 3) {
+                                                    setUserForm({ ...userForm, role: value });
+                                                }
+                                            }}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
-                                            <option value="Administrador">Administrador</option>
-                                            <option value="Suporte">Suporte</option>
+                                            <option value={2}>Administrador</option>
+                                            <option value={3}>Suporte</option>
                                         </select>
                                     </div>
                                 </div>
@@ -969,7 +725,6 @@ function AdminDashboard() {
             </div>
         )
     }
-
     const renderEditModal = () => {
         if (!isEditModalOpen || !editingPackage) return null;
 
@@ -978,7 +733,7 @@ function AdminDashboard() {
                 {/* Overlay com gradiente */}
                 <div
                     className="fixed inset-0 bg-opacity-80"
-                    onClick={closeEditModal}
+                    onClick={closeEditPackageModal}
                     style={{
                         background: MODAL_OVERLAY_GRADIENT
                     }}
@@ -990,10 +745,10 @@ function AdminDashboard() {
                     <div className="p-6 border-b border-gray-200">
                         <div className="flex justify-between items-center">
                             <h2 className="text-xl font-bold text-gray-900">
-                                Editar Pacote: {editingPackage.name}
+                                Editar Pacote: {editPackageForm.title}
                             </h2>
                             <button
-                                onClick={closeEditModal}
+                                onClick={closeEditPackageModal}
                                 className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <FaTimes size={20} />
@@ -1003,9 +758,9 @@ function AdminDashboard() {
 
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                        <form id="edit-package-form" onSubmit={handleEditSubmit} className="space-y-8">
+                        <form id="edit-package-form" onSubmit={handleEditPackageSubmit} className="space-y-6 flex flex-col gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Título do Pacote</label>
+                                <label className="block text-sm font-medium text-gray-700">Título do Pacote</label>
                                 <input
                                     type="text"
                                     required
@@ -1016,7 +771,7 @@ function AdminDashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Descrição</label>
+                                <label className="block text-sm font-medium text-gray-700">Descrição</label>
                                 <textarea
                                     required
                                     value={editPackageForm.description}
@@ -1027,66 +782,19 @@ function AdminDashboard() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Cidade de Origem</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.originCity}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originCity: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: São Paulo"
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Imagem atual</label>
+                                {editPackageForm.imageUrl && (
+                                    <img
+                                        src={editPackageForm.imageUrl}
+                                        alt="Imagem do pacote"
+                                        className="w-full h-48 object-cover rounded border mb-4"
                                     />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">País de Origem</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.originCountry}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originCountry: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: Brasil"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Cidade de Destino</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.destinationCity}
-                                        onChange={(e) => {
-                                            const newValue = e.target.value;
-                                            setEditPackageForm({ ...editPackageForm, destinationCity: newValue });
-                                        }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: Rio de Janeiro"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">País de Destino</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editPackageForm.destinationCountry}
-                                        onChange={(e) => {
-                                            const newValue = e.target.value;
-                                            setEditPackageForm({ ...editPackageForm, destinationCountry: newValue });
-                                        }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: Brasil"
-                                    />
-                                </div>
+                                )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">Upload de Imagem</label>
+                                <label className="block text-sm font-medium text-gray-700">Upload de Imagem</label>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -1098,98 +806,266 @@ function AdminDashboard() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Duração</label>
+                                    <label className="block text-sm font-medium text-gray-700">Cidade de Origem</label>
                                     <input
                                         type="text"
                                         required
-                                        value={editPackageForm.duration}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, duration: e.target.value })}
+                                        value={editPackageForm.originAddress.city}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originAddress: { ...editPackageForm.originAddress, city: e.target.value } })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: São Paulo"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Máx. Pessoas</label>
+                                    <label className="block text-sm font-medium text-gray-700">País de Origem</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editPackageForm.originAddress.country}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originAddress: { ...editPackageForm.originAddress, country: e.target.value } })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: Brasil"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Cidade de Destino</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editPackageForm.destinationAddress.city}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setEditPackageForm({ ...editPackageForm, destinationAddress: { ...editPackageForm.destinationAddress, city: newValue } });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: Rio de Janeiro"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">País de Destino</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editPackageForm.destinationAddress.country}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setEditPackageForm({ ...editPackageForm, destinationAddress: { ...editPackageForm.destinationAddress, country: newValue } });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: Brasil"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h4 className="text-md font-medium mb-2">Viagem</h4>
+                                <h4 className="text-md font-medium text-gray-500 mb-2">As datas do pacote não podem ser alteradas.</h4>
+                                <div className="flex flex-col gap-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duração em dias</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={editPackageForm.duration}
+                                        onChange={(e) => {
+                                            const duration = e.target.value;
+                                            let endDate = "";
+                                            if (editPackageForm.startDate && duration) {
+                                                const start = new Date(editPackageForm.startDate);
+                                                const days = parseInt(duration, 10);
+                                                if (!isNaN(days)) {
+                                                    start.setDate(start.getDate() + days);
+                                                    endDate = start.toISOString().split("T")[0];
+                                                }
+                                            }
+                                            setEditPackageForm({
+                                                ...editPackageForm,
+                                                duration,
+                                                endDate
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <label className="block text-sm font-medium text-gray-700">Data de partida</label>
+                                    <input
+                                        type="date"
+                                        disabled
+                                        value={editPackageForm.startDate}
+                                        onChange={(e) => {
+                                            const startDate = e.target.value;
+                                            let endDate = "";
+                                            if (startDate && editPackageForm.duration) {
+                                                const start = new Date(startDate);
+                                                const days = parseInt(editPackageForm.duration, 10);
+                                                if (!isNaN(days)) {
+                                                    start.setDate(start.getDate() + days);
+                                                    endDate = start.toISOString().split("T")[0];
+                                                }
+                                            }
+                                            setEditPackageForm({
+                                                ...editPackageForm,
+                                                startDate,
+                                                endDate
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                    <label className="block text-sm font-medium text-gray-700">Data de retorno</label>
+                                    <input
+                                        type="date"
+                                        disabled
+                                        value={editPackageForm.endDate}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{/* Aumenta o espaço acima desta seção */}
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Número de vagas</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                value={editPackageForm.maxPeople}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, maxPeople: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Tipo de Veículo</label>
+                                            <select
+                                                required
+                                                value={editPackageForm.vehicleType}
+                                                onChange={(e) => setEditPackageForm({ ...editPackageForm, vehicleType: e.target.value })}
+                                                className="w-full px-3 py-[11px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <option value="">Selecione o veículo</option>
+                                                {vehicleTypes.map((vehicle) => (
+                                                    <option key={vehicle} value={vehicle}>
+                                                        {vehicle}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Preço do pacote</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editPackageForm.startPrice}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, startPrice: maskCurrency(e.target.value) })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: R$ 1.999,99"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Taxa do Pacote</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editPackageForm.packageTax}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, packageTax: maskCurrency(e.target.value) })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: R$ 150,00"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="col-span-2 2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem de desconto promocional (opcional)</label>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            value={editPackageForm.promoDiscount || ""}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, promoDiscount: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: 10"
+                                            disabled={!!promoActive}
+                                        />
+                                        {!promoActive ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => applyPackagePromotion(editPackageForm.travelPackageId, editPackageForm.promoDiscount)}
+                                                className={`px-4 py-2 rounded-md transition-colors w-full
+                                                ${!editPackageForm.promoDiscount || Number(editPackageForm.promoDiscount) <= 0 || isNaN(Number(editPackageForm.promoDiscount))
+                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                        : "bg-blue-600 text-white hover:bg-blue-700"
+                                                    }`
+                                                }
+                                                disabled={
+                                                    !editPackageForm.promoDiscount ||
+                                                    Number(editPackageForm.promoDiscount) <= 0 ||
+                                                    isNaN(Number(editPackageForm.promoDiscount))
+                                                }
+                                            >
+                                                APLICAR PROMOÇÃO
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <span className="text-green-600 font-medium py-2 w-full text-center">Promoção ativa</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePackagePromotion(editPackageForm.travelPackageId)}
+                                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors w-full"
+                                                >
+                                                    Remover promoção
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded-lg border border-blue-200">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto do cupom</label>
                                     <input
                                         type="number"
-                                        required
-                                        min="1"
-                                        value={editPackageForm.maxPeople}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, maxPeople: e.target.value })}
+                                        min={0}
+                                        max={100}
+                                        step={1}
+                                        value={editPackageForm.discountValue}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, discountValue: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Digite a porcentagem do cupom"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Tipo de Veículo</label>
-                                    <select
-                                        required
-                                        value={editPackageForm.vehicleType}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, vehicleType: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="">Selecione o veículo</option>
-                                        {vehicleTypes.map((vehicle) => (
-                                            <option key={vehicle} value={vehicle}>
-                                                {vehicle}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Preço Original</label>
+                                    <label className="block text-sm font-medium text-gray-700">Código do Cupom</label>
                                     <input
                                         type="text"
-                                        required
-                                        value={editPackageForm.originalPrice}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: e.target.value })}
+                                        value={editPackageForm.cupomDiscount}
+                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, cupomDiscount: e.target.value.toUpperCase() })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 1.200,00"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Taxa do Serviço</label>
-                                    <input
-                                        type="text"
-                                        value={editPackageForm.packageFee}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, packageFee: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: R$ 50,00"
+                                        placeholder="Ex: CARNAVAL10"
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">Porcentagem do Cupom de Desconto (%)</label>
-                                    <select
-                                        value={editPackageForm.discountCoupon}
-                                        onChange={(e) => setEditPackageForm({ ...editPackageForm, discountCoupon: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="0">Sem desconto</option>
-                                        <option value="5">5%</option>
-                                        <option value="10">10%</option>
-                                        <option value="15">15%</option>
-                                        <option value="20">20%</option>
-                                        <option value="25">25%</option>
-                                        <option value="30">30%</option>
-                                        <option value="35">35%</option>
-                                        <option value="40">40%</option>
-                                        <option value="45">45%</option>
-                                        <option value="50">50%</option>
-                                    </select>
-                                </div>
-                                <div></div>
-                            </div>
-
-                            <div className="pt-4">
+                            <div className="flex items-center gap-2 mt-4 mb-4">
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -1209,7 +1085,7 @@ function AdminDashboard() {
                         <div className="flex gap-4">
                             <button
                                 type="button"
-                                onClick={closeEditModal}
+                                onClick={closeEditPackageModal}
                                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                             >
                                 Cancelar
@@ -1229,7 +1105,358 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de edição de usuários
+    // Form states
+    // Estados para criação e edição de pacotes
+    const [editingPackage, setEditingPackage] = useState<TableData | null>(null);
+    const [packageForm, setPackageForm] = useState<PackageFormData>({
+        travelPackageId: "",
+        title: "",
+        description: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
+        image: null,
+        duration: "",
+        maxPeople: "",
+        vehicleType: "",
+        startPrice: "",
+        promoDiscount: "",
+        isActive: true,
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        startDate: "",
+        endDate: ""
+    })
+    const [editPackageForm, setEditPackageForm] = useState<PackageFormData>({
+        travelPackageId: "",
+        title: "",
+        description: "",
+        originAddress: { city: "", country: "" },
+        destinationAddress: { city: "", country: "" },
+        image: null,
+        imageUrl: "",
+        duration: "",
+        maxPeople: "",
+        vehicleType: "",
+        startPrice: "",
+        promoDiscount: "",
+        isActive: true,
+        packageTax: "",
+        cupomDiscount: "",
+        discountValue: "",
+        startDate: "",
+        endDate: ""
+    });
+    const handlePackageSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        // Validações básicas
+        if (!packageForm.title.trim()) {
+            alert("Por favor, insira um título para o pacote");
+            return;
+        }
+        if (!packageForm.description.trim()) {
+            alert("Por favor, insira uma descrição para o pacote");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("userId", "1");
+        formData.append("title", packageForm.title.trim());
+        formData.append("description", packageForm.description.trim());
+        if (packageForm.image) {
+            formData.append("image", packageForm.image); // arquivo real
+        }
+        formData.append("vehicleType", packageForm.vehicleType);
+        formData.append("duration", packageForm.duration);
+        formData.append("maxPeople", packageForm.maxPeople);
+        formData.append("originalPrice", String(unmaskCurrency(packageForm.startPrice)));
+        formData.append("manualDiscountValue", packageForm.promoDiscount);
+        formData.append("packageTax", String(unmaskCurrency(packageForm.packageTax)));
+        formData.append("cupomDiscount", packageForm.cupomDiscount);
+        formData.append("discountValue", packageForm.discountValue);
+        formData.append("originAddress.City", packageForm.originAddress.city);
+        formData.append("originAddress.Country", packageForm.originAddress.country);
+        formData.append("destinationAddress.City", packageForm.destinationAddress.city);
+        formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
+        formData.append("startDate", packageForm.startDate);
+        formData.append("isAvailable", packageForm.isActive ? "true" : "false");
+
+        for (let pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            alert(`Pacote "${packageForm.title}" criado com sucesso!`);
+            fetchPackages();
+            closeModal();
+        } catch (error: any) {
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
+            alert("Erro ao criar pacote. Verifique os dados e tente novamente.");
+            console.error(error);
+        }
+    }
+    const handleEditPackage = (packageItem: TableData) => {
+        const selectedPackage = getPackageById(packageItem.id);
+        if (!selectedPackage) return;
+
+        setEditingPackage(selectedPackage);
+
+        // Calcula se há promoção
+        let promoActive = false;
+
+        if (
+            selectedPackage.manualDiscountValue &&
+            selectedPackage.manualDiscountValue !== "0"
+        ) {
+            promoActive = true;
+        }
+
+        setPromoActive(promoActive);
+
+        setEditPackageForm({
+            travelPackageId: selectedPackage.travelPackageId || "",
+            title: selectedPackage.title || "",
+            description: selectedPackage.description || "",
+            originAddress: {
+                city: selectedPackage.originCity || "",
+                country: selectedPackage.originCountry || ""
+            },
+            destinationAddress: {
+                city: selectedPackage.destinationCity || "",
+                country: selectedPackage.destinationCountry || ""
+            },
+            image: null,
+            imageUrl: selectedPackage.imageUrl || "",
+            duration: selectedPackage.duration || "",
+            maxPeople: selectedPackage.maxPeople || "",
+            vehicleType: selectedPackage.vehicleType || "",
+            startPrice: formatBRL(selectedPackage.originalPrice) || "",
+            promoDiscount: selectedPackage.manualDiscountValue || "",
+            isActive: selectedPackage.isActive || "",
+            // Novos campos
+            packageTax: formatBRL(selectedPackage.packageTax) || "",
+            cupomDiscount: selectedPackage.cupomDiscount || "",
+            discountValue: selectedPackage.discountValue || "",
+            startDate: selectedPackage.startDate && selectedPackage.startDate !== "0001-01-01T00:00:00"
+                ? selectedPackage.startDate.split("T")[0]
+                : "",
+            endDate: selectedPackage.startDate && selectedPackage.duration
+                ? calculateEndDate(
+                    selectedPackage.startDate.split("T")[0],
+                    selectedPackage.duration
+                )
+                : "",
+        });
+
+        setIsEditModalOpen(true);
+    };
+    const closeEditPackageModal = () => {
+        setIsEditModalOpen(false)
+        setEditingPackage(null)
+        // Limpar o formulário de edição
+        setEditPackageForm({
+            travelPackageId: "",
+            title: "",
+            description: "",
+            originAddress: { city: "", country: "" },
+            destinationAddress: { city: "", country: "" },
+            image: null,
+            imageUrl: "",
+            duration: "",
+            maxPeople: "",
+            vehicleType: "",
+            startPrice: "",
+            promoDiscount: "",
+            isActive: true,
+            packageTax: "",
+            cupomDiscount: "",
+            discountValue: "",
+            startDate: "",
+            endDate: ""
+        })
+    }
+    // Função para lidar com o envio do formulário de edição
+    const handleEditPackageSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!editingPackage) return
+        // Monta o objeto conforme esperado pela API
+        const formData = new FormData();
+        if (editPackageForm.travelPackageId) {
+            formData.append("travelPackageId", editPackageForm.travelPackageId); // arquivo real
+        };
+        formData.append("title", editPackageForm.title);
+        formData.append("description", editPackageForm.description);
+        if (editPackageForm.image) {
+            formData.append("imageFile", editPackageForm.image); // arquivo real
+        };
+        if (editPackageForm.imageUrl) {
+            formData.append("imageUrl", editPackageForm.imageUrl); // arquivo real
+        };
+        formData.append("vehicleType", editPackageForm.vehicleType);
+        formData.append("duration", editPackageForm.duration);
+        formData.append("maxPeople", editPackageForm.maxPeople);
+        formData.append("originalPrice", String(unmaskCurrency(editPackageForm.startPrice)));
+        formData.append("packageTax", String(unmaskCurrency(editPackageForm.packageTax)));
+        if (editPackageForm.cupomDiscount) {
+            formData.append("cupomDiscount", editPackageForm.cupomDiscount);
+        }
+        if (editPackageForm.discountValue) {
+            formData.append("discountValue", editPackageForm.discountValue);
+        }
+        if (editPackageForm.promoDiscount) {
+            formData.append("manualDiscountValue", editPackageForm.promoDiscount);
+        }
+        formData.append("originCity", editPackageForm.originAddress.city);
+        formData.append("originCountry", editPackageForm.originAddress.country);
+        formData.append("destinationCity", editPackageForm.destinationAddress.city);
+        formData.append("destinationCountry", editPackageForm.destinationAddress.country);
+        formData.append("startDate", editPackageForm.startDate);
+        formData.append("endDate", editPackageForm.endDate);
+        formData.append("isAvailable", editPackageForm.isActive ? "true" : "false");
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put("http://localhost:5028/api/TravelPackage/update", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            alert("Pacote atualizado com sucesso!");
+            closeEditPackageModal();
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao atualizar pacote.");
+            console.error(error);
+        }
+    };
+
+    async function applyPackagePromotion(travelPackageId: string, discountPercentage: string) {
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(
+                `http://localhost:5028/api/TravelPackage/discount?travelPackageId=${travelPackageId}&discountPercentage=${discountPercentage}`
+            );
+            alert("Promoção aplicada com sucesso!");
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao aplicar promoção.");
+            console.error(error);
+        }
+    }
+
+    // Função para remover promoção de um pacote
+    async function removePackagePromotion(travelPackageId: string) {
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(
+                `http://localhost:5028/api/TravelPackage/discount/deactivate?travelPackageId=${travelPackageId}`
+            );
+            alert("Promoção removida com sucesso!");
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao remover promoção.");
+            console.error(error);
+        }
+    }
+
+    // Estados para edição de usuários
+    const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+    const [userForm, setUserForm] = useState<UserFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        role: 2,
+        isActive: true,
+        password: "",
+        confirmPassword: ""
+    })
+    const [editingUser, setEditingUser] = useState<TableData | null>(null);
+    const [editUserForm, setEditUserForm] = useState<UserFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        role: 2,
+        isActive: true,
+        password: "",
+        confirmPassword: ""
+    });
+    const handleUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Monta o objeto conforme esperado pela API
+        const newUser = {
+            firstName: userForm.firstName,
+            lastName: userForm.lastName,
+            email: userForm.email,
+            password: userForm.password,
+            phone: userForm.phone,
+            documentNumber: unmaskCPF(userForm.documentNumber),
+            birthDate: userForm.birthDate,
+            role: userForm.role
+        };
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.post("http://localhost:5028/api/admin/register", newUser);
+            alert("Usuário criado com sucesso!");
+            closeModal();
+            fetchUsers(); // Atualiza a lista de usuários
+        } catch (error) {
+            alert("Erro ao criar usuário. Verifique os dados e tente novamente.");
+            console.error(error);
+        }
+    }
+    const handleEditUser = (userItem: TableData) => {
+
+        const selectedUser = getUserById(userItem.id);
+        if (!selectedUser) return;
+
+        setEditingUser(userItem);
+
+        setEditUserForm({
+            firstName: selectedUser.firstName || "",
+            lastName: selectedUser.lastName || "",
+            email: selectedUser.email || "",
+            phone: maskPhone(selectedUser.phone) || "",
+            documentNumber: maskCPF(selectedUser.documentNumber) || "",
+            birthDate: selectedUser.birthDate ? selectedUser.birthDate.split("T")[0] : "",
+            role: selectedUser.role,
+            isActive: selectedUser.isActive,
+        });
+
+        setIsEditUserModalOpen(true);
+    };
+    const closeEditUserModal = () => {
+        setIsEditUserModalOpen(false)
+        setEditingUser(null)
+        // Limpar o formulário de edição de usuário
+        setEditUserForm({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            documentNumber: "",
+            birthDate: "",
+            role: 2,
+            isActive: true
+        })
+    }
     const renderEditUserModal = () => {
         if (!isEditUserModalOpen || !editingUser) return null;
 
@@ -1308,6 +1535,29 @@ function AdminDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                                    <input
+                                        type="password"
+                                        value={editUserForm.password}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Digite a nova senha (opcional)"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                                    <input
+                                        type="password"
+                                        value={editUserForm.confirmPassword}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, confirmPassword: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Confirme a nova senha"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Telefone e CPF */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
@@ -1315,7 +1565,7 @@ function AdminDashboard() {
                                         type="tel"
                                         required
                                         value={editUserForm.phone}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, phone: e.target.value })}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, phone: maskPhone(e.target.value) })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="(11) 99999-9999"
                                     />
@@ -1327,7 +1577,7 @@ function AdminDashboard() {
                                         type="text"
                                         required
                                         value={editUserForm.documentNumber}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, documentNumber: e.target.value })}
+                                        onChange={(e) => setEditUserForm({ ...editUserForm, documentNumber: maskCPF(e.target.value) })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="000.000.000-00"
                                     />
@@ -1351,11 +1601,16 @@ function AdminDashboard() {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Função</label>
                                     <select
                                         value={editUserForm.role}
-                                        onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value })}
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            if (value === 2 || value === 3) {
+                                                setUserForm({ ...userForm, role: value });
+                                            }
+                                        }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="Administrador">Administrador</option>
-                                        <option value="Suporte">Suporte</option>
+                                        <option value={2}>Administrador</option>
+                                        <option value={3}>Suporte</option>
                                     </select>
                                 </div>
                             </div>
@@ -1399,8 +1654,150 @@ function AdminDashboard() {
             </div>
         );
     };
+    const handleEditUserSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    // Modal de edição de afiliados
+        if (!editingUser) return;
+
+        // Validação: campos obrigatórios
+        if (
+            !editUserForm.firstName.trim() ||
+            !editUserForm.lastName.trim() ||
+            !editUserForm.email.trim() ||
+            !editUserForm.phone.trim() ||
+            !editUserForm.documentNumber.trim() ||
+            !editUserForm.birthDate
+        ) {
+            alert("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        // Validação: e-mail
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(editUserForm.email)) {
+            alert("Digite um e-mail válido.");
+            return;
+        }
+
+        // Validação: telefone (mínimo 10 dígitos)
+        const phoneDigits = editUserForm.phone.replace(/\D/g, "");
+        if (phoneDigits.length < 11) {
+            alert("Digite um telefone válido.");
+            return;
+        }
+
+        // Validação: CPF (mínimo 11 dígitos)
+        const cpfDigits = editUserForm.documentNumber.replace(/\D/g, "");
+        if (cpfDigits.length < 11) {
+            alert("Digite um CPF válido.");
+            return;
+        }
+
+        // Validação: data de nascimento não pode ser futura
+        if (new Date(editUserForm.birthDate) > new Date()) {
+            alert("A data de nascimento não pode ser futura.");
+            return;
+        }
+
+        // Validação: senha e confirmação (se preenchidas)
+        if (editUserForm.password || editUserForm.confirmPassword) {
+            if (editUserForm.password !== editUserForm.confirmPassword) {
+                alert("As senhas não coincidem.");
+                return;
+            }
+            // Validação: senha forte (mínimo 6 caracteres)
+            if (editUserForm.password && editUserForm.password.length < 6) {
+                alert("A senha deve ter pelo menos 6 caracteres.");
+                return;
+            }
+        }
+
+        const updatedUserData = {
+            userId: editingUser.id,
+            email: editUserForm.email,
+            firstName: editUserForm.firstName,
+            lastName: editUserForm.lastName,
+            birthDate: editUserForm.birthDate,
+            password: editUserForm.password,
+        };
+
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
+            alert("Usuário atualizado com sucesso!");
+            closeEditUserModal();
+            fetchUsers(); // Atualiza a tabela de usuários após edição
+        } catch (error) {
+            alert("Erro ao atualizar usuário.");
+            console.error(error);
+        }
+    };
+
+    // Estados para edição de afiliados
+    const [isEditAffiliateModalOpen, setIsEditAffiliateModalOpen] = useState(false);
+    const [editingAffiliate, setEditingAffiliate] = useState<TableData | null>(null);
+    const [editAffiliateForm, setEditAffiliateForm] = useState<AffiliateFormData>({
+        corporateName: "",
+        tradeName: "",
+        cnpj: "",
+        stateRegistration: "",
+        phone: "",
+        email: "",
+        cep: "",
+        street: "",
+        number: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        country: "",
+        isActive: true
+    });
+    const handleViewAffiliate = (affiliateItem: TableData) => {
+        const selectedAffiliate = getAffiliateById(affiliateItem.id);
+        if (!selectedAffiliate) return;
+
+        setEditingAffiliate(selectedAffiliate);
+
+        setEditAffiliateForm({
+            corporateName: selectedAffiliate.name || "",
+            tradeName: selectedAffiliate.companyName || "",
+            cnpj: selectedAffiliate.cnpj || "",
+            stateRegistration: selectedAffiliate.stateRegistration || "",
+            phone: selectedAffiliate.phone || "",
+            email: selectedAffiliate.email || "",
+            cep: selectedAffiliate.address?.zipCode || "",
+            street: selectedAffiliate.address?.streetName || "",
+            number: selectedAffiliate.address?.addressNumber || "",
+            neighborhood: selectedAffiliate.address?.neighborhood || "",
+            city: selectedAffiliate.address?.city || "",
+            state: selectedAffiliate.address?.state || "",
+            country: selectedAffiliate.address?.country || "",
+            isActive: selectedAffiliate.isActive,
+        });
+
+        setIsEditAffiliateModalOpen(true);
+    };
+    const closeEditAffiliateModal = () => {
+        setIsEditAffiliateModalOpen(false)
+        setEditingAffiliate(null)
+        // Limpar o formulário de edição de afiliado
+        setEditAffiliateForm({
+            corporateName: "",
+            tradeName: "",
+            cnpj: "",
+            stateRegistration: "",
+            phone: "",
+            email: "",
+            cep: "",
+            street: "",
+            number: "",
+            neighborhood: "",
+            city: "",
+            state: "",
+            country: "",
+            isActive: true
+        })
+    }
     const renderEditAffiliateModal = () => {
         if (!isEditAffiliateModalOpen || !editingAffiliate) return null;
 
@@ -1485,21 +1882,10 @@ function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone 1</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
                                     <input
                                         type="tel"
-                                        value={editAffiliateForm.phone1}
-                                        readOnly
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                                        style={{ color: "#003194" }}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone 2 (Opcional)</label>
-                                    <input
-                                        type="tel"
-                                        value={editAffiliateForm.phone2}
+                                        value={editAffiliateForm.phone}
                                         readOnly
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
                                         style={{ color: "#003194" }}
@@ -1604,11 +1990,10 @@ function AdminDashboard() {
                             <div className="flex items-center gap-2 mt-6">
                                 <div className="flex items-center">
                                     <span className="text-sm font-medium text-gray-700">Status: </span>
-                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                                        editAffiliateForm.isActive 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${editAffiliateForm.isActive
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}>
                                         {editAffiliateForm.isActive ? 'Ativo' : 'Inativo'}
                                     </span>
                                 </div>
@@ -1633,7 +2018,72 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de edição de hotéis
+    // Estados para edição de hotéis
+    const [isEditHotelModalOpen, setIsEditHotelModalOpen] = useState(false);
+    const [editingHotel, setEditingHotel] = useState<TableData | null>(null);
+    const [editHotelForm, setEditHotelForm] = useState<HotelFormData>({
+        name: "",
+        description: "",
+        imageUrl: "",
+        street: "",
+        number: "",
+        neighborhood: "",
+        city: "",
+        cep: "",
+        state: "",
+        country: "",
+        phone: "",
+        email: "",
+        isActive: true,
+        star: 0
+    });
+    const handleViewHotel = (item: TableData) => {
+
+        const hotel = getHotelById(item.id);
+        if (!hotel) return;
+
+        setEditingHotel(hotel);
+
+        setEditHotelForm({
+            name: hotel.name,
+            description: hotel.description || "",
+            imageUrl: hotel.imageUrl || "",
+            street: hotel.address?.streetName || "",
+            number: hotel.address?.addressNumber || "",
+            neighborhood: hotel.address?.neighborhood || "",
+            city: hotel.address?.city || "",
+            cep: hotel.address?.zipCode || "",
+            state: hotel.address?.state || "",
+            country: hotel.address?.country || "",
+            phone: hotel.contactNumber || "",
+            email: hotel.affiliate?.email || "",
+            isActive: hotel.isActive,
+            star: hotel.star || 1
+        });
+
+        setIsEditHotelModalOpen(true);
+    };
+    const closeEditHotelModal = () => {
+        setIsEditHotelModalOpen(false)
+        setEditingHotel(null)
+        // Limpar o formulário de edição de hotel
+        setEditHotelForm({
+            name: "",
+            description: "",
+            street: "",
+            number: "",
+            neighborhood: "",
+            city: "",
+            cep: "",
+            state: "",
+            country: "",
+            phone: "",
+            email: "",
+            isActive: true,
+            star: 1
+        })
+    }
+    // Modal de edição
     const renderEditHotelModal = () => {
         if (!isEditHotelModalOpen || !editingHotel) return null;
 
@@ -1688,6 +2138,19 @@ function AdminDashboard() {
                                     style={{ color: "#003194" }}
                                     rows={3}
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Imagem do Hotel</label>
+                                {editHotelForm?.imageUrl ? (
+                                    <img
+                                        src={editHotelForm.imageUrl}
+                                        alt="Imagem do Hotel"
+                                        className="w-full h-48 object-cover rounded border mb-4"
+                                    />
+                                ) : (
+                                    <span className="text-xs text-gray-500">Sem imagem cadastrada</span>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1795,16 +2258,25 @@ function AdminDashboard() {
                                         style={{ color: "#003194" }}
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Estrelas</label>
+                                    <input
+                                        value={editHotelForm.star}
+                                        readOnly
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                                        style={{ color: "#003194" }}
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-2 mt-6">
                                 <div className="flex items-center">
                                     <span className="text-sm font-medium text-gray-700">Status: </span>
-                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                                        editHotelForm.isActive 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${editHotelForm.isActive
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}>
                                         {editHotelForm.isActive ? 'Ativo' : 'Inativo'}
                                     </span>
                                 </div>
@@ -1829,9 +2301,55 @@ function AdminDashboard() {
         );
     };
 
-    // Modal de visualização de clientes
+    // Estados para edição de clientes
+    const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+    const [editingClient, setEditingClient] = useState<TableData | null>(null);
+    const [editClientForm, setEditClientForm] = useState<ClientFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        documentNumber: "",
+        birthDate: "",
+        isActive: true
+    });
+    const handleViewClient = (clientItem: TableData) => {
+        const selectedClient = getClientById(clientItem.id);
+        if (!selectedClient) return;
+
+        setEditingClient(selectedClient);
+
+        setEditClientForm({
+            firstName: selectedClient.firstName || "",
+            lastName: selectedClient.lastName || "",
+            email: selectedClient.email || "",
+            phone: selectedClient.phone || "",
+            documentNumber: selectedClient.documentNumber || "",
+            birthDate: selectedClient.birthDate ? selectedClient.birthDate.split("T")[0] : "",
+            isActive: selectedClient.isActive,
+        });
+
+        setIsEditClientModalOpen(true);
+    };
+    const closeEditClientModal = () => {
+        setIsEditClientModalOpen(false)
+        setEditingClient(null)
+        // Limpar o formulário de edição de cliente
+        setEditClientForm({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            documentNumber: "",
+            birthDate: "",
+            isActive: true
+        })
+    }
+    // Modal de edição
     const renderEditClientModal = () => {
         if (!isEditClientModalOpen || !editingClient) return null;
+        console.log("Rendering Edit Client Modal", editingClient);
+
 
         return (
             <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -1936,11 +2454,10 @@ function AdminDashboard() {
 
                             <div className="flex items-center gap-2">
                                 <label className="text-sm font-medium text-gray-700">Status:</label>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    editClientForm.isActive 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${editClientForm.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
                                     {editClientForm.isActive ? 'Ativo' : 'Inativo'}
                                 </span>
                             </div>
@@ -1964,6 +2481,24 @@ function AdminDashboard() {
         );
     };
 
+    const menuItems: MenuItem[] = [
+        { id: "dashboard", label: "Dashboard", icon: <FaChartBar style={{ color: "white", fill: "white" }} /> },
+        { id: "usuarios", label: "Administradores", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
+        { id: "pacotes", label: "Pacotes", icon: <FaBox style={{ color: "white", fill: "white" }} /> },
+        { id: "afiliados", label: "Afiliados", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
+        { id: "hoteis", label: "Hotéis", icon: <FaHotel style={{ color: "white", fill: "white" }} /> },
+        { id: "clientes", label: "Clientes", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
+    ]
+
+    const vehicleTypes = [
+        "Ônibus",
+        "Avião",
+        "Trem",
+        "Navio",
+        "Barco"
+    ]
+
+    // Renderiza os dashboards principais
     const renderDashboard = () => (
         <div className="space-y-6">
             {/* Metrics Cards */}
@@ -2051,11 +2586,11 @@ function AdminDashboard() {
                             {/* Grid lines for better visualization */}
                             <defs>
                                 <pattern id="grid" width="16.67" height="20" patternUnits="userSpaceOnUse">
-                                    <path d="M 16.67 0 L 0 0 0 20" fill="none" stroke="#f3f4f6" strokeWidth="0.5"/>
+                                    <path d="M 16.67 0 L 0 0 0 20" fill="none" stroke="#f3f4f6" strokeWidth="0.5" />
                                 </pattern>
                             </defs>
                             <rect width="100" height="100" fill="url(#grid)" />
-                            
+
                             {/* Line connecting all points */}
                             <polyline
                                 fill="none"
@@ -2065,7 +2600,7 @@ function AdminDashboard() {
                                 points="8.33,74 25,59 41.67,69 58.33,49 75,54 91.67,39"
                             />
                         </svg>
-                        
+
                         {/* Data points positioned responsively */}
                         {[
                             { x: 8.33, y: 74, value: "R$ 15.2k", month: "Jan" },
@@ -2090,7 +2625,7 @@ function AdminDashboard() {
                                 </div>
                             </div>
                         ))}
-                        
+
                         {/* Month labels at bottom */}
                         <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 px-2">
                             {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"].map((month) => (
@@ -2115,7 +2650,7 @@ function AdminDashboard() {
                             { name: "Pacote Romântico", percentage: 68 },
                         ].map((pacote, index) => (
                             <div key={index}>
-                                <div className="flex justify-between text-sm mb-1 mb-2">
+                                <div className="flex justify-between text-sm mb-2">
                                     <span className="text-gray-700">{pacote.name}</span>
                                     <span className="text-gray-900 font-medium">{pacote.percentage}%</span>
                                 </div>
@@ -2135,15 +2670,15 @@ function AdminDashboard() {
                         <div className="relative w-32 h-32">
                             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                                 {/* Base circle (cinza) */}
-                                <circle 
-                                    cx="50" 
-                                    cy="50" 
-                                    r="40" 
-                                    fill="none" 
-                                    stroke="#E5E7EB" 
-                                    strokeWidth="8" 
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke="#E5E7EB"
+                                    strokeWidth="8"
                                 />
-                                
+
                                 {/* Confirmadas (verde) - 56.25% */}
                                 <circle
                                     cx="50"
@@ -2155,7 +2690,7 @@ function AdminDashboard() {
                                     strokeDasharray="251.2"
                                     strokeDashoffset="0"
                                 />
-                                
+
                                 {/* Pendentes (laranja) - 28.75% */}
                                 <circle
                                     cx="50"
@@ -2167,7 +2702,7 @@ function AdminDashboard() {
                                     strokeDasharray="251.2"
                                     strokeDashoffset="-141.3"  // 251.2 * 0.5625 (offset do verde)
                                 />
-                                
+
                                 {/* Canceladas (vermelho) - 15% */}
                                 <circle
                                     cx="50"
@@ -2210,8 +2745,28 @@ function AdminDashboard() {
         </div>
     )
 
+    // Estado para os dados das tabelas
     const renderTable = (tabId: string) => {
-        const data = sampleData[tabId] || []
+        if (isLoading) {
+            return (
+                <div className="flex justify-center items-center h-64">
+                    <span className="text-lg font-medium text-gray-700">Carregando dados...</span>
+                </div>
+            );
+        }
+
+        const data =
+            tabId === "pacotes"
+                ? packagesTableData
+                : tabId === "afiliados"
+                    ? affiliatesTableData
+                    : tabId === "hoteis"
+                        ? hotelsTableData
+                        : tabId === "clientes"
+                            ? clientsTableData
+                            : tabId === "usuarios"
+                                ? usersTableData
+                                : [];
         const tabLabels: Record<string, string> = {
             pacotes: "Pacotes",
             afiliados: "Afiliados",
@@ -2220,58 +2775,58 @@ function AdminDashboard() {
             usuarios: "Usuários",
         }
         const tabsWithCreateButton = ["pacotes", "usuarios"]
-        
+
         // Definir colunas específicas para cada tipo de tabela
         const getTableHeaders = () => {
             if (tabId === "pacotes") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Pacote</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor do Pacote</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vagas Restantes</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome do Pacote</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Valor do Pacote</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Vagas Restantes</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "afiliados") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razão Social</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNPJ</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Razão Social</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">CNPJ</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "hoteis") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Hotel</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Afiliado</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                    </tr>     
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome do Hotel</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Afiliado</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
+                    </tr>
                 );
             } else if (tabId === "clientes") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Email</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "usuarios") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Colaborador</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else {
@@ -2285,12 +2840,14 @@ function AdminDashboard() {
                     </tr>
                 );
             }
-        };        const getTableRow = (item: TableData) => {
+        }; const getTableRow = (item: TableData) => {
+            const actionCellClass = "px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium space-x-2 md:space-x-3 flex gap-1 xs:flex-row items-center justify-center w-[100px}";
+            const actionButtonClass = "p-1 md:p-3 rounded-lg hover:opacity-80 text-base md:text-lg w-10 h-10 md:w-12 md:h-12 flex items-center justify-center";
             if (tabId === "pacotes") {
                 return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-8 py-5 whitespace-nowrap">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900 truncate max-w-[120px]">{item.name}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap">
                             <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Ativo"
                                     ? "bg-green-100 text-green-800"
@@ -2302,28 +2859,27 @@ function AdminDashboard() {
                                 {item.status}
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500 font-medium text-green-600">{item.value}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500">{item.date}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-green-600">{item.value}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500 hidden sm:table-cell">
                             <span className={`font-medium ${item.remainingSlots && item.remainingSlots <= 5 ? 'text-red-600' : 'text-blue-600'}`}>
                                 {item.remainingSlots || 0} vagas
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium space-x-3">
+                        <td className={actionCellClass}>
                             <button
                                 onClick={() => handleEditPackage(item)}
-                                className="p-2 rounded hover:opacity-80"
+                                className={actionButtonClass}
                                 style={{ color: "#003194", backgroundColor: "rgba(0, 49, 148, 0.1)" }}
                             >
                                 <FaEdit />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${
-                                    item.status === "Ativo" 
-                                    ? "text-red-600 hover:bg-red-50" 
+                                className={`${actionButtonClass} ${item.status === "Ativo"
+                                    ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
-                                }`}
+                                    }`}
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
@@ -2334,8 +2890,8 @@ function AdminDashboard() {
             } else {
                 return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-8 py-5 whitespace-nowrap">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900 truncate max-w-[120px]">{item.name}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap">
                             <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Ativo"
                                     ? "bg-green-100 text-green-800"
@@ -2347,9 +2903,9 @@ function AdminDashboard() {
                                 {item.status}
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.value}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium space-x-3">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500">{item.date}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500 hidden sm:table-cell">{item.value}</td>
+                        <td className={actionCellClass}>
                             <button
                                 onClick={() => {
                                     if (tabId === "usuarios") {
@@ -2364,19 +2920,18 @@ function AdminDashboard() {
                                         handleEditPackage(item);
                                     }
                                 }}
-                                className="p-2 rounded hover:opacity-80"
+                                className={actionButtonClass}
                                 style={{ color: "#003194", backgroundColor: "rgba(0, 49, 148, 0.1)" }}
                                 title={tabId === "afiliados" || tabId === "hoteis" || tabId === "clientes" ? "Visualizar" : "Editar"}
                             >
                                 {(tabId === "afiliados" || tabId === "hoteis" || tabId === "clientes") ? <FaEye /> : <FaEdit />}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${
-                                    item.status === "Ativo" 
-                                    ? "text-red-600 hover:bg-red-50" 
+                                className={`${actionButtonClass} ${item.status === "Ativo"
+                                    ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
-                                }`}
+                                    }`}
                                 title={`Clique para ${item.status === "Ativo" ? "desativar" : "ativar"}`}
                             >
                                 {item.status === "Ativo" ? <FaToggleOn /> : <FaToggleOff />}
@@ -2386,16 +2941,16 @@ function AdminDashboard() {
                 );
             }
         };
-        
+
         return (
             <div className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-white">{tabLabels[tabId]}</h2>
+                <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center mb-4 gap-2">
+                    <h2 className="text-lg md:text-2xl font-bold text-white">{tabLabels[tabId]}</h2>
                     {/* Só mostra o botão se a aba atual está na lista de abas permitidas */}
                     {tabsWithCreateButton.includes(tabId) && (
                         <button
                             onClick={() => openModal(tabId as "pacotes" | "usuarios")}
-                            className="bg-white px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2 mb-3 gap-2"
+                            className="bg-white px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2 mb-3 gap-2 text-xs md:text-base"
                             style={{ color: "#003194" }}
                         >
                             <FaPlus />
@@ -2403,8 +2958,8 @@ function AdminDashboard() {
                         </button>
                     )}
                 </div>
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <table className="w-full">
+                <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
                         <thead className="bg-gray-50">
                             {getTableHeaders()}
                         </thead>
@@ -2417,95 +2972,172 @@ function AdminDashboard() {
         )
     }
 
-    // Função para lidar com o envio do formulário de edição
-    const handleEditSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!editingPackage) return;
+    // USUÁRIOS ADMINS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [usersTableData, setUsersTableData] = useState<TableData[]>([]);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
 
-        // Aqui você implementaria a lógica para salvar as alterações do pacote
-        const updatedPackageData = {
-            id: editingPackage.id,
-            Title: editPackageForm.title,
-            Description: editPackageForm.description,
-            OriginCity: editPackageForm.originCity,
-            OriginCountry: editPackageForm.originCountry,
-            DestinationCity: editPackageForm.destinationCity,
-            DestinationCountry: editPackageForm.destinationCountry,
-            Image: editPackageForm.image,
-            Duration: editPackageForm.duration,
-            MaxPeople: parseInt(editPackageForm.maxPeople),
-            VehicleType: editPackageForm.vehicleType,
-            OriginalPrice: parseFloat(editPackageForm.originalPrice.replace(/[^\d.,]/g, '').replace(',', '.')),
-            PackageFee: editPackageForm.packageFee ? parseFloat(editPackageForm.packageFee.replace(/[^\d.,]/g, '').replace(',', '.')) : null,
-            DiscountCoupon: editPackageForm.discountCoupon,
-            SelectedHotels: editPackageForm.selectedHotels,
-            IsActive: editPackageForm.isActive,
-        };
+    async function fetchUsers() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/admin");
+            setAllUsers(response.data);
+            const mapped = response.data.map((user: any) => ({
+                id: user.userId,
+                name: `${user.firstName} ${user.lastName}`,
+                status: user.isActive ? "Ativo" : "Inativo",
+                date: user.createdAt ? user.createdAt.split("T")[0] : "",
+                value: user.role === 2 ? "Administrador" : user.role === 3 ? "Suporte" : "Cliente"
+            }));
+            setUsersTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar usuários administrativos:", err);
+        }
+    }
 
-        console.log('Salvando alterações do pacote:', updatedPackageData);
-        console.log('Hotéis selecionados:', editPackageForm.selectedHotels);
-        
-        // Após salvar, feche o modal e limpe o estado
-        closeEditModal();
-    };
+    // PACOTES -> Carrega os dados da API e mapeia para o formato da tabela
+    const [packagesTableData, setPackagesTableData] = useState<TableData[]>([]);
+    const [allPackages, setAllPackages] = useState<any[]>([]);
 
-    // Função para lidar com o envio do formulário de edição de usuários
-    const handleEditUserSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!editingUser) return;
+    async function fetchPackages() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/TravelPackage/list");
+            setAllPackages(response.data);
+            const mapped = response.data.map((pkg: any) => ({
+                id: pkg.travelPackageId,
+                name: pkg.title,
+                status: pkg.isActive ? "Ativo" : "Inativo",
+                date: pkg.createdAt ? pkg.createdAt.split("T")[0] : "",
+                value: formatBRL(pkg.price),
+                remainingSlots: pkg.maxPeople - pkg.confirmedPeople || "",
+            }));
+            setPackagesTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar pacotes:", err);
+        }
+    }
 
-        // Aqui você implementaria a lógica para salvar as alterações do usuário
-        const updatedUserData = {
-            id: editingUser.id,
-            FirstName: editUserForm.firstName,
-            LastName: editUserForm.lastName,
-            Email: editUserForm.email,
-            Phone: editUserForm.phone,
-            DocumentNumber: editUserForm.documentNumber,
-            BirthDate: editUserForm.birthDate,
-            Role: editUserForm.role,
-            IsActive: editUserForm.isActive,
-        };
+    // AFILIADOS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [affiliatesTableData, setAffiliatesTableData] = useState<TableData[]>([]);
+    const [allAffiliates, setAllAffiliates] = useState<any[]>([]);
+    async function fetchAffiliates() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/Affiliate/all-adm");
+            setAllAffiliates(response.data);
+            const mapped = response.data.map((aff: any) => ({
+                id: aff.affiliateId,
+                name: aff.companyName || aff.name,
+                status: aff.isActive ? "Ativo" : "Inativo",
+                date: aff.createdAt ? aff.createdAt.split("T")[0] : "",
+                value: aff.cnpj
+            }));
+            setAffiliatesTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar afiliados:", err);
+        }
+    }
 
-        console.log('Salvando alterações do usuário:', updatedUserData);
-        
-        // Após salvar, feche o modal e limpe o estado
-        closeEditUserModal();
-    };
+    // HOTEIS -> Carrega os dados da API e mapeia para o formato da tabela
+    const [hotelsTableData, setHotelsTableData] = useState<TableData[]>([]);
+    const [allHotels, setAllHotels] = useState<any[]>([]);
+
+    async function fetchHotels() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/Hotel");
+            setAllHotels(response.data);
+            const mapped = response.data.map((hotel: any) => ({
+                id: hotel.hotelId,
+                name: hotel.name,
+                status: hotel.isActive ? "Ativo" : "Inativo",
+                date: hotel.createdAt ? hotel.createdAt.split("T")[0] : "",
+                value: hotel.affiliateId ? hotel.affiliate?.name : "",
+            }));
+            setHotelsTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar hotéis:", err);
+        }
+    }
+
+    // CLIENTES -> Carrega os dados da API e mapeia para o formato da tabela
+    const [clientsTableData, setClientsTableData] = useState<TableData[]>([]);
+    const [allClients, setAllClients] = useState<any[]>([]);
+
+    async function fetchClients() {
+        try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get("http://localhost:5028/api/User");
+            setAllClients(response.data);
+            const mapped = response.data.map((user: any) => ({
+                id: user.userId,
+                name: `${user.firstName} ${user.lastName}`,
+                status: user.isActive ? "Ativo" : "Inativo",
+                date: user.createdAt ? user.createdAt.split("T")[0] : "",
+                value: user.email
+            }));
+            setClientsTableData(mapped);
+        } catch (err) {
+            console.error("Erro ao buscar clientes:", err);
+        }
+    }
+
+    useEffect(() => {
+        async function fetchAll() {
+            setIsLoading(true);
+
+            await Promise.all([
+                fetchPackages(),
+                fetchAffiliates(),
+                fetchHotels(),
+                fetchClients(),
+                fetchUsers()
+            ]);
+
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 1000); // aguarda 1 segundo antes de fechar o loading
+        }
+        fetchAll();
+    }, []);
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            {/* Sidebar */}
-            <Sidebar 
-                menuItems={menuItems}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-            />
+        <>
+            <LoadingModal isOpen={isLoading} />
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <Header activeTab={activeTab} />
-                
-                {/* Content */}
-                <main
-                    className="flex-1 overflow-auto p-10"
-                    style={{ background: `linear-gradient(to bottom right, #003194, #003194)` }}
-                >
-                    {activeTab === "dashboard" ? renderDashboard() : renderTable(activeTab)}
-                </main>
+            {/* Main Dashboard Layout */}
+            <div className="flex h-screen bg-gray-100">
+                {/* Sidebar */}
+                <Sidebar
+                    menuItems={menuItems}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
+
+                {/* Main Content */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    {/* Header */}
+                    <Header activeTab={activeTab} />
+
+                    {/* Content */}
+                    <main
+                        className="flex-1 overflow-auto p-10"
+                        style={{ background: `linear-gradient(to bottom right, #003194, #003194)` }}
+                    >
+                        {activeTab === "dashboard" ? renderDashboard() : renderTable(activeTab)}
+                    </main>
+                </div>
+
+                {/* Modals */}
+                {renderModal()}
+                {renderEditModal()}
+                {renderEditUserModal()}
+                {renderEditAffiliateModal()}
+                {renderEditHotelModal()}
+                {renderEditClientModal()}
             </div>
 
-            {/* Modals */}
-            {renderModal()}
-            {renderEditModal()}
-            {renderEditUserModal()}
-            {renderEditAffiliateModal()}
-            {renderEditHotelModal()}
-            {renderEditClientModal()}
-        </div>
+        </>
     )
 }
 
