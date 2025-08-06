@@ -6,6 +6,7 @@ import Header from "./components/Header"
 import { formatBRL } from "../../utils/currency"
 import { maskCPF, maskCurrency, maskPhone, unmaskCPF, unmaskCurrency } from "../../utils/masks"
 import LoadingModal from "../../components/LoadingModal"
+import { calculateEndDate } from "../../utils/dates"
 
 interface MenuItem {
     id: string
@@ -70,7 +71,7 @@ interface HotelFormData {
 }
 
 interface PackageFormData {
-    travelPackageId?: string;
+    travelPackageId: string;
     title: string;
     description: string;
     originAddress: { city: string; country: string };
@@ -80,7 +81,8 @@ interface PackageFormData {
     duration: string;
     maxPeople: string;
     vehicleType: string;
-    originalPrice: string;
+    startPrice: string;
+    promoDiscount: string;
     isActive: boolean;
     packageTax: string;
     cupomDiscount: string;
@@ -105,6 +107,7 @@ const MODAL_OVERLAY_GRADIENT = `linear-gradient(135deg, rgba(0, 49, 148, 0.9), r
 
 function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
+    const [promoActive, setPromoActive] = useState(false);
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
@@ -138,6 +141,7 @@ function AdminDashboard() {
         // Reset forms
         if (type === "pacotes") {
             setPackageForm({
+                travelPackageId: "",
                 title: "",
                 description: "",
                 originAddress: { city: "", country: "" },
@@ -146,7 +150,8 @@ function AdminDashboard() {
                 duration: "",
                 maxPeople: "",
                 vehicleType: "",
-                originalPrice: "",
+                startPrice: "",
+                promoDiscount: "",
                 isActive: true,
                 // Novos campos
                 packageTax: "",
@@ -267,7 +272,7 @@ function AdminDashboard() {
                     {/* Área com Scroll */}
                     <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {modalType === "pacotes" ? (
-                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6 flex flex-col gap-3">
+                            <form id="package-form" onSubmit={handlePackageSubmit} className="space-y-6 flex flex-col gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Título do Pacote</label>
                                     <input
@@ -456,18 +461,18 @@ function AdminDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-2">
                                     <div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Preço do pacote</label>
                                             <input
                                                 type="text"
                                                 required
-                                                value={packageForm.originalPrice}
+                                                value={packageForm.startPrice}
                                                 onChange={(e) => {
                                                     setPackageForm({
                                                         ...packageForm,
-                                                        originalPrice: maskCurrency(e.target.value)
+                                                        startPrice: maskCurrency(e.target.value)
                                                     });
                                                 }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -475,6 +480,8 @@ function AdminDashboard() {
                                             />
                                         </div>
                                     </div>
+
+
 
                                     <div>
                                         <div>
@@ -489,11 +496,27 @@ function AdminDashboard() {
                                             />
                                         </div>
                                     </div>
+
+                                    <div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto promocional (opcional)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                step={1}
+                                                value={packageForm.promoDiscount || ""}
+                                                onChange={(e) => setPackageForm({ ...packageForm, promoDiscount: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Digite a porcentagem do desconto"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded-lg border border-blue-200">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Porcentagem do Cupom de Desconto (%)</label>
+                                        <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto do cupom</label>
                                         <input
                                             type="number"
                                             min={0}
@@ -942,8 +965,8 @@ function AdminDashboard() {
                                         <input
                                             type="text"
                                             required
-                                            value={editPackageForm.originalPrice}
-                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, originalPrice: maskCurrency(e.target.value) })}
+                                            value={editPackageForm.startPrice}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, startPrice: maskCurrency(e.target.value) })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Ex: R$ 1.999,99"
                                         />
@@ -965,9 +988,58 @@ function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="col-span-2 2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Porcentagem de desconto promocional (opcional)</label>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            step={1}
+                                            value={editPackageForm.promoDiscount || ""}
+                                            onChange={(e) => setEditPackageForm({ ...editPackageForm, promoDiscount: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: 10"
+                                            disabled={!!promoActive}
+                                        />
+                                        {!promoActive ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => applyPackagePromotion(editPackageForm.travelPackageId, editPackageForm.promoDiscount)}
+                                                className={`px-4 py-2 rounded-md transition-colors w-full
+                                                ${!editPackageForm.promoDiscount || Number(editPackageForm.promoDiscount) <= 0 || isNaN(Number(editPackageForm.promoDiscount))
+                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                        : "bg-blue-600 text-white hover:bg-blue-700"
+                                                    }`
+                                                }
+                                                disabled={
+                                                    !editPackageForm.promoDiscount ||
+                                                    Number(editPackageForm.promoDiscount) <= 0 ||
+                                                    isNaN(Number(editPackageForm.promoDiscount))
+                                                }
+                                            >
+                                                APLICAR PROMOÇÃO
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <span className="text-green-600 font-medium py-2 w-full text-center">Promoção ativa</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePackagePromotion(editPackageForm.travelPackageId)}
+                                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors w-full"
+                                                >
+                                                    Remover promoção
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded-lg border border-blue-200">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Porcentagem do Cupom de Desconto (%)</label>
+                                    <label className="block text-sm font-medium text-gray-700">Porcentagem de desconto do cupom</label>
                                     <input
                                         type="number"
                                         min={0}
@@ -1045,7 +1117,8 @@ function AdminDashboard() {
         duration: "",
         maxPeople: "",
         vehicleType: "",
-        originalPrice: "",
+        startPrice: "",
+        promoDiscount: "",
         isActive: true,
         packageTax: "",
         cupomDiscount: "",
@@ -1064,7 +1137,8 @@ function AdminDashboard() {
         duration: "",
         maxPeople: "",
         vehicleType: "",
-        originalPrice: "",
+        startPrice: "",
+        promoDiscount: "",
         isActive: true,
         packageTax: "",
         cupomDiscount: "",
@@ -1094,7 +1168,10 @@ function AdminDashboard() {
         formData.append("vehicleType", packageForm.vehicleType);
         formData.append("duration", packageForm.duration);
         formData.append("maxPeople", packageForm.maxPeople);
-        formData.append("originalPrice", unmaskCurrency(packageForm.originalPrice));
+        formData.append("originalPrice", unmaskCurrency(packageForm.startPrice));
+        if (packageForm.promoDiscount) {
+            formData.append("manualDiscountValue", packageForm.promoDiscount);
+        }
         formData.append("packageTax", unmaskCurrency(packageForm.packageTax));
         formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
         formData.append("discountValue", packageForm.discountValue);
@@ -1103,8 +1180,6 @@ function AdminDashboard() {
         formData.append("destinationAddress.City", packageForm.destinationAddress.city);
         formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
         formData.append("packageSchedule.StartDate", packageForm.startDate);
-        formData.append("packageSchedule.EndDate", packageForm.endDate);
-        formData.append("packageSchedule.IsFixed", "true");
         formData.append("packageSchedule.IsAvailable", packageForm.isActive ? "true" : "false");
 
         for (let pair of formData.entries()) {
@@ -1136,6 +1211,18 @@ function AdminDashboard() {
 
         setEditingPackage(selectedPackage);
 
+        // Calcula se há promoção
+        let promoActive = false;
+
+        if (
+            selectedPackage.manualDiscountValue &&
+            selectedPackage.manualDiscountValue !== "0"
+        ) {
+            promoActive = true;
+        }
+
+        setPromoActive(promoActive);
+
         setEditPackageForm({
             travelPackageId: selectedPackage.travelPackageId || "",
             title: selectedPackage.title || "",
@@ -1153,17 +1240,21 @@ function AdminDashboard() {
             duration: selectedPackage.duration || "",
             maxPeople: selectedPackage.maxPeople || "",
             vehicleType: selectedPackage.vehicleType || "",
-            originalPrice: formatBRL(selectedPackage.originalPrice) || "",
+            startPrice: formatBRL(selectedPackage.price) || "",
+            promoDiscount: selectedPackage.manualDiscountValue || "",
             isActive: selectedPackage.isActive || "",
             // Novos campos
             packageTax: formatBRL(selectedPackage.packageTax) || "",
             cupomDiscount: selectedPackage.cupomDiscount || "",
             discountValue: selectedPackage.discountValue || "",
-            startDate: selectedPackage.packageSchedule && selectedPackage.packageSchedule.startDate && selectedPackage.packageSchedule.startDate !== "0001-01-01T00:00:00"
-                ? selectedPackage.packageSchedule.startDate.split("T")[0]
+            startDate: selectedPackage.startDate && selectedPackage.startDate !== "0001-01-01T00:00:00"
+                ? selectedPackage.startDate.split("T")[0]
                 : "",
-            endDate: selectedPackage.packageSchedule && selectedPackage.packageSchedule.endDate
-                ? selectedPackage.packageSchedule.endDate.split("T")[0]
+            endDate: selectedPackage.startDate && selectedPackage.duration
+                ? calculateEndDate(
+                    selectedPackage.startDate.split("T")[0],
+                    selectedPackage.duration
+                )
                 : "",
         });
 
@@ -1184,7 +1275,8 @@ function AdminDashboard() {
             duration: "",
             maxPeople: "",
             vehicleType: "",
-            originalPrice: "",
+            startPrice: "",
+            promoDiscount: "",
             isActive: true,
             packageTax: "",
             cupomDiscount: "",
@@ -1197,8 +1289,7 @@ function AdminDashboard() {
     const handleEditPackageSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!editingPackage) return;
-
+        if (!editingPackage) return
         // Monta o objeto conforme esperado pela API
         const formData = new FormData();
         if (editPackageForm.travelPackageId) {
@@ -1215,7 +1306,7 @@ function AdminDashboard() {
         formData.append("vehicleType", editPackageForm.vehicleType);
         formData.append("duration", editPackageForm.duration);
         formData.append("maxPeople", editPackageForm.maxPeople);
-        formData.append("originalPrice", unmaskCurrency(editPackageForm.originalPrice));
+        formData.append("price", unmaskCurrency(editPackageForm.startPrice));
         formData.append("packageTax", unmaskCurrency(editPackageForm.packageTax));
         formData.append("cupomDiscount", editPackageForm.cupomDiscount);
         formData.append("discountValue", editPackageForm.discountValue);
@@ -1227,7 +1318,6 @@ function AdminDashboard() {
         formData.append("packageSchedule.EndDate", editPackageForm.endDate);
         formData.append("packageSchedule.IsFixed", "true");
         formData.append("packageSchedule.IsAvailable", editPackageForm.isActive ? "true" : "false");
-
 
         try {
             const axios = (await import("axios")).default;
@@ -1244,6 +1334,35 @@ function AdminDashboard() {
             console.error(error);
         }
     };
+
+    async function applyPackagePromotion(travelPackageId: string, discountPercentage: string) {
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(
+                `http://localhost:5028/api/TravelPackage/discount?travelPackageId=${travelPackageId}&discountPercentage=${discountPercentage}`
+            );
+            alert("Promoção aplicada com sucesso!");
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao aplicar promoção.");
+            console.error(error);
+        }
+    }
+
+    // Função para remover promoção de um pacote
+    async function removePackagePromotion(travelPackageId: string) {
+        try {
+            const axios = (await import("axios")).default;
+            await axios.put(
+                `http://localhost:5028/api/TravelPackage/discount/deactivate?travelPackageId=${travelPackageId}`
+            );
+            alert("Promoção removida com sucesso!");
+            fetchPackages();
+        } catch (error) {
+            alert("Erro ao remover promoção.");
+            console.error(error);
+        }
+    }
 
     // Estados para edição de usuários
     const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -2910,7 +3029,7 @@ function AdminDashboard() {
     useEffect(() => {
         async function fetchAll() {
             setIsLoading(true);
-            
+
             await Promise.all([
                 fetchPackages(),
                 fetchAffiliates(),
@@ -2920,8 +3039,8 @@ function AdminDashboard() {
             ]);
 
             setTimeout(() => {
-            setIsLoading(false);
-        }, 1000); // aguarda 1 segundo antes de fechar o loading
+                setIsLoading(false);
+            }, 1000); // aguarda 1 segundo antes de fechar o loading
         }
         fetchAll();
     }, []);
