@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import apiClient from "../../../utils/apiClient";
-import { validateEmail, validatePassword, validatePhone, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
+import { validateEmail, validatePassword, validatePhoneUnmasked, validateCNPJUnmasked, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
 import { maskPhone, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
@@ -365,13 +365,13 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
             case "telefone1":
             case "telefone2":
             case "contactNumber":
-                if (!validatePhone(value)) error = "Telefone inválido.";
+                if (!validatePhoneUnmasked(value)) error = "Telefone inválido.";
                 break;
             case "zipCode":
                 if (!validateCEP(value)) error = "CEP inválido.";
                 break;
             case "cnpj":
-                if (!validateCNPJ(value)) error = "CNPJ inválido.";
+                if (!validateCNPJUnmasked(value)) error = "CNPJ inválido.";
                 break;
             case "cadastur":
                 // Cadastur é apenas para visualização, não validar
@@ -423,9 +423,9 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         if (!validateRequired(form.state)) newErrors.state = "Campo obrigatório.";
         if (!validateRequired(form.country)) newErrors.country = "Campo obrigatório.";
         if (!validateRequired(form.imagemHotel)) newErrors.imagemHotel = "Campo obrigatório.";
-        if (!validateCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
+        if (!validateCNPJUnmasked(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
         if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
-        if (!validatePhone(form.contactNumber)) newErrors.contactNumber = "Telefone inválido.";
+        if (!validatePhoneUnmasked(form.contactNumber)) newErrors.contactNumber = "Telefone inválido.";
         if (!validateCEP(form.zipCode)) newErrors.zipCode = "CEP inválido.";
         
         const starsValue = parseInt(form.estrelas);
