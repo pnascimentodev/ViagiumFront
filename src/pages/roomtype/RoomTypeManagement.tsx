@@ -103,6 +103,7 @@ interface RoomType {
     maxOccupancy: number
     numberOfRoomsAvailable: number
     numberOfRoomsReserved: number // Mock - não vem da API ainda
+    actualAvailableRooms?: number // Mock - quartos realmente disponíveis (não reservados)
     createdAt: string
     isActive: boolean
     deletedAt: string | null
@@ -148,11 +149,19 @@ export default function RoomTypeManagement() {
             const response = await apiClient.get('http://localhost:5028/api/roomtype');
 
             // Adiciona dados mockados para campos não disponíveis na API
-            const roomTypesWithMockData = response.data.map((roomType: any) => ({
-                ...roomType,
-                // Mock para quartos reservados (não vem da API ainda)
-                numberOfRoomsReserved: Math.floor(Math.random() * (roomType.numberOfRoomsAvailable || 5))
-            }));
+            const roomTypesWithMockData = response.data.map((roomType: any) => {
+                const totalRooms = roomType.numberOfRoomsAvailable || 5;
+                // Mock para quartos reservados - entre 0% e 70% dos quartos disponíveis
+                const numberOfRoomsReserved = Math.floor(totalRooms * Math.random() * 0.7);
+                // Calcular quartos realmente disponíveis (não reservados)
+                const actualAvailableRooms = totalRooms - numberOfRoomsReserved;
+
+                return {
+                    ...roomType,
+                    numberOfRoomsReserved,
+                    actualAvailableRooms
+                };
+            });
 
             setRoomTypes(roomTypesWithMockData);
 
@@ -1441,10 +1450,10 @@ export default function RoomTypeManagement() {
 
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div className="flex items-center gap-2">
-                                        <FaBed className="w-4 h-4 text-orange-600" />
+                                        <FaBed className="w-4 h-4 text-green-600" />
                                         <div>
-                                            <p className="text-xs text-gray-600">Quartos disp.</p>
-                                            <p className="font-semibold text-orange-600 text-sm">{roomType.numberOfRoomsAvailable}</p>
+                                            <p className="text-xs text-gray-600">Disponíveis</p>
+                                            <p className="font-semibold text-green-600 text-sm">{roomType.actualAvailableRooms || (roomType.numberOfRoomsAvailable - roomType.numberOfRoomsReserved)}</p>
                                         </div>
                                     </div>
 
