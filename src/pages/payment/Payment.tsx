@@ -57,7 +57,7 @@ export default function Payment() {
 
     const location = useLocation();
     const { reservationData } = location.state || {};
-    const reservationId = reservationData?.reservationId ?? 2;
+    const reservationId = reservationData?.reservationId;
 
     // Função para exibir toast
     const showToastMessage = (message: string, type: "success" | "error" | "info") => {
@@ -263,7 +263,7 @@ export default function Payment() {
             // Se o metodo de pagamento for PIX, buscar o QR Code
             if (selectedMethod === "pix") {
                 // Para PIX, usamos um CPF de teste ou dos dados da reserva
-                const cpfForPix = reservationData?.cpf || "26666530217"; // CPF da reserva ou CPF de teste // CPF de teste
+                const cpfForPix = reservationData?.cpf; // CPF da reserva ou CPF de teste // CPF de teste
                 await getPixQrCode(cpfForPix);
             }
 
@@ -568,7 +568,7 @@ export default function Payment() {
                 {/* QR Code Image */}
                 <div className="flex justify-center">
                   <img
-                    src={`data:image/png;base64,${pixData.qrCode}`}
+                    src={pixData.qrCode}
                     alt="QR Code PIX"
                     className="w-48 h-48 border-2 border-gray-200 rounded-lg"
                   />
