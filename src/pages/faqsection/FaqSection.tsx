@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { FaChevronDown } from "react-icons/fa"
 import Navbar from "../../components/Navbar"
+import Footer from "../../components/Footer"
 
 
 function FAQSection() {
@@ -47,7 +48,7 @@ function FAQSection() {
         <>
             <Navbar />
             <section className="w-full py-12 md:py-24 lg:py-32">
-                <div className="container px-4 md:px-6">
+                <div className="w-full px-4 md:px-6">
                     <div className="mx-auto max-w-3xl text-center">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#003194] -mt-8 md:-mt-12 lg:-mt-16">
                             Perguntas Frequentes
@@ -82,6 +83,7 @@ function FAQSection() {
                 </div>
             </div>
         </section>
+        <Footer/>
         </>
     )
 }

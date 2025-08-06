@@ -1,4 +1,3 @@
-
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useEffect, useState } from "react"
@@ -7,14 +6,15 @@ import { useLocation } from "react-router-dom";
 import { validateCPF, validateCNPJ, validateRequired } from "../../utils/validations";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AuthService } from "../../utils/auth"
 
-interface Client {
+interface User {
   id: number
   firstName: string
   lastName: string
   documentNumber: string
-  phoneNumber: string
   dateOfBirth: string 
+  phone: string
 }
 
 interface Passenger {
@@ -34,22 +34,47 @@ interface Reservation{
 export default function Reservation() {
   const location = useLocation();
   const { reservationData, displayData } = location.state || {};
-  
-  console.log('Dados recebidos do Package:', location.state);
-  console.log('reservationData:', reservationData);
-  console.log('displayData:', displayData);
-  
-
   const numPessoas = displayData?.numPessoas || 1;
 
-  const [client] = useState<Client>({
-    id: 3,
-    firstName: "João",
-    lastName: "Silva",
-    documentNumber: "03159792080",
-    phoneNumber: "(11) 91234-5678",
-    dateOfBirth: "1990-05-15",
-  })
+  // Estado do usuário autenticado
+  const [user, setUser] = useState<User | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Busca dados completos do usuário autenticado ao montar
+    const userAuth = AuthService.getUserAuth();
+    let detectedUserId: number | null = null;
+    if (userAuth?.id) {
+      detectedUserId = Number(userAuth.id);
+      setUserId(detectedUserId);
+      axios.get(`http://localhost:5028/api/User/${userAuth.id}`)
+        .then(res => {
+          const data = res.data;
+          setUser({
+            id: data.id,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            documentNumber: data.documentNumber || '',
+            dateOfBirth: data.dateOfBirth || '',
+            phone: data.phone || '',
+          });
+        })
+        .catch(() => setUser(null));
+    } else {
+      // fallback: tenta pegar do localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.id) {
+            detectedUserId = Number(parsed.id);
+            setUserId(detectedUserId);
+          }
+        } catch {}
+      }
+      setUser(null);
+    }
+  }, []);
 
 
   const packageDetails = {
@@ -78,7 +103,6 @@ export default function Reservation() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('useEffect - Atualizando passengers para numPessoas:', numPessoas);
     setPassengers(Array.from({ length: Math.max(numPessoas - 1, 0) }, (_, idx) => ({
       id: idx,
       firstName: "",
@@ -90,39 +114,53 @@ export default function Reservation() {
   
   // Função para criar o payload da reserva
   const createReservationPayload = () => {
+    const finalUserId = userId || user?.id;
+    if (!finalUserId) return null;
+    const travelPackageId = reservationData?.travelPackageId || packageDetails.id;
+    let hotelId = reservationData?.hotelId ?? displayData?.hotelId;
+    let roomTypeId = reservationData?.roomTypeId ?? displayData?.roomTypeId;
+    if ((hotelId === undefined || hotelId === 0) && displayData?.hotels?.length > 0) {
+      hotelId = displayData.hotels[0].hotelId || displayData.hotels[0].id;
+      if ((roomTypeId === undefined || roomTypeId === 0) && displayData.hotels[0].roomTypes?.length > 0) {
+        roomTypeId = displayData.hotels[0].roomTypes[0].roomTypeId;
+      }
+    }
+    if (!hotelId || !roomTypeId || hotelId === 0 || roomTypeId === 0) {
+      alert("Não foi possível identificar hotel/quarto válido para a reserva. Tente novamente.");
+      return null;
+    }
     return {
-      userId: client.id,
-      travelPackageId: reservationData?.travelPackageId || packageDetails.id,
-      hotelId: reservationData?.hotelId || 0,
-      roomTypeId: reservationData?.roomTypeId || 0,
+      userId: finalUserId,
+      travelPackageId,
+      hotelId,
+      roomTypeId,
       travelers: passengers.map(p => ({
-          firstName: p.firstName,
-          lastName: p.lastName,
-          documentNumber: p.documentNumber,
-          dateOfBirth: p.dateOfBirth
-        }))
-      };
+        firstName: p.firstName,
+        lastName: p.lastName,
+        documentNumber: p.documentNumber,
+        dateOfBirth: p.dateOfBirth
+      }))
+    };
+  };
+  const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
+    setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
 
-  const updatePassenger = (id: number, field: keyof Passenger, value: string) => {
-    setPassengers(passengers.map((p) => (p.id === id ? { ...p, [field]: value } : p)))
-  }
-
   function validatePassengers() {
-  const errors: { [key: string]: string } = {};
-  passengers.forEach((p, idx) => {
-    if (!validateRequired(p.firstName)) errors[`firstName${idx}`] = "Nome obrigatório";
-    if (!validateRequired(p.lastName)) errors[`lastName${idx}`] = "Sobrenome obrigatório";
-    if (!validateRequired(p.documentNumber)) {
-      errors[`documentNumber${idx}`] = "Documento obrigatório";
-    } else if (!validateCPF(p.documentNumber) && !validateCNPJ(p.documentNumber)) {
-      errors[`documentNumber${idx}`] = "Documento deve ser CPF ou CNPJ válido";
-    }
-    if (!validateRequired(p.dateOfBirth)) errors[`dateOfBirth${idx}`] = "Data de nascimento obrigatória";
-  });
-  return errors;
+    const errors: { [key: string]: string } = {};
+    passengers.forEach((p, idx) => {
+      if (!validateRequired(p.firstName)) errors[`firstName${idx}`] = "Nome obrigatório";
+      if (!validateRequired(p.lastName)) errors[`lastName${idx}`] = "Sobrenome obrigatório";
+      if (!validateRequired(p.documentNumber)) {
+        errors[`documentNumber${idx}`] = "Documento obrigatório";
+      } else if (!validateCPF(p.documentNumber) && !validateCNPJ(p.documentNumber)) {
+        errors[`documentNumber${idx}`] = "Documento deve ser CPF ou CNPJ válido";
+      }
+      if (!validateRequired(p.dateOfBirth)) errors[`dateOfBirth${idx}`] = "Data de nascimento obrigatória";
+    });
+    return errors;
   }
-    const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
+  const [passengerErrors, setPassengerErrors] = useState<{ [key: string]: string }>({});
 
     async function handleConfirmReservation() {
       const errors = validatePassengers();
@@ -130,10 +168,16 @@ export default function Reservation() {
       if (Object.keys(errors).length === 0) {
         try {
           const payload = createReservationPayload();
-          // Cria a reserva na API
-          const response = await axios.post("http://localhost:5028/api/Reservation", payload, {
-            headers: { "Content-Type": "application/json" }
-          });
+          if (!payload) {
+            alert("Dados do usuário não encontrados.");
+            return;
+          }
+          // O backend espera o payload diretamente
+          const response = await axios.post(
+            "http://localhost:5028/api/Reservation",
+            payload,
+            { headers: { "Content-Type": "application/json" } }
+          );
 
           // Se sucesso, navega para pagamento com os dados da reserva criada
           if (response.data) {
@@ -142,7 +186,7 @@ export default function Reservation() {
                 reservationData: response.data, // dados da reserva criada
                 displayData,
                 passengerData: passengers,
-                clientData: client,
+                clientData: user,
                 packageDetails,
                 createReservationPayload: payload
               }
@@ -158,7 +202,6 @@ export default function Reservation() {
   return (
     <div>
       <Navbar />
-
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -175,22 +218,28 @@ export default function Reservation() {
               </div>
               <div className="grid md:grid-cols-2 gap-4 ml-6">
                 <div className="space-y-3">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Nome:</span>
-                    <p className="text-gray-900 font-medium">{client.firstName} {client.lastName}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Sobrenome:</span>
-                    <p className="text-gray-900 font-medium">{client.lastName}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">CPF ou Passaporte:</span>
-                    <p className="text-gray-900">{client.documentNumber}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Contato:</span>
-                    <p className="text-gray-900">{client.phoneNumber}</p>
-                  </div>
+                  {user ? (
+                    <>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Nome:</span>
+                        <p className="text-gray-900 font-medium">{user.firstName} {user.lastName}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Sobrenome:</span>
+                        <p className="text-gray-900 font-medium">{user.lastName}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">CPF ou Passaporte:</span>
+                        <p className="text-gray-900">{user.documentNumber}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Contato:</span>
+                        <p className="text-gray-900">{user.phone}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-gray-500">Carregando dados do cliente...</div>
+                  )}
                 </div>
               </div>
 

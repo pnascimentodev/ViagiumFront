@@ -252,9 +252,8 @@ function Register() {
       setBackendError("");
       setShowSuccess(true);
       setTimeout(() => {
-        setShowSuccess(false);
         navigate('/client');
-      }, 2000); // Exibe animação por 2 segundos
+      }, 1000);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       let message = err.response?.data?.message || "Erro ao registrar.";
