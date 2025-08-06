@@ -1,4 +1,4 @@
-import { useState} from "react";
+import React, { useState } from "react";
 import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskExpiryMonth, maskExpiryYear, maskCEP } from "../../utils/masks";
@@ -6,39 +6,52 @@ import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useLocation } from "react-router-dom";
 
+
 const paymentMethods = [
-  { id: "pix", name: "PIX", icon: FaPix },
-  { id: "boleto", name: "Boleto", icon: FaBarcode },
-  { id: "credito", name: "Cartão de Crédito", icon: FaCreditCard },
+    { id: "pix", name: "PIX", icon: FaPix },
+    { id: "boleto", name: "Boleto", icon: FaBarcode },
+    { id: "credito", name: "Cartão de Crédito", icon: FaCreditCard },
 ];
 
 export default function Payment() {
 
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
     const [cardForm, setCardForm] = useState({
-      holderName: "",
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      ccv: "",
-      streetName: "",
-      addressNumber: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: ""
+        holderName: "",
+        cardNumber: "",
+        expiryMonth: "",
+        expiryYear: "",
+        ccv: "",
+        streetName: "",
+        addressNumber: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: ""
     });
 
     const [errors, setErrors] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState<"success" | "error" | "pending">("pending");
-    
+    const [toastMessage, setToastMessage] = useState<string>("");
+    const [toastType, setToastType] = useState<"success" | "error" | "info">("info");
+    const [showToast, setShowToast] = useState(false);
+    const [pixData, setPixData] = useState<{
+        paymentId: string;
+        valor: number;
+        vencimento: string;
+        qrCode: string;
+        pixCopiaCola: string;
+        mensagem: string;
+        instrucoes: string[];
+    } | null>(null);
+
 
     const paymentMethodMap: { [key: string]: number } = {
+        "boleto": 0,
         "pix": 1,
-        "boleto": 2,
-        "credito": 3,
+        "credito": 2,
     };
 
   // Status config
@@ -56,48 +69,93 @@ export default function Payment() {
 
     const location = useLocation();
     const { reservationData } = location.state || {};
-    const reservationId = reservationData?.id;
+    const reservationId = reservationData?.reservationId ?? 2;
+
+    // Função para exibir toast
+    const showToastMessage = (message: string, type: "success" | "error" | "info") => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 5000);
+    };
+
+    // Função para buscar QR Code do PIX
+    const getPixQrCode = async (cpf: string) => {
+        try {
+            const formData = new URLSearchParams();
+            formData.append('cpf', cpf);
+
+            const response = await fetch("http://localhost:5028/api/Payment/GetPixQrCodeByCpf", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                const errorMessage = errorData.erro || 'Erro ao obter QR Code PIX';
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            setPixData(result);
+        } catch (error: any) {
+            let errorMessage = error.message;
+
+            // Tratamento específico para erro de conexão
+            if (error.message?.includes('ERR_CONNECTION_REFUSED') ||
+                error.code === 'ERR_CONNECTION_REFUSED' ||
+                error.message?.includes('Failed to fetch') ||
+                error.name === 'TypeError') {
+                errorMessage = "Falha ao se comunicar com o servidor de pagamento";
+            }
+
+            showToastMessage(errorMessage, "error");
+        }
+    };
 
     function handleCardInputChange(field: string, value: string) {
       // Aplica máscara de CEP
-      if (field === "zipCode") value = maskCEP(value);
-      setCardForm((prev: any) => ({ ...prev, [field]: value }));
-      setErrors((prev: any) => ({ ...prev, [field]: "" }));
+        if (field === "zipCode") value = maskCEP(value);
+        setCardForm((prev: any) => ({ ...prev, [field]: value }));
+        setErrors((prev: any) => ({ ...prev, [field]: "" }));
     }
 
+    //validação dos dados do cartão
     function validateCardForm() {
-      const newErrors: any = {};
-      if (!cardForm.holderName) newErrors.holderName = "Nome obrigatório";
-      if (!cardForm.cardNumber) {
-        newErrors.cardNumber = "Número obrigatório";
-      } else if (cardForm.cardNumber.replace(/\s/g, "").length !== 16) {
-        newErrors.cardNumber = "O número do cartão deve ter 16 dígitos";
-      }
-      if (!cardForm.expiryMonth) {
-        newErrors.expiryMonth = "Mês obrigatório";
-      } else if (cardForm.expiryMonth.replace(/\D/g, "").length !== 2) {
-        newErrors.expiryMonth = "O mês deve ter 2 dígitos";
-      }
-      if (!cardForm.expiryYear) {
-        newErrors.expiryYear = "Ano obrigatório";
-      } else if (cardForm.expiryYear.replace(/\D/g, "").length !== 2) {
-        newErrors.expiryYear = "O ano deve ter 2 dígitos";
-      }
-      if (!cardForm.ccv) {
-        newErrors.ccv = "CVV obrigatório";
-      } else if (cardForm.ccv.replace(/\D/g, "").length !== 3) {
-        newErrors.ccv = "O CVV deve ter 3 dígitos";
-      }
-      if (!cardForm.streetName) newErrors.streetName = "Rua obrigatória";
-      if (!cardForm.addressNumber) newErrors.addressNumber = "Número obrigatório";
-      if (!cardForm.neighborhood) newErrors.neighborhood = "Bairro obrigatório";
-      if (!cardForm.city) newErrors.city = "Cidade obrigatória";
-      if (!cardForm.state) newErrors.state = "Estado obrigatório";
-      if (!cardForm.zipCode) newErrors.zipCode = "CEP obrigatório";
-      else if (!/^\d{5}-\d{3}$/.test(cardForm.zipCode)) newErrors.zipCode = "CEP inválido";
-      if (!cardForm.country) newErrors.country = "País obrigatório";
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
+    const newErrors: any = {};
+    if (!cardForm.holderName) newErrors.holderName = "Nome obrigatório";
+        if (!cardForm.cardNumber) {
+            newErrors.cardNumber = "Número obrigatório";
+        } else if (cardForm.cardNumber.replace(/\s/g, "").length !== 16) {
+            newErrors.cardNumber = "O número do cartão deve ter 16 dígitos";
+        }
+        if (!cardForm.expiryMonth) {
+            newErrors.expiryMonth = "Mês obrigatório";
+        } else if (cardForm.expiryMonth.replace(/\D/g, "").length !== 2) {
+            newErrors.expiryMonth = "O mês deve ter 2 dígitos";
+        }
+        if (!cardForm.expiryYear) {
+            newErrors.expiryYear = "Ano obrigatório";
+        } else if (cardForm.expiryYear.replace(/\D/g, "").length !== 2) {
+            newErrors.expiryYear = "O ano deve ter 2 dígitos";
+        }
+        if (!cardForm.ccv) {
+            newErrors.ccv = "CVV obrigatório";
+        } else if (cardForm.ccv.replace(/\D/g, "").length !== 3) {
+            newErrors.ccv = "O CVV deve ter 3 dígitos";
+        }
+        if (!cardForm.streetName) newErrors.streetName = "Rua obrigatória";
+        if (!cardForm.addressNumber) newErrors.addressNumber = "Número obrigatório";
+        if (!cardForm.neighborhood) newErrors.neighborhood = "Bairro obrigatório";
+        if (!cardForm.city) newErrors.city = "Cidade obrigatória";
+        if (!cardForm.state) newErrors.state = "Estado obrigatório";
+        if (!cardForm.zipCode) newErrors.zipCode = "CEP obrigatório";
+        if (!cardForm.country) newErrors.country = "País obrigatório";
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -118,6 +176,7 @@ export default function Payment() {
             }
         }
 
+
         if (!reservationData) {
             setErrors({ general: "Dados da reserva não encontrados" });
             setIsSubmitting(false);
@@ -130,32 +189,131 @@ export default function Payment() {
         };
 
         // Prepare payment data for API
-        const paymentData = {
-            reservationId: reservationId,
-            paymentMethod: paymentMethodMap[selectedMethod || ""],
-            holderName: cardForm.holderName,
-            cardNumber: cardForm.cardNumber.replace(/\s/g, ""), // Remove spaces
-            expiryMonth: cardForm.expiryMonth,
-            expiryYear: cardForm.expiryYear,
-            ccv: cardForm.ccv,
-            remoteIp: getRemoteIp(),
-            streetName: cardForm.streetName,
-            addressNumber: Number(cardForm.addressNumber),
-            neighborhood: cardForm.neighborhood,
-            city: cardForm.city,
-            state: cardForm.state,
-            zipCode: cardForm.zipCode,
-            country: cardForm.country
-        };
+        const formData = new URLSearchParams();
+        formData.append('reservationId', reservationId.toString());
+        formData.append('paymentMethod', paymentMethodMap[selectedMethod || ""].toString());
+        formData.append('holderName', cardForm.holderName);
+        formData.append('cardNumber', cardForm.cardNumber.replace(/\s/g, ""));
+        formData.append('expiryMonth', cardForm.expiryMonth);
+        formData.append('expiryYear', cardForm.expiryYear);
+        formData.append('ccv', cardForm.ccv);
+        formData.append('remoteIp', getRemoteIp());
+        formData.append('streetName', cardForm.streetName);
+        formData.append('addressNumber', cardForm.addressNumber);
+        formData.append('neighborhood', cardForm.neighborhood);
+        formData.append('city', cardForm.city);
+        formData.append('state', cardForm.state);
+        formData.append('zipCode', cardForm.zipCode);
+        formData.append('country', cardForm.country);
 
-        console.log("Payment data to be sent to API:", paymentData);
-        
+
         try {
- 
             setPaymentStatus("pending");
-        } catch (error) {
-            console.error("Payment error:", error);
+
+            console.log("Dados enviados no formData:");
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
+            const response = await fetch("http://localhost:5028/api/Payment/CreatePayment", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                // Mapear diferentes tipos de erro para mensagens amigáveis
+                let errorMessage: string;
+
+                if (errorData.tipoErro === "VALIDATION_ERROR") {
+                    errorMessage = errorData.detalhes || "Dados inválidos fornecidos";
+                } else if (errorData.tipoErro === "BUSINESS_RULE_ERROR") {
+                    errorMessage = errorData.detalhes || "Operação não permitida";
+                } else if (errorData.tipoErro === "EXTERNAL_API_ERROR") {
+                    errorMessage = "Serviço temporariamente indisponível. Tente novamente em alguns minutos.";
+                } else if (errorData.tipoErro === "NOT_FOUND_ERROR") {
+                    errorMessage = errorData.mensagemFront || errorData.detalhes || "Recurso não encontrado";
+                } else if (errorData.tipoErro === "ACCOUNT_NOT_FOUND_ERROR") {
+                    errorMessage = "É necessário criar uma conta de cliente antes de realizar pagamentos. Entre em contato com o suporte.";
+                } else if (errorData.tipoErro === "PAYMENT_DECLINED_ERROR") {
+                    errorMessage = "O pagamento com cartão de crédito foi negado. Verifique os dados do cartão ou tente outro cartão.";
+                } else if (errorData.tipoErro === "PAYMENT_PROCESSING_ERROR") {
+                    errorMessage = "Não foi possível processar o pagamento. Verifique os dados informados e tente novamente.";
+                } else if (errorData.tipoErro === "INTERNAL_SERVER_ERROR") {
+                    errorMessage = "Erro interno do servidor. Tente novamente ou entre em contato com o suporte.";
+                } else {
+                    errorMessage = errorData.erro || errorData.detalhes || "Erro ao processar pagamento";
+                }
+
+                showToastMessage(errorMessage, "error");
+                return;
+            }
+
+            const result = await response.json();
+            console.log("Payment response:", result);
+            if (selectedMethod === "pix") {
+                setPaymentStatus("pending");
+                showToastMessage("QR Code PIX gerado! Aguardando confirmação do pagamento.", "info");
+            }
+            else if(selectedMethod === "boleto"){
+                setPaymentStatus("pending");
+                showToastMessage("Boleto gerado com sucesso! O download será iniciado automaticamente", "info");
+            }
+            else {
+                setPaymentStatus("success");
+                showToastMessage("Pagamento realizado com sucesso!", "success");
+            }
+
+
+            // Se o metodo de pagamento for PIX, buscar o QR Code
+            if (selectedMethod === "pix") {
+                // Para PIX, usamos um CPF de teste ou dos dados da reserva
+                const cpfForPix = reservationData?.cpf || "26666530217"; // CPF da reserva ou CPF de teste // CPF de teste
+                await getPixQrCode(cpfForPix);
+            }
+
+            // Se for boleto e tiver URL, fazer download automático
+            if (selectedMethod === "boleto" && result.boletoUrl) {
+                try {
+                    // Criar elemento de link temporário para download
+                    const link = document.createElement('a');
+                    link.href = result.boletoUrl;
+                    link.download = `boleto_${result.pagamentoId}.pdf`;
+                    link.target = '_blank';
+
+                    // Adicionar ao DOM, clicar e remover
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    // Mostrar mensagem de sucesso específica para boleto
+                    if (result.mensagemBoleto) {
+                        showToastMessage(result.mensagemBoleto, "success");
+                    }
+                } catch (downloadError) {
+                    console.error("Erro ao fazer download do boleto:", downloadError);
+                    showToastMessage("Boleto gerado com sucesso, mas houve erro no download automático. Tente novamente.", "error");
+                }
+            }
+        } catch (error: any) {
+            console.error("Payment API error:", error);
             setPaymentStatus("error");
+
+            let errorMessage = error.message || "Erro ao processar pagamento";
+
+            // Tratamento específico para erro de conexão
+            if (error.message?.includes('ERR_CONNECTION_REFUSED') ||
+                error.code === 'ERR_CONNECTION_REFUSED' ||
+                error.message?.includes('Failed to fetch') ||
+                error.name === 'TypeError') {
+                errorMessage = "Falha ao se comunicar com o servidor de pagamento";
+            }
+
+            showToastMessage(errorMessage, "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -397,6 +555,78 @@ export default function Payment() {
             </div>
           )}
 
+          {/* PIX QR Code - Show when PIX is selected and pixData is available */}
+          {selectedMethod === "pix" && pixData && (
+            <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+              <h2 className="text-xl font-semibold mb-4">Pagamento PIX</h2>
+              <div className="text-center space-y-4">
+
+                {/* Valor e informações do pagamento */}
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <p className="text-lg font-semibold text-gray-800">
+                    Valor: R$ {pixData.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Vencimento: {new Date(pixData.vencimento).toLocaleDateString('pt-BR')}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    ID do Pagamento: {pixData.paymentId}
+                  </p>
+                </div>
+
+                {/* QR Code Image */}
+                <div className="flex justify-center">
+                  <img
+                    src={`data:image/png;base64,${pixData.qrCode}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 border-2 border-gray-200 rounded-lg"
+                  />
+                </div>
+
+                {/* Mensagem de sucesso */}
+                <p className="text-green-600 font-medium">{pixData.mensagem}</p>
+
+                {/* Instructions */}
+                <div className="text-left bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-800 mb-2">Como pagar:</h3>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    {pixData.instrucoes.map((instrucao, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-blue-500 mr-2">•</span>
+                        {instrucao}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Copy and Paste Code */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código PIX (Copia e Cola):
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={pixData.pixCopiaCola}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(pixData.pixCopiaCola);
+                        showToastMessage("Código PIX copiado para a área de transferência!", "success");
+                      }}
+                      className="px-4 py-2 bg-[#FFA62B] text-white rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Status */}
           <div className="bg-white rounded-lg shadow-md p-6 mt-4">
             <h2 className="text-xl font-semibold mb-4 ">Status do Pagamento</h2>
@@ -422,6 +652,32 @@ export default function Payment() {
             )}
           </button>
         </form>
+
+        {/* Toast Message */}
+        {showToast && (
+          <div className={`fixed top-5 left-5 mt-4 ml-4 p-4 rounded-lg shadow-lg transition-all duration-300 z-50 ${toastType === "success" ? "bg-green-100" : "bg-red-100"}`}>
+            <div className={`flex items-center ${toastType === "success" ? "text-green-800" : "text-red-800"}`}>
+              {toastType === "success" ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <span className="font-medium">{toastMessage}</span>
+              <button
+                onClick={() => setShowToast(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
     </div>
