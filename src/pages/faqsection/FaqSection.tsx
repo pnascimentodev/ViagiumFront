@@ -19,7 +19,7 @@ function FAQSection() {
         {
             question: "Quais formas de pagamento a Viagium aceita?",
             answer:
-                "Aceitamos cartão de crédito (Visa, MasterCard, Elo), PIX, boleto bancário e oferecemos opções de parcelamento em até 12x sem juros para facilitar sua viagem dos sonhos.",
+                "Aceitamos cartão de crédito, PIX e boleto bancário para facilitar sua viagem dos sonhos.",
         },
         {
             question: "Posso cancelar ou alterar minha reserva?",
@@ -29,13 +29,68 @@ function FAQSection() {
         {
             question: "Como entro em contato com o suporte da Viagium?",
             answer:
-                "Você pode entrar em contato através do nosso WhatsApp, e-mail (contato@viagium.com) ou pelo formulário de contato em nosso site. Nossa equipe está pronta para ajudar!",
+                "Você pode entrar em contato através do nosso e-mail (contato@viagium.app). Nossa equipe está pronta para ajudar!",
         },
         {
             question: "Quais documentos preciso para viajar?",
             answer:
                 "Para viagens nacionais, é necessário RG ou CNH com foto. Para viagens internacionais, é obrigatório o passaporte válido e, dependendo do destino, visto de entrada. Verificamos todos os requisitos específicos de cada destino para você.",
         },
+        {
+            question: "O seguro viagem está incluído nos pacotes?",
+            answer:
+                "O seguro viagem pode estar incluído em alguns pacotes específicos. Para outros, oferecemos a opção de contratar separadamente com cobertura completa para emergências médicas, cancelamento de viagem e bagagem extraviada.",
+        },
+        {
+            question: "Qual é a política de bagagem?",
+            answer:
+                "A política de bagagem varia conforme a companhia aérea e tipo de passagem. Informamos todos os detalhes sobre peso, dimensões e franquia de bagagem no momento da reserva. Bagagem extra pode ser contratada com desconto através da Viagium.",
+        },
+        {
+            question: "Crianças pagam o valor integral?",
+            answer:
+                "Crianças de 0 a 2 anos (colo) pagam apenas taxas aeroportuárias. De 2 a 11 anos, há desconto especial que varia conforme o destino e hotel. Consulte nossa equipe para condições específicas do seu pacote.",
+        },
+        {
+            question: "Como posso acompanhar promoções e ofertas especiais?",
+            answer:
+                "Cadastre-se em nossa newsletter, siga nossas redes sociais (@viagium) e ative as notificações do nosso site. Enviamos regularmente ofertas exclusivas, last minute e promoções sazonais para nossos clientes.",
+        },
+        {
+            question: "Posso escolher meu hotel e voo separadamente?",
+            answer:
+                "Não! A viagium se preocupa tanto que cuida de todos os detalhes para você, só é necessário escolher o pacote, hotel e quarto! O resto deixa que cuídamos para você.",
+        },
+        {
+            question: "Quais destinos vocês atendem?",
+            answer:
+                "Atendemos destinos nacionais (todas as regiões do Brasil) e internacionais (América do Sul, América do Norte, Europa, Ásia, África e Oceania). Temos parcerias especiais com mais de 150 destinos ao redor do mundo.",
+        },
+        {
+            question: "Vocês organizam atividades e passeios nos destinos?",
+            answer:
+                "Sim! Oferecemos uma ampla gama de experiências: city tours, passeios gastronômicos, aventuras radicais, visitas culturais e muito mais. Todos os passeios são com guias locais qualificados e seguros.",
+        },
+        {
+            question: "E se eu tiver problemas durante a viagem?",
+            answer:
+                "Temos suporte 24h durante sua viagem através do nosso WhatsApp de emergência. Nossa equipe está preparada para resolver qualquer imprevisto, desde problemas com voos até questões de hospedagem.",
+        },
+        {
+            question: "Vocês oferecem pacotes de lua de mel?",
+            answer:
+                "Sim! Temos pacotes românticos especiais com upgrades de quarto, jantares privativos, spa para casais e experiências únicas. Nossos consultores especializados ajudam a criar a lua de mel perfeita.",
+        },
+        {
+            question: "Qual a antecedência mínima para reservar?",
+            answer:
+                "Para viagens nacionais, recomendamos pelo menos 15 dias de antecedência. Para internacionais, 30 dias. Porém, temos opções de last minute disponíveis com condições especiais para viagens de última hora.",
+        },
+        {
+            question: "Vocês trabalham com milhas aéreas?",
+            answer:
+                "Não! Aproveite nossas promoções para garantir condições especiais para realizar seu sonho.",
+        }
     ]
 
     const [openItem, setOpenItem] = useState<number | null>(null)
@@ -58,8 +113,9 @@ function FAQSection() {
                         </p>
                     </div>
                 <div className="mx-auto mt-12 max-w-3xl">
-                    {faqs.map((faq, index) => (
-                        <div key={index} className="border-b border-gray-200 last:border-b-0">
+                    <div className="max-h-[800px] overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-sm">
+                        {faqs.map((faq, index) => (
+                            <div key={index} className="border-b border-gray-200 last:border-b-0 px-4">
                             <button
                                 className="flex w-full items-center justify-between py-4 text-left text-lg font-medium text-[#003194] hover:text-[#FFA62B] focus:outline-none"
                                 onClick={() => toggleItem(index)}
@@ -80,6 +136,7 @@ function FAQSection() {
                             </div>
                         </div>
                     ))}
+                    </div>
                 </div>
             </div>
         </section>
