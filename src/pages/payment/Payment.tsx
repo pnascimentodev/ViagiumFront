@@ -4,7 +4,9 @@ import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskExpiryMonth, maskExpiryYear, maskCEP } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
+
 
 
 const paymentMethods = [
@@ -14,8 +16,8 @@ const paymentMethods = [
 ];
 
 export default function Payment() {
-
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const navigate = useNavigate();
     const [cardForm, setCardForm] = useState({
         holderName: "",
         cardNumber: "",
@@ -47,24 +49,11 @@ export default function Payment() {
         instrucoes: string[];
     } | null>(null);
 
-
     const paymentMethodMap: { [key: string]: number } = {
         "boleto": 0,
         "pix": 1,
         "credito": 2,
     };
-
-  // Status config
-    const statusConfig =
-      paymentStatus === "success"
-        ? { bgColor: "bg-green-100", color: "text-green-600", text: "Pagamento aprovado!" }
-        : paymentStatus === "error"
-        ? { bgColor: "bg-red-100", color: "text-red-600", text: "Pagamento recusado!" }
-        : undefined;
-
-    const StatusIcon = paymentStatus === "success"
-      ? FaCreditCard
-      : FaBarcode;
 
     const location = useLocation();
     const { reservationData } = location.state || {};
@@ -265,6 +254,9 @@ export default function Payment() {
             else {
                 setPaymentStatus("success");
                 showToastMessage("Pagamento realizado com sucesso!", "success");
+                if (selectedMethod === "credito") {
+                  navigate('/paymentconfirmed');
+                }
             }
 
 
@@ -318,19 +310,19 @@ export default function Payment() {
         }
     }
 
-  return (
-    <div>
-      <Navbar />
+    return (
+      <div>
+        <Navbar />
 
-    <div className="min-h-screen h-full bg-gray-50 py-8 px-4">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Confirme o Pagamento</h1>
-        <p className="text-gray-600">Selecione o método de pagamento e complete as informações</p>
-      </div>
+      <div className="min-h-screen h-full bg-gray-50 py-8 px-4">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">Confirme o Pagamento</h1>
+          <p className="text-gray-600">Selecione o método de pagamento e complete as informações</p>
+        </div>
 
-      <div className="flex justify-center items-center">
-      <div className="max-w-2xl w-full bg-[#FFFFFF] mb-20 rounded-xl shadow-2xl p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex justify-center items-center">
+        <div className="max-w-2xl w-full bg-[#FFFFFF] mb-20 rounded-xl shadow-2xl p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Payment Method Selection */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Método de Pagamento</h2>
@@ -625,33 +617,31 @@ export default function Payment() {
               </div>
             </div>
           )}
-
-          {/* Payment Status */}
-          {(paymentStatus === "success" || paymentStatus === "error") && statusConfig && (
-            <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-              <h2 className="text-xl font-semibold mb-4 ">Status do Pagamento</h2>
-              <div className={`inline-flex items-center px-4 py-2 rounded-full ${statusConfig.bgColor}`}>
-                <StatusIcon className={`w-5 h-5 mr-2 ${statusConfig.color}`} />
-                <span className={`font-medium ${statusConfig.color}`}>{statusConfig.text}</span>
-              </div>
-            </div>
-          )}
-
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-[#FFA62B] hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-6 mt-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Processando...
-              </>
-            ) : (
-              "Confirmar Pagamento"
-            )}
-          </button>
+          {paymentStatus === "success" ? (
+            <button
+              type="button"
+              onClick={() => navigate('/paymentconfirmed')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 mt-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            >
+              Ir para confirmação
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#FFA62B] hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold py-3 px-6 mt-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processando...
+                </>
+              ) : (
+                "Confirmar Pagamento"
+              )}
+            </button>
+          )}
         </form>
 
         {/* Toast Message */}
@@ -683,6 +673,8 @@ export default function Payment() {
     </div>
     </div>
     <Footer />
+
+
     </div>
   );
 }
