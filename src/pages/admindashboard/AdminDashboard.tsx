@@ -1168,19 +1168,19 @@ function AdminDashboard() {
         formData.append("vehicleType", packageForm.vehicleType);
         formData.append("duration", packageForm.duration);
         formData.append("maxPeople", packageForm.maxPeople);
-        formData.append("originalPrice", unmaskCurrency(packageForm.startPrice));
+        formData.append("originalPrice", String(unmaskCurrency(packageForm.startPrice)));
         if (packageForm.promoDiscount) {
             formData.append("manualDiscountValue", packageForm.promoDiscount);
         }
-        formData.append("packageTax", unmaskCurrency(packageForm.packageTax));
-        formData.append("cupomDiscount", packageForm.cupomDiscount.trim());
+        formData.append("packageTax", String(unmaskCurrency(packageForm.packageTax)));
+        formData.append("cupomDiscount", packageForm.cupomDiscount);
         formData.append("discountValue", packageForm.discountValue);
         formData.append("originAddress.City", packageForm.originAddress.city);
         formData.append("originAddress.Country", packageForm.originAddress.country);
         formData.append("destinationAddress.City", packageForm.destinationAddress.city);
         formData.append("destinationAddress.Country", packageForm.destinationAddress.country);
-        formData.append("packageSchedule.StartDate", packageForm.startDate);
-        formData.append("packageSchedule.IsAvailable", packageForm.isActive ? "true" : "false");
+        formData.append("startDate", packageForm.startDate);
+        formData.append("isAvailable", packageForm.isActive ? "true" : "false");
 
         for (let pair of formData.entries()) {
             console.log(pair[0], pair[1]);
@@ -1240,7 +1240,7 @@ function AdminDashboard() {
             duration: selectedPackage.duration || "",
             maxPeople: selectedPackage.maxPeople || "",
             vehicleType: selectedPackage.vehicleType || "",
-            startPrice: formatBRL(selectedPackage.price) || "",
+            startPrice: formatBRL(selectedPackage.originalPrice) || "",
             promoDiscount: selectedPackage.manualDiscountValue || "",
             isActive: selectedPackage.isActive || "",
             // Novos campos
@@ -1293,7 +1293,7 @@ function AdminDashboard() {
         // Monta o objeto conforme esperado pela API
         const formData = new FormData();
         if (editPackageForm.travelPackageId) {
-            formData.append("imageFile", editPackageForm.travelPackageId); // arquivo real
+            formData.append("travelPackageId", editPackageForm.travelPackageId); // arquivo real
         };
         formData.append("title", editPackageForm.title);
         formData.append("description", editPackageForm.description);
@@ -1306,18 +1306,17 @@ function AdminDashboard() {
         formData.append("vehicleType", editPackageForm.vehicleType);
         formData.append("duration", editPackageForm.duration);
         formData.append("maxPeople", editPackageForm.maxPeople);
-        formData.append("price", unmaskCurrency(editPackageForm.startPrice));
-        formData.append("packageTax", unmaskCurrency(editPackageForm.packageTax));
+        formData.append("originalPrice", String(unmaskCurrency(editPackageForm.startPrice)));
+        formData.append("packageTax", String(unmaskCurrency(editPackageForm.packageTax)));
         formData.append("cupomDiscount", editPackageForm.cupomDiscount);
         formData.append("discountValue", editPackageForm.discountValue);
         formData.append("originCity", editPackageForm.originAddress.city);
         formData.append("originCountry", editPackageForm.originAddress.country);
         formData.append("destinationCity", editPackageForm.destinationAddress.city);
         formData.append("destinationCountry", editPackageForm.destinationAddress.country);
-        formData.append("packageSchedule.StartDate", editPackageForm.startDate);
-        formData.append("packageSchedule.EndDate", editPackageForm.endDate);
-        formData.append("packageSchedule.IsFixed", "true");
-        formData.append("packageSchedule.IsAvailable", editPackageForm.isActive ? "true" : "false");
+        formData.append("startDate", editPackageForm.startDate);
+        formData.append("endDate", editPackageForm.endDate);
+        formData.append("isAvailable", editPackageForm.isActive ? "true" : "false");
 
         try {
             const axios = (await import("axios")).default;
@@ -2952,8 +2951,8 @@ function AdminDashboard() {
                 name: pkg.title,
                 status: pkg.isActive ? "Ativo" : "Inativo",
                 date: pkg.createdAt ? pkg.createdAt.split("T")[0] : "",
-                value: formatBRL(pkg.originalPrice),
-                remainingSlots: pkg.remainingSlots || "API NAO TRAS VAGAS RESTANTES",
+                value: formatBRL(pkg.price),
+                remainingSlots: pkg.maxPeople - pkg.confirmedPeople || "",
             }));
             setPackagesTableData(mapped);
         } catch (err) {

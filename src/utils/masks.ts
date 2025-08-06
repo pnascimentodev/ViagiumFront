@@ -79,16 +79,16 @@ export function maskCadasturNumber(value: string) {
 export function maskCurrency(value: string) {
     // Remove tudo que não é número
     let v = value.replace(/\D/g, "");
-    
+
     // Se não há números, retorna vazio
     if (!v) return "";
-    
+
     // Limita a valores até R$ 999.999,99 (remove se muito grande)
     if (parseInt(v) > 99999999) v = v.slice(0, 8);
-    
+
     // Converte para número e divide por 100 para ter centavos
     const number = parseInt(v) / 100;
-    
+
     // Formata como moeda brasileira
     return number.toLocaleString('pt-BR', {
         style: 'currency',
@@ -99,18 +99,17 @@ export function maskCurrency(value: string) {
 
 // Função auxiliar para extrair valor numérico da máscara
 export function unmaskCurrency(maskedValue: string): string {
-    // Remove R$, espaços, pontos de milhares e substitui vírgula por ponto
-    if (!maskedValue) return "";
-
+    if (!maskedValue) return "0,00";
     let numericString = maskedValue
         .replace(/[R$\s]/g, '')
         .replace(/\./g, '')
-
-    numericString = numericString.replace(',', '.');
-    
-    return numericString;
+        .replace(',', '.');
+    const number = parseFloat(numericString);
+    // Retorna string com vírgula como separador decimal
+    return number.toFixed(2).replace('.', ',');
 }
-export function maskCardNumber(value: string){
+
+export function maskCardNumber(value: string) {
     let v = value.replace(/\D/g, "");
     if (v.length > 12) {
         return `${v.slice(0, 4)} ${v.slice(4, 8)} ${v.slice(8, 12)} ${v.slice(12)}`;
