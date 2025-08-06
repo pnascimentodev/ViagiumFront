@@ -3,7 +3,6 @@ import axios from "axios";
 import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
 import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
-import { HiQuestionMarkCircle } from "react-icons/hi";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import { MdCheck } from "react-icons/md";
@@ -65,8 +64,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
     const [loadingAmenities, setLoadingAmenities] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-    //O que é Cadastur? Interrogation
-    const [showCadasturInfo, setShowCadasturInfo] = useState(false);
 
     // Função para buscar amenities da API
     const fetchAmenities = async () => {
@@ -893,28 +890,8 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
 
                         {/* Cadastur */}
                         <div className="pt-6 border-t border-gray-200">
-                            {/* Com Icone de Interrogaçao - O é o Cadastur? */}
-                            <h3 className="text-xl font-semibold text-[#003194] mb-6 flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-[#003194] mb-6">
                                 Cadastur
-                                <div className="relative inline-block">
-                                    <a
-                                        href="#"
-                                        onClick={e => {
-                                            e.preventDefault();
-                                            setShowCadasturInfo(true);
-                                            setTimeout(() => setShowCadasturInfo(false), 5000);
-                                        }}
-                                        className="inline-flex items-center"
-                                        title="O que é Cadastur?"
-                                    >
-                                        <HiQuestionMarkCircle className="text-[#003194]" size={22} />
-                                    </a>
-                                    {showCadasturInfo && (
-                                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-white border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 shadow z-10 w-64">
-                                            O Cadastur é o sistema de cadastro de pessoas físicas e jurídicas que atuam no setor de turismo. Para mais informações, acesse o site oficial do Cadastur.
-                                        </span>
-                                    )}
-                                </div>
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
