@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
+import { FaCreditCard, FaBarcode } from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskExpiryMonth, maskExpiryYear, maskCEP } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
@@ -54,7 +54,6 @@ export default function Payment() {
         "pix": 1,
         "credito": 2,
     };
-
 
     const location = useLocation();
     const { reservationData } = location.state || {};
@@ -618,9 +617,6 @@ export default function Payment() {
               </div>
             </div>
           )}
-
-
-
           {/* Submit Button */}
           {paymentStatus === "success" ? (
             <button
