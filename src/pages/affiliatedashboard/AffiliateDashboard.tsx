@@ -254,7 +254,8 @@ function AffiliateDashboard() {
                 name: hotel.name || "",
                 location: hotel.address ? `${hotel.address.city}, ${hotel.address.country}` : "",
                 status: hotel.isActive ? "Ativo" : "Inativo",
-                image: hotel.imageUrl || ""
+                image: hotel.imageUrl || "",
+                rating: hotel.star || 0
               }));
               setYourHotels(hotelsMapped);
             } else {
@@ -633,8 +634,7 @@ function AffiliateDashboard() {
                         <div className="flex items-center gap-2 mt-1">
                           <div className="flex items-center gap-1">
                             <FaStar className="w-3 h-3 text-yellow-400 fill-current" />
-                            {/* <span className="text-sm font-medium">{hotel.rating}</span> */}
-
+                            <span className="text-sm font-medium">{hotel.rating || "0.0"}</span>
                           </div>
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${hotel.status === "Ativo"
