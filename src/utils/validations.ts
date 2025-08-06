@@ -46,6 +46,12 @@ export function validatePhone(phone: string): boolean {
     return /^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone);
 }
 
+// Validação de telefone brasileiro sem máscara (apenas números)
+export function validatePhoneUnmasked(phone: string): boolean {
+    const phoneNumbers = phone.replace(/\D/g, '');
+    return phoneNumbers.length >= 10 && phoneNumbers.length <= 11;
+}
+
 // Validação de CEP brasileiro
 export function validateCEP(cep: string): boolean {
     return /^\d{5}-\d{3}$/.test(cep);

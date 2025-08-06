@@ -759,23 +759,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 name="contactNumber"
                                                 placeholder="(00) 00000-0000"
                                                 value={form.contactNumber}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const newNumbers = value.replace(/\D/g, '');
-                                                    const oldNumbers = form.contactNumber.replace(/\D/g, '');
-                                                    if (newNumbers.length < oldNumbers.length) {
-                                                        setForm(prev => ({ ...prev, contactNumber: newNumbers }));
-                                                    } else {
-                                                        const maskedValue = value === '' ? '' : maskPhone(value);
-                                                        setForm(prev => ({ ...prev, contactNumber: maskedValue }));
-                                                    }
-                                                    
-                                                    setErrors(prev => {
-                                                        const newErrors = { ...prev };
-                                                        delete newErrors.contactNumber;
-                                                        return newErrors;
-                                                    });
-                                                }}
+                                                onChange={handleChange}
                                                 onBlur={handleBlur}
                                                 className={`w-full px-3 py-2 border ${errors.contactNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                                             />
@@ -968,15 +952,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                                                 name="cnpj"
                                                 placeholder="00.000.000/0000-00"
                                                 value={form.cnpj}
-                                                onChange={(e) => {
-                                                    const maskedValue = maskCNPJ(e.target.value);
-                                                    setForm(prev => ({ ...prev, cnpj: maskedValue }));
-                                                    setErrors(prev => {
-                                                        const newErrors = { ...prev };
-                                                        delete newErrors.cnpj;
-                                                        return newErrors;
-                                                    });
-                                                }}
+                                                onChange={handleChange}
                                                 onBlur={handleBlur}
                                                 className={`w-full px-3 py-2 border ${errors.cnpj ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                                             />
