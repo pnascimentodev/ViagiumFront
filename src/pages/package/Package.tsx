@@ -729,6 +729,12 @@ function Package() {
                 alt="Imagem do hotel"
                 className="w-full h-48 object-cover rounded mb-4"
               />
+               {(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star) && (
+                  <div className="flex items-center font-semibold text-xl mb-4">
+                    <span className="mr-2">Nível do hotel:</span>
+                    {renderStars(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0, 'md')}       
+                  </div>
+                )}
               <p className="mb-2 text-xl">{renderHotelAddress(hotels[hotelIndex]?.address)}</p>
                 <div className="mb-4">
                   <h4 className="font-semibold text-lg mb-2">Adicionais do Hotel:</h4>
@@ -746,12 +752,6 @@ function Package() {
                     ))}
                   </ul>
                 </div>
-                {(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star) && (
-                  <div className="flex items-center font-semibold text-xl mb-4">
-                    <span className="mr-2">Avaliação:</span>
-                    {renderStars(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0, 'md')}       
-                  </div>
-                )}
             </div>
           </div>
         )}
