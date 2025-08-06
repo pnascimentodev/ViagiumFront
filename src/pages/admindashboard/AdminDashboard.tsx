@@ -1399,15 +1399,12 @@ function AdminDashboard() {
     const handleUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Exemplo de senha fixa, pode ser ajustado para vir de um campo ou gerar aleatória
-        const defaultPassword = "SenhaForte!123";
-
         // Monta o objeto conforme esperado pela API
         const newUser = {
             firstName: userForm.firstName,
             lastName: userForm.lastName,
             email: userForm.email,
-            password: defaultPassword,
+            password: userForm.password,
             phone: userForm.phone,
             documentNumber: unmaskCPF(userForm.documentNumber),
             birthDate: userForm.birthDate,
@@ -1662,14 +1659,66 @@ function AdminDashboard() {
 
         if (!editingUser) return;
 
-        // Aqui você implementaria a lógica para salvar as alterações do usuário
+        // Validação: campos obrigatórios
+        if (
+            !editUserForm.firstName.trim() ||
+            !editUserForm.lastName.trim() ||
+            !editUserForm.email.trim() ||
+            !editUserForm.phone.trim() ||
+            !editUserForm.documentNumber.trim() ||
+            !editUserForm.birthDate
+        ) {
+            alert("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        // Validação: e-mail
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(editUserForm.email)) {
+            alert("Digite um e-mail válido.");
+            return;
+        }
+
+        // Validação: telefone (mínimo 10 dígitos)
+        const phoneDigits = editUserForm.phone.replace(/\D/g, "");
+        if (phoneDigits.length < 11) {
+            alert("Digite um telefone válido.");
+            return;
+        }
+
+        // Validação: CPF (mínimo 11 dígitos)
+        const cpfDigits = editUserForm.documentNumber.replace(/\D/g, "");
+        if (cpfDigits.length < 11) {
+            alert("Digite um CPF válido.");
+            return;
+        }
+
+        // Validação: data de nascimento não pode ser futura
+        if (new Date(editUserForm.birthDate) > new Date()) {
+            alert("A data de nascimento não pode ser futura.");
+            return;
+        }
+
+        // Validação: senha e confirmação (se preenchidas)
+        if (editUserForm.password || editUserForm.confirmPassword) {
+            if (editUserForm.password !== editUserForm.confirmPassword) {
+                alert("As senhas não coincidem.");
+                return;
+            }
+            // Validação: senha forte (mínimo 6 caracteres)
+            if (editUserForm.password && editUserForm.password.length < 6) {
+                alert("A senha deve ter pelo menos 6 caracteres.");
+                return;
+            }
+        }
+
         const updatedUserData = {
             userId: editingUser.id,
             email: editUserForm.email,
             firstName: editUserForm.firstName,
             lastName: editUserForm.lastName,
             birthDate: editUserForm.birthDate,
-            password: "string" // Se não for alterar, envie um valor padrão ou o atual
+            password: editUserForm.password,
         };
 
         try {
@@ -1677,7 +1726,7 @@ function AdminDashboard() {
             await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
             alert("Usuário atualizado com sucesso!");
             closeEditUserModal();
-            fetchClients(); // Atualiza a tabela de clientes após edição
+            fetchUsers(); // Atualiza a tabela de usuários após edição
         } catch (error) {
             alert("Erro ao atualizar usuário.");
             console.error(error);
@@ -2434,11 +2483,11 @@ function AdminDashboard() {
 
     const menuItems: MenuItem[] = [
         { id: "dashboard", label: "Dashboard", icon: <FaChartBar style={{ color: "white", fill: "white" }} /> },
+        { id: "usuarios", label: "Administradores", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
         { id: "pacotes", label: "Pacotes", icon: <FaBox style={{ color: "white", fill: "white" }} /> },
         { id: "afiliados", label: "Afiliados", icon: <FaUserTie style={{ color: "white", fill: "white" }} /> },
         { id: "hoteis", label: "Hotéis", icon: <FaHotel style={{ color: "white", fill: "white" }} /> },
         { id: "clientes", label: "Clientes", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
-        { id: "usuarios", label: "Usuários Adm", icon: <FaUsers style={{ color: "white", fill: "white" }} /> },
     ]
 
     const vehicleTypes = [
@@ -2732,52 +2781,52 @@ function AdminDashboard() {
             if (tabId === "pacotes") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Pacote</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor do Pacote</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vagas Restantes</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome do Pacote</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Valor do Pacote</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Vagas Restantes</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "afiliados") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razão Social</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNPJ</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Razão Social</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">CNPJ</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "hoteis") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Hotel</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Afiliado</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome do Hotel</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Afiliado</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "clientes") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Email</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else if (tabId === "usuarios") {
                 return (
                     <tr>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Criação</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
-                        <th className="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Nome</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Data de Criação</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Colaborador</th>
+                        <th className="px-2 md:px-8 py-2 md:py-4 text-left text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ações</th>
                     </tr>
                 );
             } else {
@@ -2792,11 +2841,13 @@ function AdminDashboard() {
                 );
             }
         }; const getTableRow = (item: TableData) => {
+            const actionCellClass = "px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium space-x-2 md:space-x-3 flex gap-1 xs:flex-row items-center justify-center w-[100px}";
+            const actionButtonClass = "p-1 md:p-3 rounded-lg hover:opacity-80 text-base md:text-lg w-10 h-10 md:w-12 md:h-12 flex items-center justify-center";
             if (tabId === "pacotes") {
                 return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-8 py-5 whitespace-nowrap">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900 truncate max-w-[120px]">{item.name}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap">
                             <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Ativo"
                                     ? "bg-green-100 text-green-800"
@@ -2808,24 +2859,24 @@ function AdminDashboard() {
                                 {item.status}
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-green-600">{item.value}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500">{item.date}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-green-600">{item.value}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500 hidden sm:table-cell">
                             <span className={`font-medium ${item.remainingSlots && item.remainingSlots <= 5 ? 'text-red-600' : 'text-blue-600'}`}>
                                 {item.remainingSlots || 0} vagas
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium space-x-3">
+                        <td className={actionCellClass}>
                             <button
                                 onClick={() => handleEditPackage(item)}
-                                className="p-2 rounded hover:opacity-80"
+                                className={actionButtonClass}
                                 style={{ color: "#003194", backgroundColor: "rgba(0, 49, 148, 0.1)" }}
                             >
                                 <FaEdit />
                             </button>
                             <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
+                                className={`${actionButtonClass} ${item.status === "Ativo"
                                     ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
                                     }`}
@@ -2839,8 +2890,8 @@ function AdminDashboard() {
             } else {
                 return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="px-8 py-5 whitespace-nowrap">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900 truncate max-w-[120px]">{item.name}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap">
                             <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === "Ativo"
                                     ? "bg-green-100 text-green-800"
@@ -2852,9 +2903,9 @@ function AdminDashboard() {
                                 {item.status}
                             </span>
                         </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-500">{item.value}</td>
-                        <td className="px-8 py-5 whitespace-nowrap text-sm font-medium space-x-3">
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500">{item.date}</td>
+                        <td className="px-2 md:px-8 py-2 md:py-5 whitespace-nowrap text-xs md:text-sm text-gray-500 hidden sm:table-cell">{item.value}</td>
+                        <td className={actionCellClass}>
                             <button
                                 onClick={() => {
                                     if (tabId === "usuarios") {
@@ -2869,7 +2920,7 @@ function AdminDashboard() {
                                         handleEditPackage(item);
                                     }
                                 }}
-                                className="p-2 rounded hover:opacity-80"
+                                className={actionButtonClass}
                                 style={{ color: "#003194", backgroundColor: "rgba(0, 49, 148, 0.1)" }}
                                 title={tabId === "afiliados" || tabId === "hoteis" || tabId === "clientes" ? "Visualizar" : "Editar"}
                             >
@@ -2877,7 +2928,7 @@ function AdminDashboard() {
                             </button>
                             <button
                                 onClick={() => handleToggleItemStatus(item, tabId)}
-                                className={`p-2 rounded hover:opacity-80 ${item.status === "Ativo"
+                                className={`${actionButtonClass} ${item.status === "Ativo"
                                     ? "text-red-600 hover:bg-red-50"
                                     : "text-green-600 hover:bg-green-50"
                                     }`}
@@ -2893,13 +2944,13 @@ function AdminDashboard() {
 
         return (
             <div className="space-y-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-white">{tabLabels[tabId]}</h2>
+                <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center mb-4 gap-2">
+                    <h2 className="text-lg md:text-2xl font-bold text-white">{tabLabels[tabId]}</h2>
                     {/* Só mostra o botão se a aba atual está na lista de abas permitidas */}
                     {tabsWithCreateButton.includes(tabId) && (
                         <button
                             onClick={() => openModal(tabId as "pacotes" | "usuarios")}
-                            className="bg-white px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2 mb-3 gap-2"
+                            className="bg-white px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center space-x-2 mb-3 gap-2 text-xs md:text-base"
                             style={{ color: "#003194" }}
                         >
                             <FaPlus />
@@ -2908,7 +2959,7 @@ function AdminDashboard() {
                     )}
                 </div>
                 <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-[600px]">
                         <thead className="bg-gray-50">
                             {getTableHeaders()}
                         </thead>
