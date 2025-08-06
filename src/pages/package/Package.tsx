@@ -25,13 +25,9 @@ function Package() {
     packageTax: number;
     discountValue: number;
     duration: number;
-    packageSchedule?: {
-      startDate?: string | null;
-      endDate?: string | null;
-      duration?: number;
-      isFixed?: boolean;
-      isAvailable?: boolean;
-    };
+    startDate: string;
+    isFixed?: boolean;
+    isAvailable?: boolean;
     imageUrl?: string;
     images?: string;
     hotels?: Hotel[]; // Hotéis podem vir junto com o pacote
@@ -465,8 +461,8 @@ function Package() {
                     </div>
                         <div className="flex items-center mb-2 gap-1 flex-wrap">
                             <span className="font-semibold">Data de Início:</span>
-                            <span>{currentPackage.packageSchedule?.startDate
-                              ? formatDate(currentPackage.packageSchedule.startDate)
+                            <span>{currentPackage.startDate
+                              ? formatDate(currentPackage.startDate)
                               : 'Não informado'}</span>
                         </div>
                           {/*
@@ -668,7 +664,8 @@ function Package() {
                       const selectedHotelId = selectedHotel?.hotelId ?? selectedHotel?.id;
                       const roomTypeId = selectedHotel?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0;
                       const travelPackageId = currentPackage?.travelPackageId ?? currentPackage?.id ?? 0;
-                      const startDate = new Date().toISOString().slice(0, 10);
+                      // Use a data correta do pacote, preferencialmente packageSchedule.startDate
+                      const startDate = currentPackage?.startDate;
                       const userId = Number(localStorage.getItem("userId")) || 0;
                       const numPessoasReserva = numPessoas;
                       
@@ -701,7 +698,8 @@ function Package() {
                           originCity: currentPackage?.originCity,
                           originCountry: currentPackage?.originCountry,
                           destinationCity: currentPackage?.destinationCity,
-                          destinationCountry: currentPackage?.destinationCountry
+                          destinationCountry: currentPackage?.destinationCountry,
+                          startDate // Adiciona a data correta para exibição
                         }
                       };
                       
