@@ -15,37 +15,34 @@ export default function HomePage() {
 
     // Pode ser usado diretamente no HomePage.tsx, na hora de setar os pacotes
     function mapApiToTravelPackage(apiPkg: any): TravelPackage {
-    return {
-        id: apiPkg.travelPackageId,
-        title: apiPkg.title,
-        description: apiPkg.description,
-        vehicleType: apiPkg.vehicleType,
-        price: apiPkg.price,
-        originalPrice: apiPkg.originalPrice,
-        packageTax: apiPkg.packageTax,
-        duration: apiPkg.duration,
-        image: apiPkg.imageUrl,
-        rating: 5, // valor padrão
-        reviews: 10, // valor padrão
-        maxPeople: apiPkg.maxPeople,
-        originAddress: { 
-            city: apiPkg.originCity, 
-            country: apiPkg.originCountry 
-        },
-        destinationAddress: { 
-            city: apiPkg.destinationCity, 
-            country: apiPkg.destinationCountry 
-        },
-        isActive: apiPkg.packageSchedule?.isAvailable ?? true,
-        schedules: apiPkg.packageSchedule ? [apiPkg.packageSchedule] : [],
-        cupomDiscount: apiPkg.cupomDiscount,
-        discountValue: apiPkg.discountValue,
-        manualDiscountValue: apiPkg.manualDiscountValue,
-    };
-}
+        return {
+            id: apiPkg.travelPackageId,
+            title: apiPkg.title,
+            description: apiPkg.description,
+            image: apiPkg.imageUrl,
+            vehicleType: apiPkg.vehicleType,
+            duration: apiPkg.duration,
+            maxPeople: apiPkg.maxPeople,
+            confirmedPeople: apiPkg.confirmedPeople,
+            originalPrice: apiPkg.originalPrice,
+            price: apiPkg.price,
+            packageTax: apiPkg.packageTax,
+            cupomDiscount: apiPkg.cupomDiscount,
+            discountValue: apiPkg.discountValue,
+            manualDiscountValue: apiPkg.manualDiscountValue,
+            startDate: apiPkg.startDate,
+            isAvailable: apiPkg.isAvailable,
+            originCity: apiPkg.originCity,
+            originCountry: apiPkg.originCountry,
+            destinationCity: apiPkg.destinationCity,
+            destinationCountry: apiPkg.destinationCountry,
+            createdAt: apiPkg.createdAt,
+            isActive: apiPkg.isActive,
+        };
+    }
     useEffect(() => {
         document.title = "Viagium | Descubra o Mundo Com Quem Entende de Viagem";
-        
+
         axios.get("http://localhost:5028/api/TravelPackage/list")
             .then(res => {
                 const mappedPackages = res.data.map(mapApiToTravelPackage);
@@ -110,27 +107,33 @@ export default function HomePage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                        {packages.slice(0, 4).map((pkg) => (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                        {packages.slice(0, 3).map((pkg) => (
                             <TravelPackageCard
                                 key={pkg.id}
                                 pkg={{
                                     id: pkg.id,
                                     title: pkg.title,
                                     description: pkg.description,
-                                    vehicleType: pkg.vehicleType,
-                                    price: pkg.price,
-                                    originalPrice: pkg.originalPrice,
-                                    packageTax: pkg.packageTax,
-                                    duration: pkg.duration,
                                     image: pkg.image,
-                                    rating: pkg.rating,
-                                    reviews: pkg.reviews,
+                                    vehicleType: pkg.vehicleType,
+                                    duration: pkg.duration,
                                     maxPeople: pkg.maxPeople,
-                                    originAddress: pkg.originAddress,
-                                    destinationAddress: pkg.destinationAddress,
+                                    confirmedPeople: pkg.confirmedPeople,
+                                    originalPrice: pkg.originalPrice,
+                                    price: pkg.price,
+                                    packageTax: pkg.packageTax,
+                                    cupomDiscount: pkg.cupomDiscount,
+                                    discountValue: pkg.discountValue,
+                                    manualDiscountValue: pkg.manualDiscountValue,
+                                    startDate: pkg.startDate,
+                                    isAvailable: pkg.isAvailable,
+                                    originCity: pkg.originCity,
+                                    originCountry: pkg.originCountry,
+                                    destinationCity: pkg.destinationCity,
+                                    destinationCountry: pkg.destinationCountry,
+                                    createdAt: pkg.createdAt,
                                     isActive: pkg.isActive,
-                                    schedules: pkg.schedules,
                                 }}
                             />
                         ))}

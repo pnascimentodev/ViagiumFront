@@ -1,34 +1,24 @@
-export type Address = {
-    country: string;
-    city: string;
-};
-
-export type Schedule = {
-    startDate: string;
-    endDate: string;
-    duration: number;
-    isFixed: boolean;
-    isAvailable: boolean;
-};
-
 export type TravelPackage = {
     id: number;
     title: string;
     description: string;
-    vehicleType: string;
-    price: number;
-    originalPrice: number;
-    packageTax: number;
-    duration: number;
     image: string;
-    rating: number;
-    reviews: number;
+    vehicleType: string;
+    duration: number;
     maxPeople: number;
-    originAddress: Address;
-    destinationAddress: Address;
-    isActive: boolean;
-    schedules: Schedule[];
+    confirmedPeople: number;
+    originalPrice: number;
+    price: number;
+    packageTax: number;
     cupomDiscount?: string;
     discountValue?: number;
     manualDiscountValue?: number;
+    startDate: string;
+    isAvailable: boolean;
+    originCity: string;
+    originCountry: string;
+    destinationCity: string;
+    destinationCountry: string;
+    createdAt: string;
+    isActive: boolean;
 };
