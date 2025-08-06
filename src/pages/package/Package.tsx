@@ -181,26 +181,26 @@ function Package() {
 
   // Calcular valores baseados nos dados da API
 
+
   const price = currentPackage ? currentPackage.price * numPessoas : 0;
-
   const packageTax = currentPackage ? currentPackage.packageTax : 0;
-
   const discountPercent = currentPackage ? currentPackage.discountValue : 0; 
-
   const [cupomError, setCupomError] = useState('');
-
   const [cupomAplicado, setCupomAplicado] = useState(false);
-
   const pricePerNight = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
-
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
-
-  const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
-
+  const acomodationTotal = pricePerNight * (durationNights) * numPessoas;
   const valorBase = price + packageTax + acomodationTotal;
-  
   const valorDesconto = cupomAplicado && discountPercent > 0 ? (valorBase * (discountPercent / 100)) : 0;
   const valorFinal = valorBase - valorDesconto;
+
+  // Lógica para data de retorno (apenas para exibição)
+  let returnDate: string | null = null;
+  if (currentPackage?.startDate && durationNights > 0) {
+    const start = new Date(currentPackage.startDate);
+    start.setDate(start.getDate() + durationNights - 1); // -1 para considerar ida+volta no mesmo dia
+    returnDate = start.toISOString();
+  }
 
   // Nova lógica de cupom
   const aplicarCupom = async () => {
@@ -465,6 +465,10 @@ function Package() {
                               ? formatDate(currentPackage.startDate)
                               : 'Não informado'}</span>
                         </div>
+                        <div className="flex items-center mb-2 gap-1 flex-wrap">
+                            <span className="font-semibold">Data de Retorno:</span>
+                            <span>{returnDate ? formatDate(returnDate) : 'Não informado'}</span>
+                        </div>
                           {/*
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="font-semibold ">Data de Término:&nbsp;</span>
@@ -656,11 +660,10 @@ function Package() {
                       const selectedHotelId = selectedHotel?.hotelId ?? selectedHotel?.id;
                       const roomTypeId = selectedHotel?.roomTypes?.[roomTypeIndex]?.roomTypeId ?? 0;
                       const travelPackageId = currentPackage?.travelPackageId ?? currentPackage?.id ?? 0;
-                      // Use a data correta do pacote, preferencialmente packageSchedule.startDate
                       const startDate = currentPackage?.startDate;
                       const userId = Number(localStorage.getItem("userId")) || 0;
                       const numPessoasReserva = numPessoas;
-                      
+
                       const navigationData = {
                         reservationData: {
                           travelPackageId,
@@ -671,7 +674,8 @@ function Package() {
                           userId,
                           totalValue: valorFinal,
                           cupomApplied: cupomAplicado,
-                          discountValue: cupomAplicado ? valorDesconto : 0
+                          discountValue: cupomAplicado ? valorDesconto : 0,
+                          returnDate // <-- data de retorno só para exibição
                         },
                         displayData: {
                           packageTitle: currentPackage?.title,
@@ -691,12 +695,13 @@ function Package() {
                           originCountry: currentPackage?.originCountry,
                           destinationCity: currentPackage?.destinationCity,
                           destinationCountry: currentPackage?.destinationCountry,
-                          startDate // Adiciona a data correta para exibição
+                          startDate,
+                          returnDate // <-- data de retorno só para exibição
                         }
                       };
-                      
+
                       console.log('Dados sendo enviados para Reservation:', navigationData);
-                      
+
                       navigate("/reservation", {
                         state: navigationData
                       });
