@@ -865,12 +865,13 @@ function AdminDashboard() {
                             </div>
 
                             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h4 className="text-md font-medium text-blue-900 mb-2">Viagem</h4>
+                                <h4 className="text-md font-medium mb-2">Viagem</h4>
+                                <h4 className="text-md font-medium text-gray-500 mb-2">As datas do pacote não podem ser alteradas.</h4>
                                 <div className="flex flex-col gap-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Duração em dias</label>
                                     <input
                                         type="text"
-                                        required
+                                        disabled
                                         value={editPackageForm.duration}
                                         onChange={(e) => {
                                             const duration = e.target.value;
@@ -894,7 +895,7 @@ function AdminDashboard() {
                                     <label className="block text-sm font-medium text-gray-700">Data de partida</label>
                                     <input
                                         type="date"
-                                        required
+                                        disabled
                                         value={editPackageForm.startDate}
                                         onChange={(e) => {
                                             const startDate = e.target.value;
@@ -1169,9 +1170,7 @@ function AdminDashboard() {
         formData.append("duration", packageForm.duration);
         formData.append("maxPeople", packageForm.maxPeople);
         formData.append("originalPrice", String(unmaskCurrency(packageForm.startPrice)));
-        if (packageForm.promoDiscount) {
-            formData.append("manualDiscountValue", packageForm.promoDiscount);
-        }
+        formData.append("manualDiscountValue", packageForm.promoDiscount);
         formData.append("packageTax", String(unmaskCurrency(packageForm.packageTax)));
         formData.append("cupomDiscount", packageForm.cupomDiscount);
         formData.append("discountValue", packageForm.discountValue);
@@ -1308,8 +1307,15 @@ function AdminDashboard() {
         formData.append("maxPeople", editPackageForm.maxPeople);
         formData.append("originalPrice", String(unmaskCurrency(editPackageForm.startPrice)));
         formData.append("packageTax", String(unmaskCurrency(editPackageForm.packageTax)));
-        formData.append("cupomDiscount", editPackageForm.cupomDiscount);
-        formData.append("discountValue", editPackageForm.discountValue);
+        if (editPackageForm.cupomDiscount) {
+            formData.append("cupomDiscount", editPackageForm.cupomDiscount);
+        }
+        if (editPackageForm.discountValue) {
+            formData.append("discountValue", editPackageForm.discountValue);
+        }
+        if (editPackageForm.promoDiscount) {
+            formData.append("manualDiscountValue", editPackageForm.promoDiscount);
+        }
         formData.append("originCity", editPackageForm.originAddress.city);
         formData.append("originCountry", editPackageForm.originAddress.country);
         formData.append("destinationCity", editPackageForm.destinationAddress.city);
