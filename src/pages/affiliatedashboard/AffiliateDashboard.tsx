@@ -71,6 +71,9 @@ function AffiliateDashboard() {
   // Função para buscar reservas da API
   const fetchReservations = async () => {
     try {
+      // Buscar reservas ordenadas por data de criação (mais recentes primeiro)
+      // Se a API suportar parâmetros de ordenação, seria ideal usar algo como:
+      // const response = await axios.get('http://localhost:5028/api/Reservation?orderBy=createdAt&order=desc&limit=20');
       const response = await axios.get('http://localhost:5028/api/Reservation');
 
       if (response.data && Array.isArray(response.data)) {
@@ -87,7 +90,7 @@ function AffiliateDashboard() {
           return;
         }
 
-        // Debug: Ver quais affiliateIds existem nas reservas
+        // DEBUG: Ver quais affiliateIds existem nas reservas
         response.data.forEach((reservation: any, index: number) => {
           console.log(`Reserva ${index}: Hotel=${reservation.hotel?.name}, AffiliateId=${reservation.hotel?.affiliateId}`);
         });
@@ -107,12 +110,28 @@ function AffiliateDashboard() {
 
         console.log('Reservas filtradas para o afiliado:', affiliateReservations.length);
 
+        // Debug: Log das reservas do afiliado com suas datas
+        console.log('Reservas do afiliado com datas:', affiliateReservations.map(r => ({
+          id: r.reservationId,
+          createdAt: r.createdAt,
+          startDate: r.startDate,
+          endDate: r.endDate,
+          hotel: r.hotel?.name,
+          status: r.status
+        })));
+
         // Mapear as reservas filtradas para mostrar o status correto
         const formattedReservations = affiliateReservations
           .map((reservation: any) => {
             // Formatação das datas do pacote
             let dates = "Datas não informadas";
-            if (reservation.travelPackage?.packageSchedule && reservation.travelPackage?.duration) {
+            // Priorizar startDate e endDate da reserva (campos diretos)
+            if (reservation.startDate && reservation.endDate) {
+              const startDate = new Date(reservation.startDate);
+              const endDate = new Date(reservation.endDate);
+              dates = `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+            } else if (reservation.travelPackage?.packageSchedule && reservation.travelPackage?.duration) {
+              // Fallback para o cálculo antigo caso os campos diretos não existam
               const startDate = new Date(reservation.travelPackage.packageSchedule);
               const endDate = new Date(startDate.getTime() + (reservation.travelPackage.duration * 24 * 60 * 60 * 1000));
               dates = `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
@@ -126,9 +145,12 @@ function AffiliateDashboard() {
 
             // Formatação da data de compra
             let purchaseDate = "Data não informada";
-            if (reservation.hotel?.createdAt) {
+            if (reservation.createdAt) {
+              const createdDate = new Date(reservation.createdAt);
+              purchaseDate = `Reservado no dia ${createdDate.toLocaleDateString('pt-BR')}`;
+            } else if (reservation.hotel?.createdAt) {
               const createdDate = new Date(reservation.hotel.createdAt);
-              purchaseDate = `Comprado no dia ${createdDate.toLocaleDateString('pt-BR')}`;
+              purchaseDate = `Reservado no dia ${createdDate.toLocaleDateString('pt-BR')}`;
             }
 
             // Pegar o nome do primeiro viajante se não houver nome do usuário
@@ -188,9 +210,27 @@ function AffiliateDashboard() {
               purchaseDate,
               status: displayStatus,
               statusColor: statusColor,
+              createdAt: reservation.createdAt || new Date(), // Usar createdAt da reserva
+              rawReservation: reservation // Manter referência para ordenação
             };
           })
+          .sort((a, b) => {
+            // Ordenar por data de criação da reserva (mais recente primeiro)
+            const dateA = new Date(a.rawReservation.createdAt || 0);
+            const dateB = new Date(b.rawReservation.createdAt || 0);
+            return dateB.getTime() - dateA.getTime();
+          })
           .slice(0, 4); // Limitar a 4 reservas mais recentes
+
+        console.log('Reservas ordenadas por data mais recente:', formattedReservations.map((r, index) => ({
+          posicao: index + 1,
+          id: r.rawReservation?.reservationId,
+          hotel: r.hotel,
+          guest: r.guest,
+          status: r.status,
+          createdAt: r.rawReservation?.createdAt,
+          purchaseDate: r.purchaseDate
+        })));
 
         setReservations(formattedReservations);
       }
