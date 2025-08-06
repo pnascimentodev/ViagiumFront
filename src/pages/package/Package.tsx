@@ -195,7 +195,7 @@ function Package() {
 
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
 
-  const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
+  const acomodationTotal = pricePerNight * (durationNights) * numPessoas;
 
   const valorBase = price + packageTax + acomodationTotal;
   
