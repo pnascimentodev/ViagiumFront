@@ -11,7 +11,7 @@ apiClient.interceptors.request.use(
   (config) => {
     // Primeiro verifica se é uma requisição de afiliado
     const affiliateToken = AuthService.getAffiliateToken();
-    if (affiliateToken && config.url?.includes('/Affiliate/')) {
+    if (affiliateToken && (config.url?.includes('/Affiliate/') || config.url?.includes('/Hotel/'))) {
       config.headers.Authorization = `Bearer ${affiliateToken}`;
     }
 
