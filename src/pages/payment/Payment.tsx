@@ -6,9 +6,6 @@ import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 
-
-
-
 const paymentMethods = [
     { id: "pix", name: "PIX", icon: FaPix },
     { id: "boleto", name: "Boleto", icon: FaBarcode },

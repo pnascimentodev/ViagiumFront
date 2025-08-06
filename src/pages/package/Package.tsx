@@ -189,7 +189,9 @@ function Package() {
   const [cupomAplicado, setCupomAplicado] = useState(false);
   const pricePerNight = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.pricePerNight || 0;
   const durationNights = currentPackage ? (typeof currentPackage.duration === 'string' ? parseInt(currentPackage.duration) : Number(currentPackage.duration)) : 0;
-  const acomodationTotal = pricePerNight * (durationNights) * numPessoas;
+
+  // CORREÇÃO: hospedagem = preço da acomodação x (duração - 1) x pessoas
+  const acomodationTotal = pricePerNight * (durationNights > 1 ? durationNights - 1 : 0) * numPessoas;
   const valorBase = price + packageTax + acomodationTotal;
   const valorDesconto = cupomAplicado && discountPercent > 0 ? (valorBase * (discountPercent / 100)) : 0;
   const valorFinal = valorBase - valorDesconto;
