@@ -77,6 +77,8 @@ export default function Reservation() {
   }, []);
 
 
+  // Data de retorno pode vir de displayData ou reservationData
+  const returnDate = displayData?.returnDate || reservationData?.returnDate;
   const packageDetails = {
     id: reservationData?.travelPackageId || 1,
     packageName: displayData?.packageTitle || "Pacote não informado",
@@ -85,10 +87,11 @@ export default function Reservation() {
       : "Origem não informada",
     destination: displayData?.destinationCity && displayData?.destinationCountry 
       ? `${displayData.destinationCity}, ${displayData.destinationCountry}` 
-      : "Destino não informado",
+      : "Destino não informada",
     duration: displayData?.duration?.toString() || "Duração não informada",
     startDate: reservationData?.startDate ? new Date(reservationData.startDate) : new Date(),
     totalValue: `R$ ${displayData?.finalValue?.toLocaleString('pt-BR') || '0'},00`,
+    returnDate: returnDate ? new Date(returnDate) : null
   }
   const [passengers, setPassengers] = useState<Passenger[]>(
     Array.from({ length: Math.max(numPessoas - 1, 0) }, (_, idx) => ({
@@ -270,6 +273,10 @@ export default function Reservation() {
                       <p className="text-gray-900">{packageDetails.duration}</p>
                     </div>
                     <div>
+                      <span className="text-sm font-medium text-gray-700">Data de Retorno:</span>
+                      <p className="text-gray-900">{packageDetails.returnDate ? packageDetails.returnDate.toLocaleDateString() : 'Não informada'}</p>
+                    </div>
+                    <div>
                       <span className="text-sm font-medium text-gray-700">Valor Total:</span>
                       <p className="text-2xl font-bold text-[#FFA62B]">{packageDetails.totalValue}</p>
                     </div>
@@ -370,6 +377,10 @@ export default function Reservation() {
                       <div className="flex justify-between">
                         <span className="text-gray-700">Data de Início:</span>
                         <span className="font-medium">{packageDetails.startDate.toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Data de Retorno:</span>
+                        <span className="font-medium">{packageDetails.returnDate ? packageDetails.returnDate.toLocaleDateString() : 'Não informada'}</span>
                       </div>
                       <hr className="my-3" />
                       <div className="flex justify-between text-lg">
