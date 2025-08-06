@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaCreditCard, FaBarcode, FaMoneyCheckAlt} from "react-icons/fa";
+import { FaCreditCard, FaBarcode } from "react-icons/fa";
 import { FaPix } from "react-icons/fa6";
 import { maskCardNumber, maskExpiryMonth, maskExpiryYear, maskCEP } from "../../utils/masks";
 import Navbar from '../../components/Navbar';
@@ -55,17 +55,16 @@ export default function Payment() {
     };
 
   // Status config
-    const statusConfig = {
-        success: { bgColor: "bg-green-100", color: "text-green-600", text: "Pagamento aprovado!" },
-        error: { bgColor: "bg-red-100", color: "text-red-600", text: "Pagamento recusado!" },
-        pending: { bgColor: "bg-gray-100", color: "text-gray-600", text: "Aguardando confirmação..." },
-    }[paymentStatus];
+    const statusConfig =
+      paymentStatus === "success"
+        ? { bgColor: "bg-green-100", color: "text-green-600", text: "Pagamento aprovado!" }
+        : paymentStatus === "error"
+        ? { bgColor: "bg-red-100", color: "text-red-600", text: "Pagamento recusado!" }
+        : undefined;
 
     const StatusIcon = paymentStatus === "success"
-    ? FaCreditCard
-    : paymentStatus === "error"
-    ? FaBarcode
-    : FaMoneyCheckAlt;
+      ? FaCreditCard
+      : FaBarcode;
 
     const location = useLocation();
     const { reservationData } = location.state || {};
@@ -628,13 +627,15 @@ export default function Payment() {
           )}
 
           {/* Payment Status */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-4">
-            <h2 className="text-xl font-semibold mb-4 ">Status do Pagamento</h2>
-            <div className={`inline-flex items-center px-4 py-2 rounded-full ${statusConfig.bgColor}`}>
-              <StatusIcon className={`w-5 h-5 mr-2 ${statusConfig.color}`} />
-              <span className={`font-medium ${statusConfig.color}`}>{statusConfig.text}</span>
+          {(paymentStatus === "success" || paymentStatus === "error") && statusConfig && (
+            <div className="bg-white rounded-lg shadow-md p-6 mt-4">
+              <h2 className="text-xl font-semibold mb-4 ">Status do Pagamento</h2>
+              <div className={`inline-flex items-center px-4 py-2 rounded-full ${statusConfig.bgColor}`}>
+                <StatusIcon className={`w-5 h-5 mr-2 ${statusConfig.color}`} />
+                <span className={`font-medium ${statusConfig.color}`}>{statusConfig.text}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Submit Button */}
           <button
