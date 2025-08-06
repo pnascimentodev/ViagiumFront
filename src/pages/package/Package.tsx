@@ -496,34 +496,30 @@ function Package() {
                     <h3 className="text-lg font-semibold">Resumo</h3>
                   </div>
                   <div className="p-4">
-                    {/* Só exibe campo de cupom se o pacote tiver cupomDiscount */}
-                        {currentPackage?.cupomDiscount && (
-                          <div className="flex items-center space-x-3 mb-2">
-                            <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
-                            <input
-                              id="cupom"
-                              type="text"
-                              className="w-full border rounded px-2 py-1"
-                              value={cupomDiscountInput}
-                              onChange={e => {
-                                setCupomDiscountInput(e.target.value);
-                                setCupomAplicado(false); // Remove desconto se campo for alterado
-                              }}
-                            />
-                            {cupomError && <span className="text-red-500">{cupomError}</span>}
-                          </div>
-                        )}
-                        {currentPackage?.cupomDiscount && (
-                          <div className="flex justify-end mb-2">
-                            <Button
-                              className="font-bold px-4 py-2 rounded shadow hover:scale-105 transition-all duration-200"
-                              onClick={aplicarCupom}
-                              type="button"
-                            >
-                              Aplicar cupom
-                            </Button>
-                          </div>
-                        )}
+                    {/* Exibe campo de cupom sempre */}
+                    <div className="flex items-center space-x-3 mb-2">
+                      <label htmlFor="cupom" className="font-semibold">Cupom de desconto</label>
+                      <input
+                        id="cupom"
+                        type="text"
+                        className="w-full border rounded px-2 py-1"
+                        value={cupomDiscountInput}
+                        onChange={e => {
+                          setCupomDiscountInput(e.target.value);
+                          setCupomAplicado(false); // Remove desconto se campo for alterado
+                        }}
+                      />
+                      {cupomError && <span className="text-red-500">{cupomError}</span>}
+                    </div>
+                    <div className="flex justify-end mb-2">
+                      <Button
+                        className="font-bold px-4 py-2 rounded shadow hover:scale-105 transition-all duration-200"
+                        onClick={aplicarCupom}
+                        type="button"
+                      >
+                        Aplicar cupom
+                      </Button>
+                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Pacote + Transporte:</span>
                       <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
@@ -536,13 +532,10 @@ function Package() {
                       <span className="font-bold">Impostos e encargos:</span>
                       <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
                     </div>
-                    {/* Exibe desconto do cupom apenas se aplicado */}
-                    {cupomAplicado && valorDesconto > 0 && (
                       <div className="flex justify-between text-sm text-green-700">
                         <span className="font-bold">Desconto do cupom:</span>
                         <span className="font-bold">- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
-                    )}
                     <hr className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Valor Final</span>
@@ -594,7 +587,6 @@ function Package() {
                               const star = hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0;
                               return renderStars(star, 'sm');
                             })()}
-                            <span className="text-sm font-medium ml-1">{hotels[hotelIndex]?.star}</span>
                           </div>
                         )}
                         {/* Imagem do hotel */}
@@ -636,14 +628,14 @@ function Package() {
                               ))}
                             </select>
                             <div className="justify-center mt-2">
-                              <h5 className="font-semibold mb-1">Amenities:</h5>
+                              <h5 className="font-semibold mb-1">Adicionais:</h5>
                               <ul className="space-y-1">
                                 {getCurrentRoomTypeAmenities().length > 0 ? (
                                   getCurrentRoomTypeAmenities().map((item) => (
                                     <li key={item.id ?? item.amenityId} className="text-gray-600 text-xs">{item.name}</li>
                                   ))
                                 ) : (
-                                  <li className="text-gray-400 text-xs">Nenhuma amenidade disponível para este quarto.</li>
+                                  <li className="text-gray-400 text-xs">Nenhum adicional disponível para este quarto.</li>
                                 )}
                               </ul>
                             </div>
@@ -734,7 +726,7 @@ function Package() {
               />
               <p className="mb-2 text-xl">{renderHotelAddress(hotels[hotelIndex]?.address)}</p>
                 <div className="mb-4">
-                  <h4 className="font-semibold text-lg mb-2">Amenities do Hotel:</h4>
+                  <h4 className="font-semibold text-lg mb-2">Adicionais do Hotel:</h4>
                   <ul className="mb-2">
                     {getCurrentHotelAmenities().map((item) => (
                       <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
@@ -742,7 +734,7 @@ function Package() {
                   </ul>
                 </div>
                 <div className="mb-4">
-                  <h4 className="font-semibold text-lg mb-2">Amenities do Quarto:</h4>
+                  <h4 className="font-semibold text-lg mb-2">Adicionais do Quarto:</h4>
                   <ul className="mb-2">
                     {getCurrentRoomTypeAmenities().map((item) => (
                       <li key={item.id} className="text-gray-600 text-xs">{item.name}</li>
@@ -752,26 +744,9 @@ function Package() {
                 {(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star) && (
                   <div className="flex items-center font-semibold text-xl mb-4">
                     <span className="mr-2">Avaliação:</span>
-                    {renderStars(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0, 'md')}
-                    <span className="font-medium ml-2">{hotels[hotelIndex]?.star || hotels[hotelIndex]?.star}</span>
+                    {renderStars(hotels[hotelIndex]?.star || hotels[hotelIndex]?.star || 0, 'md')}       
                   </div>
                 )}
-            <div className="p-6 pt-8">
-              <Button
-                className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
-              >
-                  Ver no mapa
-              </Button>
-              {/* 
-              <div className="flex items-center justify-center mt-4">
-                <Button
-                  className="w-full text-font-bold py-4 text-lg rounded-2xl shadow-lg hover:scale-105 transition-all duration-200"
-                >
-                  Reservar Agora
-                </Button>
-              </div>
-              */}
-            </div>
             </div>
           </div>
         )}
