@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { validateEmail, validatePassword, validatePhone, validateCEP, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
-import { maskPhone, maskCEP, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
+import { validateEmail, validatePassword, validatePhone, validateCNPJ, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate, validateTerms } from "../../../utils/validations.ts";
+import {  maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
@@ -208,10 +208,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         switch (name) {
             case "telefone1":
             case "telefone2":
-                newValue = maskPhone(value);
-                break;
-            case "cep":
-                newValue = maskCEP(value);
                 break;
             case "cnpj":
                 newValue = maskCNPJ(value);
@@ -272,9 +268,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             case "telefone1":
                 if (!validatePhone(value)) error = "Telefone inválido.";
                 break;
-            case "cep":
-                if (!validateCEP(value)) error = "CEP inválido.";
-                break;
             case "cnpj":
                 if (!validateCNPJ(value)) error = "CNPJ inválido.";
                 break;
@@ -319,6 +312,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             formData.append('ContactNumber', form.telefoneHotel);
             formData.append('Cnpj', form.cnpj.replace(/\D/g, '')); // Remove formatação do CNPJ
             formData.append('Cadastur', form.numeroCadastur);
+            formData.append('InscricaoEstadual', form.inscricaoEstadual);
             formData.append('CadasturExpiration', form.dataExpiracao);
             formData.append('AffiliateId', affiliateId);
             formData.append('ImageUrl', ''); // Campo vazio conforme exemplo
@@ -369,7 +363,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         // Validação de todos os campos
         if (!validateRequired(form.nomeHospedagem)) newErrors.nomeHospedagem = "Campo obrigatório.";
         if (!validateRequired(form.tipo)) newErrors.tipo = "Campo obrigatório.";
-        if (!validateCEP(form.cep)) newErrors.cep = "CEP inválido.";
+        if (!form.cep || form.cep.trim() === "") newErrors.cep = "Campo obrigatório.";
         if (!validateRequired(form.rua)) newErrors.rua = "Campo obrigatório.";
         if (!form.numero || form.numero === 0) newErrors.numero = "Campo obrigatório.";
         if (!validateRequired(form.bairro)) newErrors.bairro = "Campo obrigatório.";
@@ -657,9 +651,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                         placeholder="(00) 00000-0000"
                                         value={form.telefoneHotel || ""}
                                         onChange={e => {
-                                            // Permite apenas números e limita a 11 dígitos
-                                            let value = e.target.value.replace(/\D/g, "").slice(0, 11);
-                                            value = maskPhone(value); // aplica a máscara se desejar
+                                            const value = e.target.value.replace(/\D/g, "");
                                             setForm(prev => ({ ...prev, telefoneHotel: value }));
                                             setErrors(prev => {
                                                 const newErrors = { ...prev };
@@ -668,7 +660,6 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                                             });
                                         }}
                                         onBlur={handleBlur}
-                                        maxLength={15} // limita o input visual (com máscara pode ser até 15)
                                         className={`w-full px-3 py-2 border ${errors.telefoneHotel ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-[#003194] focus:border-transparent`}
                                     />
                                     {errors.telefoneHotel && <div style={{ color: "red", fontWeight: 500 }}>{errors.telefoneHotel}</div>}
@@ -888,6 +879,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
                             </div>
                         </div>
 
+                        {/* Cadastur */}
                         {/* Cadastur */}
                         <div className="pt-6 border-t border-gray-200">
                             <h3 className="text-xl font-semibold text-[#003194] mb-6">

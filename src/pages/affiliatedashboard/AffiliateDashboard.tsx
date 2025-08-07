@@ -411,31 +411,32 @@ function AffiliateDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b to-white p-6"
+    <div className="min-h-screen bg-gradient-to-b to-white p-2 sm:p-4 lg:p-6"
       style={{
         background: 'linear-gradient(to bottom, #003194, white)'
       }}>
-      <div className="max-w-7xl mx-auto space-y-6 rounded-xl bg-white/10">
+      <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 rounded-xl bg-white/10">
         {/* Header */}
-        <div className="bg-white rounded-2xl p-6 flex items-center justify-between shadow-lg">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 lg:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shadow-lg">
           {/* Logo e título */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center flex-shrink-0">
               <img
                 src="/src/assets/img/logo.svg"
                 alt="Viagium Logo"
-                className="h-12"
+                className="h-8 sm:h-10 lg:h-12"
               />
             </div>
             {/* Header - Afiliado Viagium */}
-            <h1 className="text-2xl font-bold">Afiliado Viagium</h1>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Afiliado Viagium</h1>
           </div>
 
           {/* Botões e perfil */}
-          <div className="flex items-center gap-4">
-            <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2">
-              <FaPlus className="w-4 h-4" />
-              Add Hotel
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 lg:px-6 py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-sm sm:text-base">
+              <FaPlus className="w-3 h-3 sm:w-4 sm:h-4" fill="white" />
+              <span className="hidden xs:inline">Add Hotel</span>
+              <span className="xs:hidden text-white">Add</span>
             </button>
             {/* Chamada do Modal de cadastro Hotel */}
             <ModalHotel
@@ -451,26 +452,26 @@ function AffiliateDashboard() {
               onSave={handleSaveHotel}
             />
 
-            <div className="flex items-center gap-2 text-gray-600 relative">
-              <span className="text-sm">Bem vindo{affiliateName ? ` ${affiliateName}` : ""}</span>
+            <div className="flex items-center gap-1 sm:gap-2 text-gray-600 relative">
+              <span className="text-xs sm:text-sm truncate max-w-32 sm:max-w-none">{affiliateName || "Bem vindo"}</span>
               <button
                 onClick={e => { e.stopPropagation(); setIsUserDropdownOpen((open) => !open); }}
-                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors flex-shrink-0"
                 type="button"
               >
-                <FaUser className="w-4 h-4" />
+                <FaUser className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
 
               {/* Dropdown do usuário */}
               {isUserDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="absolute top-full right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="py-2">
                     <button
                       onClick={e => { e.stopPropagation(); handleLogout(); }}
-                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      className="w-full px-3 sm:px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors text-sm"
                       type="button"
                     >
-                      <FaPowerOff className="w-4 h-4" />
+                      <FaPowerOff className="w-3 h-3 sm:w-4 sm:h-4" />
                       Sair
                     </button>
                   </div>
@@ -604,18 +605,18 @@ function AffiliateDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-bold text-blue-800 truncate">{hotel.name}</h3>
+                            <h3 className="font-bold text-blue-800 ">{hotel.name}</h3>
                             <p className="text-sm text-blue-800">{hotel.location}</p>
                           </div>
 
                           {/* Dropdown Menu */}
-                          <div className="relative" onClick={(e) => e.stopPropagation()}>
+                          <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={(e) => handleDropdownClick(filteredIndex, e)}
-                              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              className="w-8 h-8 p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
                               type="button"
                             >
-                              <FaEllipsisV className="text-gray-600 w-4 h-4" />
+                              <FaEllipsisV className="text-gray-600 w-4 h-4 flex-shrink-0" />
                             </button>
 
                             {activeDropdown === filteredIndex && (

@@ -484,16 +484,18 @@ function Package() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <IoPersonCircleOutline className="text-2xl" />
-                          <select
-                            className="w-full border rounded px-2 py-1"
-                            value={numPessoas}
-                            onChange={e => setNumPessoas(Number(e.target.value))}
-                          >
-                            <option value={1}>1 pessoa</option>
-                            <option value={2}>2 pessoas</option>
-                            <option value={3}>3 pessoas</option>
-                            <option value={4}>4 pessoas</option>
-                          </select>
+                      <select
+                        className="w-full border rounded px-2 py-1"
+                        value={numPessoas}
+                        onChange={e => setNumPessoas(Number(e.target.value))}
+                      >
+                        {(() => {
+                          const max = hotels[hotelIndex]?.roomTypes?.[roomTypeIndex]?.maxOccupancy || 4;
+                          return Array.from({ length: max }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>{i + 1} pessoa{i === 0 ? '' : 's'}</option>
+                          ));
+                        })()}
+                      </select>
                     </div>
                   </div>
                 </div>

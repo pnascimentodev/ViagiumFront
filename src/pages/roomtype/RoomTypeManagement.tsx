@@ -5,35 +5,35 @@ import { useState, useEffect, useRef } from "react"
 import { FaUsers, FaEllipsisV, FaEdit, FaPowerOff, FaPlus, FaSearch, FaBed, FaDollarSign, FaHashtag, FaArrowLeft, FaTimes, FaUpload } from "react-icons/fa"
 import * as Md from "react-icons/md"
 import {
-  MdBathtub,
-  MdBalcony,
-  MdWaves,
-  MdBed as MdBedIcon,
-  MdWeekend,
-  MdDesk,
-  MdLock,
-  MdBlender,
-  MdCheckroom,
-  MdAccessible,
-  MdHearing,
-  MdPower,
-  MdKitchen,
-  MdMicrowave,
-  MdFlatware,
-  MdSmartDisplay,
-  MdCurtains,
-  MdThermostat,
-  MdVoiceChat,
-  MdLight,
-  MdShower,
-  MdCoffee,
-  MdAir,
-  MdCreditCard,
-  MdDining,
-  MdPool,
-  MdChildFriendly,
-  MdRectangle,
-  MdElectricMeter,
+    MdBathtub,
+    MdBalcony,
+    MdWaves,
+    MdBed as MdBedIcon,
+    MdWeekend,
+    MdDesk,
+    MdLock,
+    MdBlender,
+    MdCheckroom,
+    MdAccessible,
+    MdHearing,
+    MdPower,
+    MdKitchen,
+    MdMicrowave,
+    MdFlatware,
+    MdSmartDisplay,
+    MdCurtains,
+    MdThermostat,
+    MdVoiceChat,
+    MdLight,
+    MdShower,
+    MdCoffee,
+    MdAir,
+    MdCreditCard,
+    MdDining,
+    MdPool,
+    MdChildFriendly,
+    MdRectangle,
+    MdElectricMeter,
 } from "react-icons/md"
 import { useNavigate } from "react-router-dom"
 import apiClient from "../../utils/apiClient"
@@ -145,36 +145,119 @@ export default function RoomTypeManagement() {
                 return;
             }
 
-            // Busca todos os tipos de quarto
-            const response = await apiClient.get('http://localhost:5028/api/roomtype');
+            // Recupera os dados de autenticação do afiliado
+            const affiliateAuth = AuthService.getAffiliateAuth();
+            if (!affiliateAuth || !affiliateAuth.id) {
+                console.error('Dados de autenticação do afiliado não encontrados');
+                navigate('/affiliate');
+                return;
+            }
 
-            // Adiciona dados mockados para campos não disponíveis na API
-            const roomTypesWithMockData = response.data.map((roomType: any) => {
-                const totalRooms = roomType.numberOfRoomsAvailable || 5;
-                // Mock para quartos reservados - entre 0% e 70% dos quartos disponíveis
-                const numberOfRoomsReserved = Math.floor(totalRooms * Math.random() * 0.7);
-                // Calcular quartos realmente disponíveis (não reservados)
-                const actualAvailableRooms = totalRooms - numberOfRoomsReserved;
-
-                return {
-                    ...roomType,
-                    numberOfRoomsReserved,
-                    actualAvailableRooms
-                };
-            });
-
-            setRoomTypes(roomTypesWithMockData);
-
-            // Se tiver hotelId selecionado (pode vir de params ou estado), filtra
+            // Verifica se há um hotelId específico na URL
             const urlParams = new URLSearchParams(window.location.search);
             const hotelIdParam = urlParams.get('hotelId');
 
             if (hotelIdParam) {
+                // Se há um hotelId específico, busca os room types diretamente do hotel
                 const hotelId = parseInt(hotelIdParam);
-                const filteredByHotel = roomTypesWithMockData.filter((room: RoomType) => room.hotelId === hotelId);
-                setFilteredRoomTypes(filteredByHotel);
+                console.log('Buscando room types do hotel:', hotelId);
+
+                try {
+                    const hotelResponse = await apiClient.get(`http://localhost:5028/api/Hotel/${hotelId}`);
+
+                    // Verificar se o hotel pertence ao afiliado logado
+                    if (hotelResponse.data.affiliateId !== parseInt(affiliateAuth.id)) {
+                        console.warn(`Hotel ${hotelId} não pertence ao afiliado logado`);
+                        alert('Você não tem permissão para acessar os quartos deste hotel.');
+                        navigate('/affiliatedashboard');
+                        return;
+                    }
+
+                    // Extrair os room types do hotel
+                    const roomTypesFromHotel = hotelResponse.data.roomTypes || [];
+                    console.log(`Room types encontrados para o hotel ${hotelId}:`, roomTypesFromHotel.length);
+
+                    // Adiciona dados mockados para campos não disponíveis na API
+                    const roomTypesWithMockData = roomTypesFromHotel.map((roomType: any) => {
+                        const totalRooms = roomType.numberOfRoomsAvailable || 5;
+                        // Mock para quartos reservados - entre 0% e 70% dos quartos disponíveis
+                        const numberOfRoomsReserved = Math.floor(totalRooms * Math.random() * 0.7);
+                        // Calcular quartos realmente disponíveis (não reservados)
+                        const actualAvailableRooms = totalRooms - numberOfRoomsReserved;
+
+                        return {
+                            ...roomType,
+                            numberOfRoomsReserved,
+                            actualAvailableRooms
+                        };
+                    });
+
+                    setRoomTypes(roomTypesWithMockData);
+                    setFilteredRoomTypes(roomTypesWithMockData);
+
+                } catch (hotelError) {
+                    console.error(`Erro ao buscar dados do hotel ${hotelId}:`, hotelError);
+                    if ((hotelError as any)?.response?.status === 404) {
+                        alert('Hotel não encontrado.');
+                    } else {
+                        alert('Erro ao carregar dados do hotel. Tente novamente.');
+                    }
+                    navigate('/affiliatedashboard');
+                    return;
+                }
+
             } else {
-                setFilteredRoomTypes(roomTypesWithMockData);
+                // Se não há hotelId específico, busca dados do afiliado para mostrar todos os room types dos seus hotéis
+                try {
+                    const affiliateResponse = await apiClient.get(`/Affiliate/${affiliateAuth.id}`);
+
+                    if (!affiliateResponse.data || !affiliateResponse.data.hotels || !Array.isArray(affiliateResponse.data.hotels)) {
+                        console.error('Afiliado não possui hotéis cadastrados');
+                        setRoomTypes([]);
+                        setFilteredRoomTypes([]);
+                        return;
+                    }
+
+                    // Buscar room types de todos os hotéis do afiliado
+                    const allRoomTypes: any[] = [];
+
+                    for (const hotel of affiliateResponse.data.hotels) {
+                        try {
+                            const hotelResponse = await apiClient.get(`http://localhost:5028/api/Hotel/${hotel.hotelId}`);
+                            const roomTypesFromHotel = hotelResponse.data.roomTypes || [];
+                            allRoomTypes.push(...roomTypesFromHotel);
+                        } catch (error) {
+                            console.warn(`Erro ao buscar room types do hotel ${hotel.hotelId}:`, error);
+                            // Continuar com os outros hotéis mesmo se um falhar
+                        }
+                    }
+
+                    console.log(`Total de room types de todos os hotéis do afiliado: ${allRoomTypes.length}`);
+
+                    // Adiciona dados mockados para campos não disponíveis na API
+                    const roomTypesWithMockData = allRoomTypes.map((roomType: any) => {
+                        const totalRooms = roomType.numberOfRoomsAvailable || 5;
+                        // Mock para quartos reservados - entre 0% e 70% dos quartos disponíveis
+                        const numberOfRoomsReserved = Math.floor(totalRooms * Math.random() * 0.7);
+                        // Calcular quartos realmente disponíveis (não reservados)
+                        const actualAvailableRooms = totalRooms - numberOfRoomsReserved;
+
+                        return {
+                            ...roomType,
+                            numberOfRoomsReserved,
+                            actualAvailableRooms
+                        };
+                    });
+
+                    setRoomTypes(roomTypesWithMockData);
+                    setFilteredRoomTypes(roomTypesWithMockData);
+
+                } catch (affiliateError) {
+                    console.error('Erro ao buscar dados do afiliado:', affiliateError);
+                    alert('Erro ao carregar dados do afiliado. Tente novamente.');
+                    navigate('/affiliatedashboard');
+                    return;
+                }
             }
 
         } catch (error) {
@@ -331,7 +414,7 @@ export default function RoomTypeManagement() {
                             ✕
                         </button>
                     </div>
-                    
+
                     <EditRoomTypeForm roomType={editingRoomType} onClose={handleCloseEditModal} onUpdate={fetchRoomTypes} />
                 </div>
             </div>
@@ -339,10 +422,10 @@ export default function RoomTypeManagement() {
     };
 
     // Componente do Formulário de Edição
-    const EditRoomTypeForm = ({ roomType, onClose, onUpdate }: { 
-        roomType: RoomType; 
-        onClose: () => void; 
-        onUpdate: () => void; 
+    const EditRoomTypeForm = ({ roomType, onClose, onUpdate }: {
+        roomType: RoomType;
+        onClose: () => void;
+        onUpdate: () => void;
     }) => {
         const [form, setForm] = useState({
             name: roomType.name,
@@ -374,7 +457,7 @@ export default function RoomTypeManagement() {
         // Estados para paginação dos diferenciais
         const [currentAmenitiesPage, setCurrentAmenitiesPage] = useState(0);
         const [activeTab, setActiveTab] = useState("manual"); // Estado para controlar a aba ativa (range ou manual)
-        
+
         // Estados para geração automática de números
         const [startNumber, setStartNumber] = useState("");
         const [endNumber, setEndNumber] = useState("");
@@ -443,7 +526,7 @@ export default function RoomTypeManagement() {
         const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             const { name, value } = e.target;
             setForm(prev => ({ ...prev, [name]: value }));
-            
+
             // Limpar erro do campo quando usuário começar a digitar
             if (errors[name]) {
                 setErrors(prev => {
@@ -456,7 +539,7 @@ export default function RoomTypeManagement() {
 
         const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             const { name, value } = e.target;
-            
+
             // Validação no blur (quando sai do campo)
             if (!value.trim() && name !== 'imageUrl') {
                 setErrors(prev => ({
@@ -468,10 +551,10 @@ export default function RoomTypeManagement() {
 
         const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const inputValue = e.target.value;
-            
+
             // Remove tudo que não é dígito
             const cleanValue = inputValue.replace(/\D/g, '');
-            
+
             if (cleanValue === '') {
                 setDisplayPrice('');
                 setForm(prev => ({ ...prev, pricePerNight: '' }));
@@ -480,7 +563,7 @@ export default function RoomTypeManagement() {
 
             // Converte para número e divide por 100 para ter centavos
             const numValue = parseInt(cleanValue) / 100;
-            
+
             // Formata para exibição
             const formatted = new Intl.NumberFormat("pt-BR", {
                 style: "currency",
@@ -489,7 +572,7 @@ export default function RoomTypeManagement() {
 
             setDisplayPrice(formatted);
             setForm(prev => ({ ...prev, pricePerNight: numValue.toString() }));
-            
+
             // Limpar erro de preço
             if (errors.pricePerNight) {
                 setErrors(prev => {
@@ -625,11 +708,11 @@ export default function RoomTypeManagement() {
             try {
                 // Simular delay de upload
                 await new Promise(resolve => setTimeout(resolve, 1500));
-                
+
                 // Armazenar arquivo selecionado após "upload"
                 setSelectedImage(file);
                 setUploadError(null);
-                
+
             } catch (error) {
                 console.error('Erro no upload:', error);
                 setUploadError('Erro ao fazer upload da imagem. Tente novamente.');
@@ -683,7 +766,7 @@ export default function RoomTypeManagement() {
                 // Se há imagem nova, usar FormData
                 if (selectedImage) {
                     const formData = new FormData();
-                    
+
                     // Seguir a estrutura exata da API
                     formData.append('roomTypeId', roomType.roomTypeId.toString());
                     formData.append('hotelId', roomType.hotelId.toString());
@@ -693,7 +776,7 @@ export default function RoomTypeManagement() {
                     formData.append('pricePerNight', form.pricePerNight);
                     formData.append('maxOccupancy', form.maxOccupancy);
                     formData.append('numberOfRoomsAvailable', form.numberOfRoomsAvailable);
-                    
+
                     // Adicionar a imagem
                     formData.append('image', selectedImage);
 
@@ -702,13 +785,13 @@ export default function RoomTypeManagement() {
                     for (let pair of formData.entries()) {
                         console.log(pair[0] + ': ' + pair[1]);
                     }
-                    
+
                     // Usar PUT como mostra na documentação
                     await apiClient.put(`http://localhost:5028/api/roomtype/${roomType.roomTypeId}`, formData);
                 } else {
                     // Se não há imagem nova, usar JSON
                     console.log('Enviando JSON sem imagem...');
-                    
+
                     const jsonData = {
                         roomTypeId: roomType.roomTypeId,
                         hotelId: roomType.hotelId,
@@ -719,9 +802,9 @@ export default function RoomTypeManagement() {
                         maxOccupancy: parseInt(form.maxOccupancy),
                         numberOfRoomsAvailable: parseInt(form.numberOfRoomsAvailable)
                     };
-                    
+
                     console.log('Dados JSON:', jsonData);
-                    
+
                     await apiClient.put(`http://localhost:5028/api/roomtype`, jsonData, {
                         headers: {
                             'Content-Type': 'application/json',
@@ -738,9 +821,9 @@ export default function RoomTypeManagement() {
                 console.error('Response data:', error.response?.data);
                 console.error('Response status:', error.response?.status);
                 console.error('Response headers:', error.response?.headers);
-                
+
                 let errorMessage = 'Erro ao atualizar tipo de quarto. Tente novamente.';
-                
+
                 if (error.response?.data?.message) {
                     errorMessage = error.response.data.message;
                 } else if (error.response?.data?.errors) {
@@ -753,7 +836,7 @@ export default function RoomTypeManagement() {
                 } else if (error.response?.status === 404) {
                     errorMessage = 'Tipo de quarto não encontrado.';
                 }
-                
+
                 alert(errorMessage);
             } finally {
                 setIsSubmitting(false);
@@ -971,11 +1054,10 @@ export default function RoomTypeManagement() {
                                             return (
                                                 <div
                                                     key={amenity.amenityId}
-                                                    className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${
-                                                        isSelected
+                                                    className={`flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all hover:bg-gray-50 gap-3 ${isSelected
                                                             ? "border-blue-500 bg-blue-50 text-blue-700"
                                                             : "border-gray-200 hover:border-gray-300"
-                                                    }`}
+                                                        }`}
                                                     onClick={() => toggleAmenity(amenity.amenityId)}
                                                 >
                                                     <input
@@ -1079,11 +1161,10 @@ export default function RoomTypeManagement() {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab("range")}
-                                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                                    activeTab === "range"
+                                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${activeTab === "range"
                                         ? "border-blue-500 text-blue-600"
                                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                }`}
+                                    }`}
                             >
                                 <FaHashtag className="w-4 h-4" />
                                 Vários Quartos de Uma Vez
@@ -1092,11 +1173,10 @@ export default function RoomTypeManagement() {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab("manual")}
-                                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${
-                                    activeTab === "manual"
+                                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium border-b-2 ${activeTab === "manual"
                                         ? "border-blue-500 text-blue-600"
                                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                }`}
+                                    }`}
                             >
                                 <FaPlus className="w-4 h-4" />
                                 Individual
@@ -1318,25 +1398,22 @@ export default function RoomTypeManagement() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setStatusFilter("all")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    statusFilter === "all" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === "all" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
                             >
                                 Todos ({roomTypes.length})
                             </button>
                             <button
                                 onClick={() => setStatusFilter("active")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    statusFilter === "active" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === "active" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
                             >
                                 Ativos ({roomTypes.filter((r) => r.isActive).length})
                             </button>
                             <button
                                 onClick={() => setStatusFilter("inactive")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    statusFilter === "inactive" ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === "inactive" ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
                             >
                                 Inativos ({roomTypes.filter((r) => !r.isActive).length})
                             </button>
@@ -1389,9 +1466,8 @@ export default function RoomTypeManagement() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleToggleStatus(roomType.roomTypeId)}
-                                                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                                                            roomType.isActive ? "text-red-600" : "text-green-600"
-                                                        }`}
+                                                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${roomType.isActive ? "text-red-600" : "text-green-600"
+                                                            }`}
                                                     >
                                                         {roomType.isActive ? (
                                                             <>
@@ -1411,13 +1487,12 @@ export default function RoomTypeManagement() {
                                     </div>
                                 </div>
                                 <div className="absolute top-3 left-3">
-                  <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          roomType.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                      }`}
-                  >
-                    {roomType.isActive ? "Ativo" : "Inativo"}
-                  </span>
+                                    <span
+                                        className={`px-2 py-1 text-xs font-medium rounded-full ${roomType.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                                            }`}
+                                    >
+                                        {roomType.isActive ? "Ativo" : "Inativo"}
+                                    </span>
                                 </div>
                             </div>
 
@@ -1508,13 +1583,13 @@ export default function RoomTypeManagement() {
                                     <div className="flex flex-wrap gap-1">
                                         {roomType.rooms.slice(0, 4).map((room, index) => (
                                             <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono">
-                        {room.roomNumber}
-                      </span>
+                                                {room.roomNumber}
+                                            </span>
                                         ))}
                                         {roomType.rooms.length > 4 && (
                                             <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                        +{roomType.rooms.length - 4}
-                      </span>
+                                                +{roomType.rooms.length - 4}
+                                            </span>
                                         )}
                                     </div>
                                 </div>

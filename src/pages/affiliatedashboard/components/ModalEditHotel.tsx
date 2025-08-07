@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import apiClient from "../../../utils/apiClient";
-import { validateEmail, validatePassword, validatePhoneUnmasked, validateCNPJUnmasked, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate, validateCEP } from "../../../utils/validations.ts";
+import { validateEmail, validatePassword, validatePhoneUnmasked, validateCNPJUnmasked, validateRequired, validateEmailConfirmation, validatePasswordConfirmation, validateFutureDate } from "../../../utils/validations.ts";
 import { maskPhone, maskCNPJ, maskInscricaoEstadual, maskCPF, maskPassaporte } from "../../../utils/masks.ts";
 import { validateCPF, validatePassaporte } from "../../../utils/validations.ts";
 import { HiQuestionMarkCircle } from "react-icons/hi";
@@ -358,7 +358,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
                 if (!validatePhoneUnmasked(value)) error = "Telefone inválido.";
                 break;
             case "zipCode":
-                if (!validateCEP(value)) error = "CEP inválido.";
+                if (!value) error = "CEP obrigatório.";
                 break;
             case "cnpj":
                 if (!validateCNPJUnmasked(value)) error = "CNPJ inválido.";
@@ -406,7 +406,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         if (!validateRequired(form.description)) newErrors.description = "Campo obrigatório.";
         if (!validateRequired(form.contactNumber)) newErrors.contactNumber = "Campo obrigatório.";
         if (!validateRequired(form.typeHosting)) newErrors.typeHosting = "Campo obrigatório.";
-        if (!validateRequired(form.zipCode)) newErrors.zipCode = "Campo obrigatório.";
+        if (!form.zipCode) newErrors.zipCode = "CEP obrigatório.";
         if (!validateRequired(form.streetName)) newErrors.streetName = "Campo obrigatório.";
         if (!validateRequired(form.neighborhood)) newErrors.neighborhood = "Campo obrigatório.";
         if (!validateRequired(form.city)) newErrors.city = "Campo obrigatório.";
@@ -416,7 +416,7 @@ function ModalEditHotel({ isOpen, onClose, hotel, onSave }: ModalEditHotelProps)
         if (!validateCNPJUnmasked(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
         if (!validateRequired(form.inscricaoEstadual)) newErrors.inscricaoEstadual = "Campo obrigatório.";
         if (!validatePhoneUnmasked(form.contactNumber)) newErrors.contactNumber = "Telefone inválido.";
-        if (!validateCEP(form.zipCode)) newErrors.zipCode = "CEP inválido.";
+        if (!form.zipCode) newErrors.zipCode = "CEP inválido.";
 
         const starsValue = parseInt(form.estrelas);
         if (!form.estrelas || isNaN(starsValue) || starsValue < 1 || starsValue > 5) {
