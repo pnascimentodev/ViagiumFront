@@ -1,7 +1,7 @@
 // Register page
 import { Button } from "../../components/Button.tsx";
 import logo from "../../assets/img/logo.svg";
-import {FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard, FaBirthdayCake, FaRegEye, FaRegEyeSlash} from "react-icons/fa";
+import {FaEnvelope, FaUser, FaPhone, FaIdCard, FaBirthdayCake, FaRegEye, FaRegEyeSlash} from "react-icons/fa";
 import { Input } from "../../components/Input.tsx";
 import { useState } from "react";
 import axios from "axios";
