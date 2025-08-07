@@ -46,12 +46,6 @@ export function validatePhone(phone: string): boolean {
     return /^\(\d{2}\) \d{4,5}-\d{4}$/.test(phone);
 }
 
-// Validação de telefone brasileiro sem máscara (aceita qualquer número)
-export function validatePhoneUnmasked(phone: string): boolean {
-    const phoneNumbers = phone.replace(/\D/g, '');
-    return phoneNumbers.length >= 1; // Aceita qualquer número com pelo menos 1 dígito
-}
-
 // Validação de CEP brasileiro
 export function validateCEP(cep: string): boolean {
     return /^\d{5}-\d{3}$/.test(cep);
@@ -86,12 +80,6 @@ export function validateCNPJ(cnpj: string): boolean {
     resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
     if (resultado !== parseInt(digitos.charAt(1))) return false;
     return true;
-}
-
-// Validação de CNPJ sem máscara (aceita qualquer número)
-export function validateCNPJUnmasked(cnpj: string): boolean {
-    const cnpjNumbers = cnpj.replace(/\D/g, '');
-    return cnpjNumbers.length >= 1; // Aceita qualquer número com pelo menos 1 dígito
 }
 
 // Validação de campos obrigatórios
@@ -130,10 +118,4 @@ export function validateFutureDate(dateStr: string): boolean {
 // Validação de aceite dos termos
 export function validateTerms(checked: boolean): boolean {
     return checked;
-}
-
-// Validação de data de chegada
-export function validateArrivalAfterDeparture(departure: string, arrival: string): boolean {
-    if (!departure || !arrival) return true;
-    return new Date(arrival) >= new Date(departure);
 }

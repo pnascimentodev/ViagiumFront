@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab }) => {
         <header className="text-white p-6" style={{ background: `linear-gradient(to right, #003194, #b17449ff)` }}>
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-[white]">
+                    <h1 className="text-2xl font-bold">
                         {getTabTitle(activeTab)}
                     </h1>
                 </div>
