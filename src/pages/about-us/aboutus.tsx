@@ -1,5 +1,13 @@
 import { FaLinkedinIn, FaInstagram } from "react-icons/fa"
 import Navbar from "../../components/Navbar"
+import dudaImg from '../../assets/img/duda.jpg';
+import priscilaImg from '../../assets/img/priscila.jpg';
+import miggeImg from '../../assets/img/migge.jpeg';
+import melImg from '../../assets/img/mel.jpeg';
+import myrellaImg from '../../assets/img/myrella.jpeg';
+import silasImg from '../../assets/img/silas.jpeg';
+import vanessaImg from '../../assets/img/vanessa.jpg';
+import viagium2Img from '../../assets/img/viagium2.jpeg';
 
 function AboutUsPage() {
   const teamMembers = [
@@ -7,8 +15,7 @@ function AboutUsPage() {
       id: 1,
       name: "Maria Eduarda",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/duda.jpg"},
+      image: dudaImg,
       social: {
         linkedin: "https://www.linkedin.com/in/maria-eduarda-carneiro/",
         instagram: "instagram.com/dudasheep",
@@ -18,8 +25,7 @@ function AboutUsPage() {
       id: 2,
       name: "Maria Priscila",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/priscila.jpg"},
+      image: priscilaImg,
       social: {
         linkedin: "https://www.linkedin.com/in/devpnascimento/",
         instagram: "instagram.com/pnxcnt",
@@ -29,8 +35,7 @@ function AboutUsPage() {
       id: 3,
       name: "Matheus Migge",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/migge.jpeg"},
+      image: miggeImg,
       social: {
         linkedin: "https://www.linkedin.com/in/matheusmigge/",
         instagram: "instagram.com/matheusmigge",
@@ -40,8 +45,7 @@ function AboutUsPage() {
       id: 4,
       name: "Melissa Valentin",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/mel.jpeg"},
+      image: melImg,
       social: {
         linkedin: "https://www.linkedin.com/in/melissavalentindev",
         instagram: "nstagram.com/melissavalentinn",
@@ -51,8 +55,7 @@ function AboutUsPage() {
       id: 5,
       name: "Myrella Gomes",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/myrella.jpeg"},
+      image: myrellaImg,
       social: {
         linkedin: "https://www.linkedin.com/in/myrellaggomes/",
         instagram: "nstagram.com/myrella-gomes",
@@ -62,8 +65,7 @@ function AboutUsPage() {
       id: 6,
       name: "Silas Sefas",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/silas.jpeg"},
+      image: silasImg,
       social: {
         linkedin: "https://www.linkedin.com/in/silassefas/",
         instagram: "instagram.com/silassefas1",
@@ -73,14 +75,13 @@ function AboutUsPage() {
       id: 7,
       name: "Vanessa Ribeiro",
       role: "Assoc, Full-Stack Development at Avanade",
-      image: {
-        src: "/../src/assets/img/vanessa.jpg"},
+      image: vanessaImg,
       social: {
         linkedin: "https://www.linkedin.com/in/vanessaribeiro-/",
         instagram: "instagram.com/_vanessa.ribeiro",
       },
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-white text-gray-800">
@@ -107,7 +108,7 @@ function AboutUsPage() {
           </div>
           <div className="flex justify-center items-center pl-4">
             <img
-              src="/../src/assets/img/viagium2.jpeg"
+              src={viagium2Img}
               alt="Grupo Viagium"
               className="rounded-lg shadow-lg object-cover w-full max-w-xl h-auto"
             />
@@ -126,7 +127,7 @@ function AboutUsPage() {
             {teamMembers.slice(0, 3).map((member) => (
               <div key={member.id} className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center max-w-sm">
                 <img
-                  src={typeof member.image === 'object' ? member.image.src : member.image || "/placeholder.svg"}
+                  src={member.image || "/placeholder.svg"}
                   alt={member.name}
                   className="rounded-full w-36 h-36 object-cover mb-4 border-4 border-[#FF6600]"
                 />
@@ -165,7 +166,7 @@ function AboutUsPage() {
             {teamMembers.slice(3).map((member) => (
               <div key={member.id} className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center max-w-sm">
                 <img
-                  src={typeof member.image === 'object' ? member.image.src : member.image || "/placeholder.svg"}
+                  src={member.image || "/placeholder.svg"}
                   alt={member.name}
                   className="rounded-full w-36 h-36 object-cover mb-4 border-4 border-[#FF6600]"
                 />
