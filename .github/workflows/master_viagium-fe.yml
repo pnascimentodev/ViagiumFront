@@ -61,6 +61,6 @@ jobs:
         with:
           app-name: 'Viagium-fe'
           slot-name: 'Production'
-          package:  ./dist
+          package:  node-app/dist
 
           
