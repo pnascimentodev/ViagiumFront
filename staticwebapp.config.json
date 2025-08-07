@@ -1,7 +1,7 @@
 {
 
   "navigationFallback": {
-    "rewrite": "index.html",
+    "rewrite": "/index.html",
     "exclude": ["/src/assets/img/*", "/public/img/*"]
   },
   "mimeTypes": {
