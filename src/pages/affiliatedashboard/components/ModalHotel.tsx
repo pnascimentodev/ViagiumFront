@@ -319,6 +319,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             formData.append('ContactNumber', form.telefoneHotel);
             formData.append('Cnpj', form.cnpj.replace(/\D/g, '')); // Remove formatação do CNPJ
             formData.append('Cadastur', form.numeroCadastur);
+            formData.append('InscricaoEstadual', form.inscricaoEstadual);
             formData.append('CadasturExpiration', form.dataExpiracao);
             formData.append('AffiliateId', affiliateId);
             formData.append('ImageUrl', ''); // Campo vazio conforme exemplo
