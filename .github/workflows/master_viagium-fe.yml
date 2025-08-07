@@ -30,7 +30,9 @@ jobs:
           npm run test --if-present
       
       - name: Copy config to dist
-        run: copy staticwebapp.config.json dist\
+        run: |
+          copy staticwebapp.config.json dist\
+          copy web.config dist\
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
