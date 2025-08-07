@@ -1,7 +1,5 @@
 {
-  "routes": [
-    {
-      "route": "/client"
-    }
-  ]
+  "navigationFallback": {
+    "rewrite": "index.html"
+  }
 }
