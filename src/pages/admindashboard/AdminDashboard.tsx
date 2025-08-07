@@ -1347,6 +1347,7 @@ function AdminDashboard() {
                 `http://localhost:5028/api/TravelPackage/discount?travelPackageId=${travelPackageId}&discountPercentage=${discountPercentage}`
             );
             alert("Promoção aplicada com sucesso!");
+            closeEditPackageModal();
             fetchPackages();
         } catch (error) {
             alert("Erro ao aplicar promoção.");
@@ -1362,6 +1363,7 @@ function AdminDashboard() {
                 `http://localhost:5028/api/TravelPackage/discount/deactivate?travelPackageId=${travelPackageId}`
             );
             alert("Promoção removida com sucesso!");
+            closeEditPackageModal();
             fetchPackages();
         } catch (error) {
             alert("Erro ao remover promoção.");
