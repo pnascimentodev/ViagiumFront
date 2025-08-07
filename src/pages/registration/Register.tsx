@@ -1,7 +1,7 @@
 // Register page
 import { Button } from "../../components/Button.tsx";
 import logo from "../../assets/img/logo.svg";
-import {FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard, FaBirthdayCake} from "react-icons/fa";
+import {FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard, FaBirthdayCake, FaRegEye, FaRegEyeSlash} from "react-icons/fa";
 import { Input } from "../../components/Input.tsx";
 import { useState } from "react";
 import axios from "axios";
@@ -20,6 +20,8 @@ function Register() {
   const [senhaError, setSenhaError] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [confirmarSenhaError, setConfirmarSenhaError] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState("");
 
@@ -336,9 +338,16 @@ function Register() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Input
-                      type="password"
+                      type={showSenha ? "text" : "password"}
                       placeholder="Senha"
-                      icon={<FaLock size={14}/>}
+                      icon={
+                        <span
+                          onClick={() => setShowSenha((prev) => !prev)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {showSenha ? <FaRegEye size={16} /> : <FaRegEyeSlash size={16} />}
+                        </span>
+                      }
                       value={senha}
                       onChange={(e) => setSenha(e.target.value)}
                       onBlur={handlePasswordBlur}
@@ -352,9 +361,16 @@ function Register() {
 
                 <div>
                   <Input
-                      type="password"
+                      type={showConfirmarSenha ? "text" : "password"}
                       placeholder="Confirmar"
-                      icon={<FaLock size={14}/>}
+                      icon={
+                        <span
+                          onClick={() => setShowConfirmarSenha((prev) => !prev)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {showConfirmarSenha ? <FaRegEye size={16} /> : <FaRegEyeSlash size={16} />}
+                        </span>
+                      }
                       value={confirmarSenha}
                       onChange={(e) => setConfirmarSenha(e.target.value)}
                       onBlur={handleConfirmarSenhaBlur}
@@ -425,9 +441,9 @@ function Register() {
                   <a href="#" className="font-semibold hover:text-[#FFA62B]">
                   Termos e Condições
                 </a>. Leia nossa{" "}
-                  <a href="#" className="font-semibold hover:text-[#FFA62B]">
+                  <a href="/privacy-policy" className="font-semibold hover:text-[#FFA62B]">
                   Política de Privacidade
-                </a>{" "}
+                </a>
                   e saiba sobre o tratamento dos seus dados pessoais.
               </span>
               </label>
