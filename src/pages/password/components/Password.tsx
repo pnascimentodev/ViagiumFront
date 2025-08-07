@@ -5,6 +5,7 @@ import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa"; // Adicione o FaRegEye
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface ForgotProps {
     actualPassword: boolean;
@@ -15,6 +16,7 @@ function Password({actualPassword}: ForgotProps) {
     const [currentPassword, setCurrentPassword] = useState("");
     const [currentPasswordError, setCurrentPasswordError] = useState("");
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const navigate = useNavigate();
 
     // Estados para nova senha
     const [newPassword, setNewPassword] = useState("");
@@ -255,15 +257,22 @@ function Password({actualPassword}: ForgotProps) {
                                 </div>
                             )}
                         </div>
-
-                        <div>
-                            <Button
-                                className="h-12 w-full rounded-[10px] shadow-lg"
-                                type="submit"
-                            >
-                                Alterar senha
-                            </Button>
-                        </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    className="h-12 w-full rounded-[10px] shadow-lg"
+                                    style={{ backgroundColor: '#FFA62B', color: '#003194' }}
+                                    type="submit"
+                                >
+                                    Alterar senha
+                                </Button>
+                                <Button
+                                    className="h-12 w-full rounded-[10px]"
+                                    type="button"
+                                    onClick={() => navigate("/profile")}
+                                >
+                                    Voltar
+                                </Button>
+                            </div>
                     </div>
                 </form>
             </div>
