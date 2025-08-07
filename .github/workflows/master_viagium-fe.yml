@@ -61,5 +61,5 @@ jobs:
         with:
           app-name: 'viagium-fe'
           slot-name: 'Production'
-          package: .
+          package: dist
           
