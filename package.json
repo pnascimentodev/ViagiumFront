@@ -11,9 +11,6 @@
     "start": "vite build && serve -l 8080 dist"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/material": "^7.2.0",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.11.0",
     "keen-slider": "^6.8.6",
