@@ -1,61 +1,82 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import Navbar from "../../components/Navbar"
 import Footer from "../../components/Footer";
 import HotelCarousel from "../../components/HotelCarousel";
 import { Link } from "react-router-dom";
 import TravelPackageCard from "../../components/TravelPackageCard";
 import Badge from "../../components/Badge";
-import axios from "axios";
-import type { TravelPackage } from "../../types/travelPackageTypes";
 
 // ...existing code...
 
 export default function HomePage() {
-    const [packages, setPackages] = useState<TravelPackage[]>([]);
-
-    // Pode ser usado diretamente no HomePage.tsx, na hora de setar os pacotes
-    function mapApiToTravelPackage(apiPkg: any): TravelPackage {
-    return {
-        id: apiPkg.travelPackageId,
-        title: apiPkg.title,
-        description: apiPkg.description,
-        vehicleType: apiPkg.vehicleType,
-        price: apiPkg.price,
-        originalPrice: apiPkg.originalPrice,
-        packageTax: apiPkg.packageTax,
-        duration: apiPkg.duration,
-        image: apiPkg.imageUrl,
-        rating: 5, // valor padrão
-        reviews: 10, // valor padrão
-        maxPeople: apiPkg.maxPeople,
-        originAddress: { 
-            city: apiPkg.originCity, 
-            country: apiPkg.originCountry 
-        },
-        destinationAddress: { 
-            city: apiPkg.destinationCity, 
-            country: apiPkg.destinationCountry 
-        },
-        isActive: apiPkg.packageSchedule?.isAvailable ?? true,
-        schedules: apiPkg.packageSchedule ? [apiPkg.packageSchedule] : [],
-        cupomDiscount: apiPkg.cupomDiscount,
-        discountValue: apiPkg.discountValue,
-        manualDiscountValue: apiPkg.manualDiscountValue,
-    };
-}
     useEffect(() => {
         document.title = "Viagium | Descubra o Mundo Com Quem Entende de Viagem";
-        
-        axios.get("http://localhost:5028/api/TravelPackage/list")
-            .then(res => {
-                const mappedPackages = res.data.map(mapApiToTravelPackage);
-                setPackages(mappedPackages);
-            })
-            .catch(err => {
-                console.error('Erro ao carregar pacotes:', err);
-                setPackages([]);
-            });
     }, []);
+    const featuredPackages = [
+        {
+            id: 1,
+            title: "Paraíso Mediterrâneo",
+            description: "7 dias de pores do sol deslumbrantes, vilarejos brancos e águas cristalinas",
+            price: "R$ 6.499",
+            originalPrice: "R$ 7.999",
+            duration: "7 dias",
+            image: "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            rating: 4.9,
+            reviews: 68,
+            qtySalesLimit: 50,
+            qtySold: 3,
+            originAddress: { country: "Brasil", city: "São Paulo" },
+            destinationAddress: { country: "Grécia", city: "Santorini" },
+        },
+        {
+            id: 2,
+            destination: "Bali, Indonésia",
+            title: "Aventura Tropical",
+            description: "10 dias explorando templos, praias e campos de arroz exuberantes",
+            price: "R$ 4.499",
+            originalPrice: "R$ 5.999",
+            duration: "10 dias",
+            image: "https://plus.unsplash.com/premium_photo-1661878915254-f3163e91d870?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            rating: 4.8,
+            reviews: 25,
+            qtySalesLimit: 10,
+            qtySold: 8,
+            originAddress: { country: "Brasil", city: "Rio de Janeiro" },
+            destinationAddress: { country: "Indonésia", city: "Bali" },
+        },
+        {
+            id: 3,
+            destination: "Tóquio, Japão",
+            title: "Descoberta Cultural",
+            description: "5 dias imerso na cultura tradicional e na vida moderna da cidade",
+            price: "R$ 7.999",
+            originalPrice: "R$ 9.499",
+            duration: "5 dias",
+            image: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=1484&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            rating: 4.9,
+            reviews: 312,
+            qtySalesLimit: 80,
+            qtySold: 65,
+            originAddress: { country: "Brasil", city: "Curitiba" },
+            destinationAddress: { country: "Japão", city: "Tóquio" },
+        },
+        {
+            id: 4,
+            destination: "Alpes Suíços",
+            title: "Refúgio nas Montanhas",
+            description: "6 dias de vistas alpinas de tirar o fôlego e chalés aconchegantes",
+            price: "R$ 8.499",
+            originalPrice: "R$ 10.499",
+            duration: "6 dias",
+            image: "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            rating: 4.7,
+            reviews: 156,
+            qtySalesLimit: 50,
+            qtySold: 41,
+            originAddress: { country: "Brasil", city: "Porto Alegre" },
+            destinationAddress: { country: "Suíça", city: "Interlaken" },
+        },
+    ]
 
     return (
         <div className="min-h-screen bg-white">
@@ -79,7 +100,7 @@ export default function HomePage() {
                                 A Viagium conecta viajantes com destinos e hotéis incríveis
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Link to="/packagesearch">
+                                <Link to="/packages">
                                     <button className="bg-[#003194] text-white px-6 py-3 rounded-lg shadow-lg hover:bg-[#002377] transition-colors text-lg font-bold cursor-pointer transform hover:scale-105 ">
                                         <span className="inline-block mr-2">📍</span>
                                         Explore Destinos
@@ -111,34 +132,14 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                        {packages.slice(0, 4).map((pkg) => (
-                            <TravelPackageCard
-                                key={pkg.id}
-                                pkg={{
-                                    id: pkg.id,
-                                    title: pkg.title,
-                                    description: pkg.description,
-                                    vehicleType: pkg.vehicleType,
-                                    price: pkg.price,
-                                    originalPrice: pkg.originalPrice,
-                                    packageTax: pkg.packageTax,
-                                    duration: pkg.duration,
-                                    image: pkg.image,
-                                    rating: pkg.rating,
-                                    reviews: pkg.reviews,
-                                    maxPeople: pkg.maxPeople,
-                                    originAddress: pkg.originAddress,
-                                    destinationAddress: pkg.destinationAddress,
-                                    isActive: pkg.isActive,
-                                    schedules: pkg.schedules,
-                                }}
-                            />
+                        {featuredPackages.map((pkg) => (
+                            <TravelPackageCard key={pkg.id} pkg={pkg} />
                         ))}
                     </div>
 
                     {/* Find Your Perfect Package Button */}
                     <div className="text-center">
-                        <Link to="/packagesearch">
+                        <Link to="/packages">
                             <button
                                 className="bg-gradient-to-r from-[#FFA62B] to-[#1A3799] text-white px-12 py-4 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer rounded-xl mb-2"
                             >

@@ -1,27 +1,35 @@
 "use client"
 
-import React, { type ChangeEvent, type ReactNode, useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import { AuthService } from "../../utils/auth"
+import React, {type ChangeEvent, type ReactNode, useState } from "react"
 import {
     FaUser,
     FaKey,
     FaExclamationTriangle,
     FaTimes,
+    FaEye,
+    FaEyeSlash,
+    FaStar,
     FaUserEdit,
     FaShieldAlt, FaPassport,
 } from "react-icons/fa"
 import { MdLocationOn, MdEmail, MdPhone, MdDateRange, MdAccountCircle } from "react-icons/md"
 
-
+const mockUser = {
+    firstName: "Maria",
+    lastName: "Silva",
+    email: "maria@email.com",
+    phone: "11999999999",
+    documentNumber: "12345678900",
+    birthDate: "1988-05-20",
+    isActive: true,
+}
 
 // Custom Button Component
 type ButtonProps = {
     children: ReactNode;
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
     disabled?: boolean;
-    variant?: "primary" | "outline" | "ghost" | "danger" | "custom";
+    variant?: "primary" | "outline" | "ghost" | "danger";
     className?: string;
     type?: "button" | "submit" | "reset";
     [key: string]: any;
@@ -44,7 +52,6 @@ const Button = ({
         outline: "border-2 bg-white hover:bg-gray-50 focus:ring-gray-500",
         ghost: "hover:bg-gray-100 focus:ring-gray-500",
         danger: "bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl focus:ring-red-500",
-        custom: "text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] focus:ring-blue-500",
     }
 
     const disabledClasses = disabled ? "opacity-50 cursor-not-allowed transform-none" : ""
@@ -146,98 +153,69 @@ const ModalContent = ({ children }: ModalContentProps) => {
 }
 
 export default function ProfileEditor() {
-    const [user, setUser] = useState<any>(null)
+    const [user, setUser] = useState(mockUser)
     const [isLoading, setIsLoading] = useState(false)
+    const [showChangePassword, setShowChangePassword] = useState(false)
     const [showDeactivateAccount, setShowDeactivateAccount] = useState(false)
-    const navigate = useNavigate()
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-    // Buscar dados do usuário autenticado ao carregar
-    useEffect(() => {
-        const auth = AuthService.getUserAuth();
-        if (!auth || !auth.id) return;
-        const fetchUser = async () => {
-            try {
-                const res = await fetch(`http://localhost:5028/api/User/${auth.id}`)
-                if (!res.ok) throw new Error("Erro ao buscar usuário")
-                const data = await res.json()
-                setUser(data)
-            } catch (err) {
-                // Pode exibir erro se quiser
-            }
-        }
-        fetchUser()
-    }, [])
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    })
 
-    const handleInputChange = (field: string, value: string) => {
-        setUser((prev: any) => ({ ...prev, [field]: value }))
+    const handleInputChange = (field: keyof typeof mockUser, value: string) => {
+        setUser((prev) => ({ ...prev, [field]: value }))
+    }
+    const handlePasswordChange = (field: keyof typeof passwordData, value: string) => {
+        setPasswordData((prev) => ({ ...prev, [field]: value }))
     }
 
     const handleSaveProfile = async () => {
-        if (!user) return;
         setIsLoading(true)
-        try {
-            const auth = AuthService.getUserAuth();
-            if (!auth || !auth.id) throw new Error("Usuário não autenticado");
-            const payload = {
-                userId: user.userId || auth.id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                birthDate: user.birthDate,
-                password: user.password || "",
-                phone: user.phone,
-            }
-            const res = await fetch(`http://localhost:5028/api/User/${auth.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            })
-            if (!res.ok) throw new Error("Erro ao atualizar usuário")
-            alert("Perfil atualizado com sucesso!")
-        } catch (err) {
-            alert("Erro ao atualizar perfil!")
-        }
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         setIsLoading(false)
+        alert("Perfil atualizado com sucesso!")
     }
 
+    const handleChangePassword = async () => {
+        if (!passwordData.currentPassword) {
+            alert("Por favor, insira sua senha atual")
+            return
+        }
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            alert("As novas senhas não coincidem")
+            return
+        }
+        if (passwordData.newPassword.length < 6) {
+            alert("A nova senha deve ter pelo menos 6 caracteres")
+            return
+        }
 
+        setIsLoading(true)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setIsLoading(false)
+        setShowChangePassword(false)
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+        alert("Senha alterada com sucesso!")
+    }
 
     const handleDeactivateAccount = async () => {
         setIsLoading(true)
-        try {
-            const auth = AuthService.getUserAuth();
-            if (!auth || !auth.id) {
-                throw new Error("Usuário não autenticado");
-            }
-
-            // Fazer a chamada DELETE para desativar a conta
-            const response = await axios.delete(`http://localhost:5028/api/User/${auth.id}`);
-
-            if (response.status === 200 || response.status === 204) {
-                // Fazer logout do usuário após desativação
-                AuthService.logout();
-
-                // Redirecionar para a página inicial ou login
-                navigate("/");
-            }
-        } catch (error) {
-            console.error("Erro ao desativar conta:", error);
-            alert("Erro ao desativar conta. Tente novamente.");
-        } finally {
-            setIsLoading(false)
-            setShowDeactivateAccount(false)
-        }
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setIsLoading(false)
+        setShowDeactivateAccount(false)
+        alert("Conta desativada com sucesso!")
     }
 
-
-
-    if (!user) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <span className="text-lg text-gray-600">Carregando dados do usuário...</span>
-            </div>
-        )
-    }
+    const isPasswordValid =
+        passwordData.currentPassword &&
+        passwordData.newPassword &&
+        passwordData.confirmPassword &&
+        passwordData.newPassword === passwordData.confirmPassword
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-blue-900 p-8">
@@ -295,8 +273,8 @@ export default function ProfileEditor() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm font-medium text-gray-700">Status da Conta</span>
                                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Ativo
-                                        </span>
+                      Ativo
+                    </span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -305,28 +283,33 @@ export default function ProfileEditor() {
                         {/* Travel Stats Card */}
                         <Card className="mt-6">
                             <CardContent>
-                                <div className="">
+                                <div className="bg-blue-50 rounded-2xl p-4 mb-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center space-x-2">
                                             <MdLocationOn className="w-5 h-5 text-blue-600" />
-                                            <span className="font-semibold">Históricos de Viagem</span>
+                                            <span className="font-semibold text-blue-900">Estatísticas de Viagem</span>
                                         </div>
-
+                                        <div className="flex items-center space-x-1">
+                                            <FaStar className="w-4 h-4 star-yellow" style={{ color: '#facc15', fill: '#facc15' }} />                                            <span className="text-blue-900 font-bold">4.8</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Button
-                                            variant="custom"
-                                            className="h-12 w-full rounded-[10px] shadow-lg"
-                                            style={{ backgroundColor: '#003194' }}
-                                            onClick={() => navigate("/travelhistory")}
-                                        >
-                                            Ver Histórico
-                                        </Button>
-                                    </div>
-
+                                    <p className="text-blue-700 text-sm">Avaliação média dos destinos</p>
                                 </div>
 
-
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Viagens Realizadas</span>
+                                        <span className="font-bold text-orange-600 text-lg">12</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Países Visitados</span>
+                                        <span className="font-bold text-orange-600 text-lg">8</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Próxima Viagem</span>
+                                        <span className="font-bold text-blue-600">Mar/2024</span>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -415,7 +398,7 @@ export default function ProfileEditor() {
                                                     label={null}
                                                     error={null}
                                                     type="date"
-                                                    value={user.birthDate ? user.birthDate.slice(0, 10) : ""}
+                                                    value={user.birthDate}
                                                     onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange("birthDate", e.target.value)}
                                                     className="h-12"
                                                 />
@@ -445,7 +428,7 @@ export default function ProfileEditor() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Button
                                                 variant="outline"
-                                                onClick={() => navigate("/resetpassclient")}
+                                                onClick={() => setShowChangePassword(true)}
                                                 className="justify-start border-blue-200 hover:bg-blue-50 text-blue-700 py-4 px-6 h-14 text-base"
                                             >
                                                 <FaKey className="w-5 h-5 mr-3 text-blue-700" style={{ color: '#2563eb', fill: '#2563eb' }} />
@@ -475,7 +458,92 @@ export default function ProfileEditor() {
                     </div>
                 </div>
 
-
+                {/* Change Password Modal */}
+                <Modal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)}>
+                    <ModalHeader onClose={() => setShowChangePassword(false)}>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+                            <FaKey className="w-6 h-6 text-orange-500" />
+                            <span>Alterar Senha</span>
+                        </h2>
+                    </ModalHeader>
+                    <ModalContent>
+                        <div className="space-y-6">
+                            <div>
+                                <Label htmlFor="currentPassword">Senha Atual</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="currentPassword"
+                                        label={null}
+                                        error={null}
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={passwordData.currentPassword}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("currentPassword", e.target.value)}
+                                        placeholder="Digite sua senha atual"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showCurrentPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="newPassword">Nova Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="newPassword"
+                                        label={null}
+                                        error={null}
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={passwordData.newPassword}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => handlePasswordChange("newPassword", e.target.value)}
+                                        placeholder="Digite a nova senha"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showNewPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="confirmPassword"
+                                        label={null}
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={passwordData.confirmPassword}
+                                        onChange={(e: { target: { value: string } }) => handlePasswordChange("confirmPassword", e.target.value)}
+                                        placeholder="Confirme a nova senha"
+                                        className="h-12 pr-12"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-3 p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        {showConfirmPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            {passwordData.newPassword &&
+                                passwordData.confirmPassword &&
+                                passwordData.newPassword !== passwordData.confirmPassword && (
+                                    <p className="text-red-500 text-sm">As senhas não coincidem</p>
+                                )}
+                            <Button onClick={handleChangePassword} disabled={!isPasswordValid || isLoading} className="w-full h-12">
+                                {isLoading ? "Alterando..." : "Alterar Senha"}
+                            </Button>
+                        </div>
+                    </ModalContent>
+                </Modal>
 
                 {/* Deactivate Account Modal */}
                 <Modal isOpen={showDeactivateAccount} onClose={() => setShowDeactivateAccount(false)}>

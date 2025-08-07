@@ -28,15 +28,15 @@ function Navbar({ navType = 'default' }: NavbarProps) {
         { label: 'Pacotes', href: '/#pacotes' },
         { label: 'Vantagens', href: '/#vantagens' },
         { label: 'Parceiros', href: '/#parceiros' },
-        { label: 'Área do afiliado', href: '/affiliatepage' },
+        { label: 'Área do Afiliado', href: '/affiliatepage' },
         { label: 'Acesso Admin', href: '/admin' },
-        { label: 'Sobre Nós', href: '/aboutus' },
+        { label: 'Sobre Nós', href: '#' },
     ];
     const navLinksAffiliate: NavLink[] = [
         { label: 'Vantagens', href: '/affiliatepage#vantagens' },
         { label: 'Nossos Parceiros', href: '/affiliatepage#nossos-parceiros' },
         { label: 'Cadastre-se', href: '/affiliatepage#cadastre-se' },
-        { label: 'Sobre Nós', href: '/aboutus' },
+        { label: 'Sobre Nós', href: '#' },
     ];
     const navLinksAdmin: NavLink[] = [
         { label: 'Painel', href: '/admin' },
@@ -105,13 +105,13 @@ function Navbar({ navType = 'default' }: NavbarProps) {
 
 
                     {/* Desktop Navigation Links */}
-                    <div className={`hidden lg:flex items-center gap-5 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
+                    <div className={`hidden md:flex items-center gap-5 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
                         {renderLinks()}
                     </div>
                 </div>
 
                 {/* Login Button */}
-                <div className="flex-shrink-0 hidden lg:block">
+                <div className="flex-shrink-0 hidden md:block">
                     <Link to={
                         navType === 'affiliatePage' ? '/affiliate' :
                             navType === 'admin' ? '/admin' :
@@ -119,13 +119,13 @@ function Navbar({ navType = 'default' }: NavbarProps) {
                     }>
                         <button className={`group flex items-center  bg-transparent transition-colors duration-200 font-bold text-lg cursor-pointer hover:text-orange-300 ${navType === 'affiliatePage' ? 'text-white' : ''}`}>
                             <FaUser className={`w-4 h-4 mr-2 group-hover:fill-orange-300 transition-colors duration-200 ${navType === 'affiliatePage' ? 'fill-white' : ''}`} />
-                            {navType === 'affiliatePage' ? 'Entrar no sistema' : navType === 'admin' ? 'Login Admin' : 'Login Cliente'}
+                            {navType === 'affiliatePage' ? 'Login Afiliado' : navType === 'admin' ? 'Login Admin' : 'Login Cliente'}
                         </button>
                     </Link>
                 </div>
 
                 {/* Mobile Hamburger Button */}
-                <div className="lg:hidden ml-auto h-full w-22 bg-white rounded-2xl flex items-center justify-center">
+                <div className="md:hidden ml-auto h-full w-22 bg-white rounded-2xl flex items-center justify-center">
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         className=" focus:outline-none"
@@ -139,7 +139,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
             {/* Mobile Dropdown Menu */}
             {
                 menuOpen && (
-                    <div className="lg:hidden mt-4 bg-white rounded-lg shadow-lg p-6 flex flex-col gap-4 z-50 absolute left-0 right-0 top-20 mx-8">
+                    <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg p-6 flex flex-col gap-4 z-50 absolute left-0 right-0 top-20 mx-8">
                         {renderLinks()}
                         <Link to={
                             navType === 'affiliatePage' ? '/affiliate' :

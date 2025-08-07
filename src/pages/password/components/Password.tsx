@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AuthService } from "../../../utils/auth";
 import { Input } from "../../../components/Input.tsx";
 import { Button } from "../../../components/Button.tsx";
 import logo from "../../../assets/img/logo.svg";
@@ -107,14 +106,8 @@ function Password({actualPassword}: ForgotProps) {
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         let valid = true;
-        // Buscar id do usuário autenticado
-        const auth = AuthService.getUserAuth();
-        const userId = auth && auth.id ? auth.id : null;
-        if (!userId) {
-            setSuccessMessage("");
-            alert("Usuário não autenticado!");
-            return;
-        }
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get("id");
 
         // Validação das senhas
         const isNewPasswordValid = handlePasswordBlur();
@@ -128,33 +121,18 @@ function Password({actualPassword}: ForgotProps) {
         }
 
         if (actualPassword) {
-            axios.put(`http://localhost:5028/api/User/${userId}/password`, {
-                oldPassword: currentPassword,
-                newPassword: newPassword,
-            })
-                .then(() => {
-                    setSuccessMessage("Senha alterada com sucesso");
-                })
-                .catch((error) => {
-                    if (error.response && error.response.status === 409) {
-                        setSuccessMessage("");
-                        setCurrentPasswordError("Senha atual incorreta ou conflito de senha.");
-                    } else {
-                        setSuccessMessage("");
-                        setCurrentPasswordError("Erro ao alterar senha. Tente novamente.");
-                    }
-                });
+            axios.put('http://localhost:5028/api/User/reset-password', {
+                currentPassword,
+                newPassword,
+            }).then(() => {
+                setSuccessMessage("Senha alterada com sucesso");
+            });
         } else {
             axios.post(`http://localhost:5028/api/User/${userId}/forgot-password`, {
-                newPassword: newPassword,
-            })
-                .then(() => {
-                    setSuccessMessage("Senha alterada com sucesso");
-                })
-                .catch(() => {
-                    setSuccessMessage("");
-                    setNewPasswordError("Erro ao redefinir senha. Tente novamente.");
-                });
+                newPassword,
+            }).then(() => {
+                setSuccessMessage("Senha alterada com sucesso");
+            });
         }
     }
 
@@ -197,8 +175,8 @@ function Password({actualPassword}: ForgotProps) {
                                 {currentPasswordError && (
                                     <div className="text-red-500 font-medium">
                                         {currentPasswordError}
-                                    </div>
-                                )}
+                                </div>
+                            )}
                             </div>
                         )}
 
