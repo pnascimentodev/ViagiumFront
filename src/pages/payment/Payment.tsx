@@ -107,7 +107,6 @@ export default function Payment() {
         setCardForm((prev: any) => ({ ...prev, [field]: value }));
         setErrors((prev: any) => ({ ...prev, [field]: "" }));
     }
-
     //validação dos dados do cartão
     function validateCardForm() {
     const newErrors: any = {};
