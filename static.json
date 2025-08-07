@@ -1,7 +1,9 @@
 {
-  "root": "dist/",
-  "routes": {
-    "/**": "index.html"
-  }
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    }
+  ]
 }
-
