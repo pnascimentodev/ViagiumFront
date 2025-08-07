@@ -127,16 +127,16 @@ type ModalHeaderProps = {
     children: ReactNode;
     onClose: () => void;
 }
-const ModalHeader = ({ children, onClose }: ModalHeaderProps) => {
-    return (
-        <div className="relative p-6 border-b border-gray-200">
-            {children}
-            <button onClick={onClose} className="absolute right-4 top-4 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <FaTimes className="h-4 w-4" />
-            </button>
-        </div>
-    )
-}
+// const ModalHeader = ({ children, onClose }: ModalHeaderProps) => {
+//     return (
+//         <div className="relative p-6 border-b border-gray-200">
+//             {children}
+//             <button onClick={onClose} className="absolute right-4 top-4 p-2 hover:bg-gray-100 rounded-full transition-colors">
+//                 <FaTimes className="h-4 w-4" />
+//             </button>
+//         </div>
+//     )
+// }
 
 type ModalContentProps = {
     children: ReactNode;

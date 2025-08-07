@@ -110,7 +110,7 @@ function Package() {
     
     const openHotelModal = () => setShowHotelModal(true);
     const closeHotelModal = () => setShowHotelModal(false);
-    const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
+    // const openAvaliacoesModal = () => setShowAvaliacoesModal(true);
     const closeAvaliacoesModal = () => setShowAvaliacoesModal(false);
       // Função utilitária para formatar endereço do hotel
    const renderHotelAddress = (address: any) => {
