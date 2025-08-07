@@ -1,5 +1,4 @@
 import React from "react";
-import { FaSignOutAlt } from "react-icons/fa";
 
 interface MenuItem {
     id: string;
@@ -48,13 +47,13 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, activeTab, onTabChange }) 
             </nav>
 
             {/* Logout Button */}
-            <div className="p-4 border-t border-white border-opacity-20">
+            {/* <div className="p-4 border-t border-white border-opacity-20">
                 <button className="w-full flex items-center justify-center lg:justify-start space-x-3 px-4 py-3 text-orange-400 hover:bg-orange-600 hover:text-white rounded-lg transition-colors gap-2">
                     
                     <span className="min-w-[24px] min-h-[24px] flex items-center justify-center text-[24px]"><FaSignOutAlt style={{ color: "white", fill: "white" }} /></span>
                     <span className="text-white hidden lg:inline">Sair</span>
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 };
