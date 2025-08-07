@@ -1,5 +1,19 @@
 {
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    }
+  ],
   "navigationFallback": {
-    "rewrite": "index.html"
+    "rewrite": "index.html",
+    "exclude": ["/src/assets/img/*", "/public/img/*"]
+  },
+  "mimeTypes": {
+    ".svg": "image/svg+xml",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png"
   }
 }
