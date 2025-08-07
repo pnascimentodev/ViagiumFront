@@ -1,21 +1,20 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import TravelPackageCard from "../../components/TravelPackageCard";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { FaCalendarAlt, FaChevronDown, FaSearch } from "react-icons/fa";
-import { FaStar } from "react-icons/fa6";
 import { ImCross } from "react-icons/im";
 import Slider from '@mui/material/Slider';
 import { travelPackages } from "../../mocks/travelPackagesMock";
 import { validateArrivalAfterDeparture } from "../../utils/validations";
+import type { TravelPackage } from "../../types/travelPackageTypes";
 
 const durations = ["Todos", "1-5 dias", "6-10 dias", "11+ dias"]
-
-// Extract unique origins and destinations
-const origins = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originAddress.city))).sort()]
-const destinations = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationAddress.city))).sort()]
+const origins = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originCity))).sort()]
+const destinations = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationCity))).sort()]
 
 export default function PackagesPage() {
+  const [travelPackages, setTravelPackages] = useState<TravelPackage[]>([]);
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedOrigin, setSelectedOrigin] = useState("Todos")
   const [selectedDestination, setSelectedDestination] = useState("Todos")
@@ -27,6 +26,41 @@ export default function PackagesPage() {
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("featured")
   const isArrivalValid = validateArrivalAfterDeparture(departureDate, arrivalDate);
+
+  // Fetch packages from API
+  useEffect(() => {
+    fetch("http://localhost:5028/api/TravelPackage/list-active")
+      .then(res => res.json())
+      .then(data => {
+        const mappedPackages = data.map((apiPkg: any) => ({
+          id: apiPkg.travelPackageId,
+          title: apiPkg.title,
+          description: apiPkg.description,
+          image: apiPkg.imageUrl,
+          vehicleType: apiPkg.vehicleType,
+          duration: apiPkg.duration,
+          maxPeople: apiPkg.maxPeople,
+          confirmedPeople: apiPkg.confirmedPeople,
+          originalPrice: apiPkg.originalPrice,
+          price: apiPkg.price,
+          packageTax: apiPkg.packageTax,
+          cupomDiscount: apiPkg.cupomDiscount,
+          discountValue: apiPkg.discountValue,
+          manualDiscountValue: apiPkg.manualDiscountValue,
+          startDate: apiPkg.startDate,
+          isAvailable: apiPkg.isAvailable,
+          originCity: apiPkg.originCity,
+          originCountry: apiPkg.originCountry,
+          destinationCity: apiPkg.destinationCity,
+          destinationCountry: apiPkg.destinationCountry,
+          createdAt: apiPkg.createdAt,
+          isActive: apiPkg.isActive,
+        }));
+        setTravelPackages(mappedPackages);
+        const maxPrice = Math.max(...mappedPackages.map((pkg: TravelPackage) => pkg.price));
+        setPriceRange([0, maxPrice]);
+      });
+  }, []);
 
   const filteredPackages = useMemo(() => {
     const filtered = travelPackages.filter((pkg) => {
@@ -40,10 +74,9 @@ export default function PackagesPage() {
         return String(value).toLowerCase().includes(searchTerm.toLowerCase());
       });
 
-      const matchesOrigin = selectedOrigin === "Todos" || pkg.originAddress.city === selectedOrigin
-      const matchesDestination = selectedDestination === "Todos" || pkg.destinationAddress.city === selectedDestination
+      const matchesOrigin = selectedOrigin === "Todos" || pkg.originCity === selectedOrigin
+      const matchesDestination = selectedDestination === "Todos" || pkg.destinationCity === selectedDestination
       const matchesPrice = pkg.price >= priceRange[0] && pkg.price <= priceRange[1]
-      const matchesRating = pkg.rating >= minRating
 
       let matchesDuration = true
       if (selectedDuration !== "Todos") {
@@ -52,31 +85,25 @@ export default function PackagesPage() {
         else if (selectedDuration === "11+ dias") matchesDuration = pkg.duration >= 11
       }
 
-      // Filtro de datas (adicionar aqui)
       let matchesDates = true;
       if (departureDate || arrivalDate) {
-        matchesDates = pkg.schedules.some(schedule => {
-          const start = new Date(schedule.startDate);
-          const end = new Date(start);
-          end.setDate(end.getDate() + pkg.duration);
+        const start = new Date(pkg.startDate);
+        const end = new Date(start);
+        end.setDate(end.getDate() + pkg.duration);
 
-          const depDate = departureDate ? new Date(departureDate) : null;
-          const arrDate = arrivalDate ? new Date(arrivalDate) : null;
+        const depDate = departureDate ? new Date(departureDate) : null;
+        const arrDate = arrivalDate ? new Date(arrivalDate) : null;
 
-          if (depDate && arrDate) {
-            return start >= depDate && end <= arrDate;
-          }
-          if (depDate) {
-            return start >= depDate;
-          }
-          if (arrDate) {
-            return end <= arrDate;
-          }
-          return true;
-        });
+        if (depDate && arrDate) {
+          matchesDates = start >= depDate && end <= arrDate;
+        } else if (depDate) {
+          matchesDates = start >= depDate;
+        } else if (arrDate) {
+          matchesDates = end <= arrDate;
+        }
       }
 
-      return matchesSearch && matchesOrigin && matchesDestination && matchesPrice && matchesRating && matchesDuration && matchesDates;
+      return matchesSearch && matchesOrigin && matchesDestination && matchesPrice && matchesDuration && matchesDates;
     })
 
     // Sort packages
@@ -88,7 +115,7 @@ export default function PackagesPage() {
         filtered.sort((a, b) => b.price - a.price)
         break
       case "rating":
-        filtered.sort((a, b) => b.rating - a.rating)
+
         break
       case "duration":
         filtered.sort((a, b) => a.duration - b.duration)
@@ -141,7 +168,7 @@ export default function PackagesPage() {
         <div className="mb-8">
           <div className="rounded-lg border bg-white text-gray-900 shadow-sm">
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                 {/* Search */}
                 <div className="lg:col-span-2">
                   <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-2">
@@ -231,30 +258,6 @@ export default function PackagesPage() {
                     </span>
                   </div>
                 </div>
-
-                {/* Rating */}
-                <div>
-                  <label htmlFor="min-rating-select" className="block text-sm font-medium text-gray-700 mb-2">
-                    Avaliações
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="min-rating-select"
-                      value={minRating.toString()}
-                      onChange={(e) => setMinRating(Number.parseFloat(e.target.value))}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
-                    >
-                      <option value="0">Todas as avaliações</option>
-                      <option value="3">3+ ⭐</option>
-                      <option value="3.5">3.5+ ⭐</option>
-                      <option value="4">4+ ⭐</option>
-                      <option value="4.5">4.5+ ⭐</option>
-                    </select>
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-50 pointer-events-none">
-                      <FaChevronDown />
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Second Row - Dates, Price, Rating, Sort */}
@@ -328,7 +331,6 @@ export default function PackagesPage() {
                       <option value="featured">Em alta</option>
                       <option value="price-low">Preço: menor para maior</option>
                       <option value="price-high">Preço: maior para menor</option>
-                      <option value="rating">Mais bem avaliado</option>
                       <option value="duration">Duração</option>
                     </select>
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-50 pointer-events-none">
