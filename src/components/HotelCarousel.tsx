@@ -37,7 +37,7 @@ const HotelCarousel = () => {
     });
 
     useEffect(() => {
-        fetch("http://localhost:5028/api/Hotel")
+        fetch("https://viagium.azurewebsites.net/api/Hotel")
             .then(res => res.json())
             .then(data => setHotels(data))
             .catch(() => setHotels([]))

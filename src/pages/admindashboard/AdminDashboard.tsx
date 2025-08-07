@@ -2981,7 +2981,7 @@ function AdminDashboard() {
     async function fetchUsers() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/admin");
+            const response = await axios.get("https://viagium.azurewebsites.net/api/admin");
             setAllUsers(response.data);
             const mapped = response.data.map((user: any) => ({
                 id: user.userId,
@@ -3025,7 +3025,7 @@ function AdminDashboard() {
     async function fetchAffiliates() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/Affiliate/all-adm");
+            const response = await axios.get("https://viagium.azurewebsites.net/api/Affiliate/all-adm");
             setAllAffiliates(response.data);
             const mapped = response.data.map((aff: any) => ({
                 id: aff.affiliateId,
@@ -3047,7 +3047,7 @@ function AdminDashboard() {
     async function fetchHotels() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/Hotel");
+            const response = await axios.get("https://viagium.azurewebsites.net/api/Hotel");
             setAllHotels(response.data);
             const mapped = response.data.map((hotel: any) => ({
                 id: hotel.hotelId,
@@ -3069,7 +3069,7 @@ function AdminDashboard() {
     async function fetchClients() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/User");
+            const response = await axios.get("https://viagium.azurewebsites.net/api/User");
             setAllClients(response.data);
             const mapped = response.data.map((user: any) => ({
                 id: user.userId,
