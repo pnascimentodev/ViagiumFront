@@ -8,7 +8,7 @@ import {
     FaUser,
     FaKey,
     FaExclamationTriangle,
-    FaTimes,
+    // FaTimes,
     FaUserEdit,
     FaShieldAlt, FaPassport,
 } from "react-icons/fa"
@@ -123,10 +123,10 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
     )
 }
 
-type ModalHeaderProps = {
-    children: ReactNode;
-    onClose: () => void;
-}
+// type ModalHeaderProps = {
+//     children: ReactNode;
+//     onClose: () => void;
+// }
 // const ModalHeader = ({ children, onClose }: ModalHeaderProps) => {
 //     return (
 //         <div className="relative p-6 border-b border-gray-200">
