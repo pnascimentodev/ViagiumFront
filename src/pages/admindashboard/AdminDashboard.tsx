@@ -1,12 +1,14 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { FaChartBar, FaBox, FaUsers, FaUserTie, FaHotel, FaPlus, FaEdit, FaDollarSign, FaMoneyBill, FaBolt, FaShoppingCart, FaTimes, FaToggleOn, FaToggleOff, FaEye } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
 import Sidebar from "./components/Sidebar"
 import Header from "./components/Header"
 import { formatBRL } from "../../utils/currency"
 import { maskCPF, maskCurrency, maskPhone, unmaskCPF, unmaskCurrency } from "../../utils/masks"
 import LoadingModal from "../../components/LoadingModal"
 import { calculateEndDate } from "../../utils/dates"
+import { AuthService } from "../../utils/auth"
 
 interface MenuItem {
     id: string
@@ -101,6 +103,17 @@ interface ClientFormData {
     isActive: boolean
 }
 
+// Interface para os dados do usuário admin
+interface AdminData {
+    userId: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    documentNumber: string;
+    birthDate: string;
+    phone: string;
+}
+
 // Constantes movidas para BaseModal
 const PRIMARY_COLOR = "#003194";
 const MODAL_OVERLAY_GRADIENT = `linear-gradient(135deg, rgba(0, 49, 148, 0.9), rgba(247, 126, 40, 0.9))`;
@@ -111,6 +124,52 @@ function AdminDashboard() {
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalType, setModalType] = useState<"pacotes" | "usuarios" | null>(null)
+    const [adminData, setAdminData] = useState<AdminData | null>(null);
+    const [isUnauthorized, setIsUnauthorized] = useState(false);
+    const navigate = useNavigate();
+
+    // Função para buscar dados do admin na API
+    const fetchAdminData = async (userId: string) => {
+        try {
+            const token = AuthService.getUserToken();
+            const response = await fetch(`http://localhost:5028/api/User/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data: AdminData = await response.json();
+                setAdminData(data);
+                setIsUnauthorized(false);
+            } else {
+                console.error('Erro ao buscar dados do admin:', response.statusText);
+                setIsUnauthorized(true);
+                // Redireciona para login se não autorizado
+                AuthService.clearUserAuth();
+                navigate('/admin');
+            }
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+            setIsUnauthorized(true);
+            // Redireciona para login em caso de erro
+            AuthService.clearUserAuth();
+            navigate('/admin');
+        }
+    };
+
+    // Verificação de autenticação no useEffect
+    useEffect(() => {
+        const adminAuth = AuthService.getUserAuth();
+        if (adminAuth && adminAuth.id) {
+            fetchAdminData(adminAuth.id);
+        } else {
+            setIsUnauthorized(true);
+            navigate('/admin');
+        }
+    }, [navigate]);
 
     // Funções utilitárias para buscar dados específicos, ao clicar no botão de visualizar ou editar da tabela
     function getPackageById(packageId: number) {
@@ -2641,15 +2700,15 @@ function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Pacotes mais vendidos</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Ocupação de pacotes</h3>
                         <span className="text-sm text-gray-500">Hoje</span>
                     </div>
                     <div className="space-y-4">
                         {[
-                            { name: "Pacote Luxo", percentage: 85 },
-                            { name: "Pacote Econômico", percentage: 72 },
-                            { name: "Pacote Familiar", percentage: 91 },
-                            { name: "Pacote Romântico", percentage: 68 },
+                            { name: "Pacote Aventura Aurora Boreal", percentage: 85 },
+                            { name: "Pacote Cruzeiro Mediterrâneo", percentage: 72 },
+                            { name: "Pacote Expedição Amazônica", percentage: 91 },
+                            { name: "Pacote Jornada Gastronômica Asiática", percentage: 68 },
                         ].map((pacote, index) => (
                             <div key={index}>
                                 <div className="flex justify-between text-sm mb-2">
@@ -3103,6 +3162,16 @@ function AdminDashboard() {
         fetchAll();
     }, []);
 
+    // Se não está autorizado, retorna null ou redireciona
+    if (isUnauthorized) {
+        return null;
+    }
+
+    // Se não tem dados do admin ainda, mostra loading
+    if (!adminData) {
+        return <LoadingModal isOpen={true} />;
+    }
+
     return (
         <>
             <LoadingModal isOpen={isLoading} />
@@ -3119,7 +3188,7 @@ function AdminDashboard() {
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                     {/* Header */}
-                    <Header activeTab={activeTab} />
+                    <Header activeTab={activeTab} adminData={adminData} />
 
                     {/* Content */}
                     <main
