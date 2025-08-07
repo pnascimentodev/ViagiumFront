@@ -183,18 +183,24 @@ export default function Reservation() {
           );
 
           // Se sucesso, navega para pagamento com os dados da reserva criada
-          if (response.data) {
-            navigate("/payment", {
-              state: {
-                reservationData: response.data, // dados da reserva criada
-                displayData,
-                passengerData: passengers,
-                clientData: user,
-                packageDetails,
-                createReservationPayload: payload
-              }
-            });
-          }
+              if (response.data) {
+                // Garante que o CPF/documentNumber está disponível diretamente em reservationData
+                const reservationDataWithCpf = {
+                  ...response.data,
+                  cpf: response.data.user?.documentNumber // ou 'documentNumber' se for passaporte
+                };
+
+                navigate("/payment", {
+                  state: {
+                    reservationData: reservationDataWithCpf,
+                    displayData,
+                    passengerData: passengers,
+                    clientData: user,
+                    packageDetails,
+                    createReservationPayload: payload
+                  }
+                });
+              } console.log("Reserva criada com sucesso:", response.data);
         } catch (error) {
           alert("Erro ao criar reserva. Tente novamente.");
           console.error(error);

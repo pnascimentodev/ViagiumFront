@@ -6,9 +6,6 @@ import Navbar from '../../components/Navbar';
 import Footer from "../../components/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 
-
-
-
 const paymentMethods = [
     { id: "pix", name: "PIX", icon: FaPix },
     { id: "boleto", name: "Boleto", icon: FaBarcode },
@@ -110,7 +107,6 @@ export default function Payment() {
         setCardForm((prev: any) => ({ ...prev, [field]: value }));
         setErrors((prev: any) => ({ ...prev, [field]: "" }));
     }
-
     //validação dos dados do cartão
     function validateCardForm() {
     const newErrors: any = {};
