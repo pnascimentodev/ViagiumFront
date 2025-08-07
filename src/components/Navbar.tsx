@@ -139,7 +139,6 @@ function Navbar({ navType = 'default' }: NavbarProps) {
         }
     }, []);
 
-    // Fechar dropdown quando clicar fora
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Element;
