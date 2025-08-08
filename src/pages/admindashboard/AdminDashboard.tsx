@@ -132,7 +132,7 @@ function AdminDashboard() {
     const fetchAdminData = async (userId: string) => {
         try {
             const token = AuthService.getUserToken();
-            const response = await fetch(`http://localhost:5028/api/User/${userId}`, {
+            const response = await fetch(`https://viagium.azurewebsites.net/api/User/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -246,24 +246,24 @@ function AdminDashboard() {
     }> = {
         // AS AÇÕES DO PACOTE NÃO ESTÃO FUNCIONANDO NO BACKEND. NECESSÁRIO AJUSTAR AQUI DEPOIS DAS CORREÇÕES
         pacotes: {
-            activate: { url: id => `http://localhost:5028/api/TravelPackage/activate?id=${id}`, method: "POST" },
-            deactivate: { url: id => `http://localhost:5028/api/TravelPackage/deactivate?id=${id}`, method: "POST" }
+            activate: { url: id => `https://viagium.azurewebsites.net/api/TravelPackage/activate?id=${id}`, method: "POST" },
+            deactivate: { url: id => `https://viagium.azurewebsites.net/api/TravelPackage/deactivate?id=${id}`, method: "POST" }
         },
         afiliados: {
-            activate: { url: id => `http://localhost:5028/api/Affiliate/activate/${id}`, method: "PUT" },
-            deactivate: { url: id => `http://localhost:5028/api/Affiliate/deactivate/${id}`, method: "DELETE" }
+            activate: { url: id => `https://viagium.azurewebsites.net/api/Affiliate/activate/${id}`, method: "PUT" },
+            deactivate: { url: id => `https://viagium.azurewebsites.net/api/Affiliate/deactivate/${id}`, method: "DELETE" }
         },
         hoteis: {
-            activate: { url: id => `http://localhost:5028/api/Hotel/${id}/activate`, method: "PUT" },
-            deactivate: { url: id => `http://localhost:5028/api/hotel/${id}/desactivate`, method: "DELETE" }
+            activate: { url: id => `https://viagium.azurewebsites.net/api/Hotel/${id}/activate`, method: "PUT" },
+            deactivate: { url: id => `https://viagium.azurewebsites.net/api/hotel/${id}/desactivate`, method: "DELETE" }
         },
         usuarios: {
-            activate: { url: id => `http://localhost:5028/api/admin/${id}/activate`, method: "POST" },
-            deactivate: { url: id => `http://localhost:5028/api/admin/${id}`, method: "DELETE" }
+            activate: { url: id => `https://viagium.azurewebsites.net/api/admin/${id}/activate`, method: "POST" },
+            deactivate: { url: id => `https://viagium.azurewebsites.net/api/admin/${id}`, method: "DELETE" }
         },
         clientes: {
-            activate: { url: id => `http://localhost:5028/api/user/activate/${id}`, method: "POST" },
-            deactivate: { url: id => `http://localhost:5028/api/user/${id}`, method: "DELETE" }
+            activate: { url: id => `https://viagium.azurewebsites.net/api/user/activate/${id}`, method: "POST" },
+            deactivate: { url: id => `https://viagium.azurewebsites.net/api/user/${id}`, method: "DELETE" }
         }
     };
     // Função genérica para alterar status de qualquer item
@@ -1246,7 +1246,7 @@ function AdminDashboard() {
 
         try {
             const axios = (await import("axios")).default;
-            await axios.post("http://localhost:5028/api/TravelPackage/create", formData, {
+            await axios.post("https://viagium.azurewebsites.net/api/TravelPackage/create", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data"
                 }
@@ -1385,7 +1385,7 @@ function AdminDashboard() {
 
         try {
             const axios = (await import("axios")).default;
-            await axios.put("http://localhost:5028/api/TravelPackage/update", formData, {
+            await axios.put("https://viagium.azurewebsites.net/api/TravelPackage/update", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data"
                 }
@@ -1403,7 +1403,7 @@ function AdminDashboard() {
         try {
             const axios = (await import("axios")).default;
             await axios.put(
-                `http://localhost:5028/api/TravelPackage/discount?travelPackageId=${travelPackageId}&discountPercentage=${discountPercentage}`
+                `https://viagium.azurewebsites.net/api/TravelPackage/discount?travelPackageId=${travelPackageId}&discountPercentage=${discountPercentage}`
             );
             alert("Promoção aplicada com sucesso!");
             closeEditPackageModal();
@@ -1419,7 +1419,7 @@ function AdminDashboard() {
         try {
             const axios = (await import("axios")).default;
             await axios.put(
-                `http://localhost:5028/api/TravelPackage/discount/deactivate?travelPackageId=${travelPackageId}`
+                `https://viagium.azurewebsites.net/api/TravelPackage/discount/deactivate?travelPackageId=${travelPackageId}`
             );
             alert("Promoção removida com sucesso!");
             closeEditPackageModal();
@@ -1474,7 +1474,7 @@ function AdminDashboard() {
 
         try {
             const axios = (await import("axios")).default;
-            await axios.post("http://localhost:5028/api/admin/register", newUser);
+            await axios.post("https://viagium.azurewebsites.net/api/admin/register", newUser);
             alert("Usuário criado com sucesso!");
             closeModal();
             fetchUsers(); // Atualiza a lista de usuários
@@ -1784,7 +1784,7 @@ function AdminDashboard() {
 
         try {
             const axios = (await import("axios")).default;
-            await axios.put(`http://localhost:5028/api/User/${editingUser.id}`, updatedUserData);
+            await axios.put(`https://viagium.azurewebsites.net/api/User/${editingUser.id}`, updatedUserData);
             alert("Usuário atualizado com sucesso!");
             closeEditUserModal();
             fetchUsers(); // Atualiza a tabela de usuários após edição
@@ -3062,7 +3062,7 @@ function AdminDashboard() {
     async function fetchPackages() {
         try {
             const axios = (await import("axios")).default;
-            const response = await axios.get("http://localhost:5028/api/TravelPackage/list");
+            const response = await axios.get("https://viagium.azurewebsites.net/api/TravelPackage/list");
             setAllPackages(response.data);
             const mapped = response.data.map((pkg: any) => ({
                 id: pkg.travelPackageId,
