@@ -132,7 +132,7 @@ function AdminDashboard() {
     const fetchAdminData = async (userId: string) => {
         try {
             const token = AuthService.getUserToken();
-            const response = await fetch(`http://localhost:5028/api/User/${userId}`, {
+            const response = await fetch(`http://localhost:5028/api/Admin/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
