@@ -43,7 +43,7 @@ export default function HomePage() {
     useEffect(() => {
         document.title = "Viagium | Descubra o Mundo Com Quem Entende de Viagem";
 
-        axios.get("http://localhost:5028/api/TravelPackage/list-active")
+        axios.get("https://viagium.azurewebsites.net/api/TravelPackage/list-active")
             .then(res => {
                 const mappedPackages = res.data.map(mapApiToTravelPackage);
                 setPackages(mappedPackages);
