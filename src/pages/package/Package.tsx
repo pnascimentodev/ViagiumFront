@@ -533,20 +533,20 @@ function Package() {
                       <span className="font-bold">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Hospedagem:</span>
-                      <span className="font-bold">{`R$ ${acomodationTotal.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">{acomodationTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Impostos e encargos:</span>
-                      <span className="font-bold">{`R$ ${packageTax.toLocaleString('pt-BR')},00`}</span>
+                      <span className="font-bold">{packageTax.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                       <div className="flex justify-between text-sm text-green-700">
                         <span className="font-bold">Desconto do cupom:</span>
-                        <span className="font-bold">- R$ {valorDesconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="font-bold">- {valorDesconto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                       </div>
                     <hr className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Valor Final</span>
-                      <span>{`R$ ${valorFinal.toLocaleString('pt-BR')},00`}</span>
+                      <span>{valorFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                   </div>
                 </div>
