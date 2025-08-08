@@ -6,6 +6,7 @@ import ModalHotel from "./components/ModalHotel"
 import ModalEditHotel from "./components/ModalEditHotel"
 import apiClient from "../../utils/apiClient"
 import { AuthService } from "../../utils/auth"
+import logo from '../../assets/img/logo.svg'
 
 // Dados para os gráficos
 const monthlyReservationsData = [
@@ -422,7 +423,7 @@ function AffiliateDashboard() {
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center flex-shrink-0">
               <img
-                src="/src/assets/img/logo.svg"
+                src={logo}
                 alt="Viagium Logo"
                 className="h-8 sm:h-10 lg:h-12"
               />
