@@ -199,7 +199,7 @@ export default function Payment() {
                 console.log(`${key}: ${value}`);
             }
 
-            const response = await fetch("https://viagium.azurewebsites.netapi/Payment/CreatePayment", {
+            const response = await fetch("https://viagium.azurewebsites.net/api/Payment/CreatePayment", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
