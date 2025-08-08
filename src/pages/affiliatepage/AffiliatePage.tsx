@@ -193,7 +193,7 @@ function AffiliatePage() {
       }
     };
 
-    axios.post("http://localhost:5028/api/affiliate/create", data)
+    axios.post("https://viagium.azurewebsites.net/api/affiliate/create", data)
       .then(() => {
         alert("Cadastro realizado com sucesso!");
       })
