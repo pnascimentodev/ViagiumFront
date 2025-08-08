@@ -530,8 +530,7 @@ function Package() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Pacote + Transporte:</span>
-                      <span className="font-bold">{`R$ ${price.toLocaleString('pt-BR')},00`}</span>
-                    </div>
+                      <span className="font-bold">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">Hospedagem:</span>
                       <span className="font-bold">{`R$ ${acomodationTotal.toLocaleString('pt-BR')},00`}</span>
