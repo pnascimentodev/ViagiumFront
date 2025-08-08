@@ -71,7 +71,7 @@ const HotelCarousel = () => {
                         <button
                             key={idx}
                             onClick={() => instanceRef.current?.moveToIdx(idx)}
-                            className={`w-3 h-3 rounded-full transition border border-blue-700 ${currentSlide === idx ? 'bg-blue-700' : 'bg-white'} pointer-events-auto`}
+                            className={`w-2 h-2 rounded-full transition border border-blue-700 ${currentSlide === idx ? 'bg-blue-700' : 'bg-white'} pointer-events-auto`}
                             aria-label={`Ir para o slide ${idx + 1}`}
                         />
                     ))}
