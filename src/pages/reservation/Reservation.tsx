@@ -47,7 +47,7 @@ export default function Reservation() {
     if (userAuth?.id) {
       detectedUserId = Number(userAuth.id);
       setUserId(detectedUserId);
-      axios.get(`http://localhost:5028/api/User/${userAuth.id}`)
+      axios.get(`https://viagium.azurewebsites.net/api/User/${userAuth.id}`)
         .then(res => {
           const data = res.data;
           setUser({
@@ -177,7 +177,7 @@ export default function Reservation() {
           }
           // O backend espera o payload diretamente
           const response = await axios.post(
-            "http://localhost:5028/api/Reservation",
+            "https://viagium.azurewebsites.net/api/Reservation",
             payload,
             { headers: { "Content-Type": "application/json" } }
           );

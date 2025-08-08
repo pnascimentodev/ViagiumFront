@@ -71,7 +71,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
         try {
             const token = AuthService.getAffiliateToken();
 
-            const response = await axios.get('http://localhost:5028/api/Amenity/Hotel', {
+            const response = await axios.get('https://viagium.azurewebsites.net/api/Amenity/Hotel', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'accept': '*/*'
@@ -342,7 +342,7 @@ function ModalHotel({ isOpen, onClose }: ModalHotelProps) {
             }
 
             // Fazer a chamada para a API
-            const response = await axios.post('http://localhost:5028/api/Hotel/create', formData, {
+            const response = await axios.post('https://viagium.azurewebsites.net/api/Hotel/create', formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',

@@ -157,7 +157,7 @@ export default function ProfileEditor() {
         if (!auth || !auth.id) return;
         const fetchUser = async () => {
             try {
-                const res = await fetch(`http://localhost:5028/api/User/${auth.id}`)
+                const res = await fetch(`https://viagium.azurewebsites.net/api/User/${auth.id}`)
                 if (!res.ok) throw new Error("Erro ao buscar usuário")
                 const data = await res.json()
                 setUser(data)
@@ -187,7 +187,7 @@ export default function ProfileEditor() {
                 password: user.password || "",
                 phone: user.phone,
             }
-            const res = await fetch(`http://localhost:5028/api/User/${auth.id}`, {
+            const res = await fetch(`https://viagium.azurewebsites.net/api/User/${auth.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -211,7 +211,7 @@ export default function ProfileEditor() {
             }
 
             // Fazer a chamada DELETE para desativar a conta
-            const response = await axios.delete(`http://localhost:5028/api/User/${auth.id}`);
+            const response = await axios.delete(`https://viagium.azurewebsites.net/api/User/${auth.id}`);
 
             if (response.status === 200 || response.status === 204) {
                 // Fazer logout do usuário após desativação

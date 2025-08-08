@@ -130,7 +130,7 @@ function Password({actualPassword}: ForgotProps) {
         }
 
         if (actualPassword) {
-            axios.put(`http://localhost:5028/api/User/${userId}/password`, {
+            axios.put(`https://viagium.azurewebsites.net/api/User/${userId}/password`, {
                 oldPassword: currentPassword,
                 newPassword: newPassword,
             })
@@ -147,7 +147,7 @@ function Password({actualPassword}: ForgotProps) {
                     }
                 });
         } else {
-            axios.post(`http://localhost:5028/api/User/${userId}/forgot-password`, {
+            axios.post(`https://viagium.azurewebsites.net/api/User/${userId}/forgot-password`, {
                 newPassword: newPassword,
             })
                 .then(() => {

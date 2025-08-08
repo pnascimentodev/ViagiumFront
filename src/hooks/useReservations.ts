@@ -86,7 +86,7 @@ export const useReservations = (userId: string): UseReservationsReturn => {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`http://localhost:5028/api/Reservation/user/${userId}`)
+      const response = await fetch(`https://viagium.azurewebsites.net/api/Reservation/user/${userId}`)
       
       if (!response.ok) {
         throw new Error(`Erro ao buscar reservas: ${response.status}`)

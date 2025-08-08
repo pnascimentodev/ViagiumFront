@@ -163,7 +163,7 @@ export default function RoomTypeManagement() {
                 console.log('Buscando room types do hotel:', hotelId);
 
                 try {
-                    const hotelResponse = await apiClient.get(`http://localhost:5028/api/Hotel/${hotelId}`);
+                    const hotelResponse = await apiClient.get(`https://viagium.azurewebsites.net/api/Hotel/${hotelId}`);
 
                     // Verificar se o hotel pertence ao afiliado logado
                     if (hotelResponse.data.affiliateId !== parseInt(affiliateAuth.id)) {
@@ -223,7 +223,7 @@ export default function RoomTypeManagement() {
 
                     for (const hotel of affiliateResponse.data.hotels) {
                         try {
-                            const hotelResponse = await apiClient.get(`http://localhost:5028/api/Hotel/${hotel.hotelId}`);
+                            const hotelResponse = await apiClient.get(`https://viagium.azurewebsites.net/api/Hotel/${hotel.hotelId}`);
                             const roomTypesFromHotel = hotelResponse.data.roomTypes || [];
                             allRoomTypes.push(...roomTypesFromHotel);
                         } catch (error) {
@@ -302,7 +302,7 @@ export default function RoomTypeManagement() {
 
             if (roomType.isActive) {
                 // Desativar: chama DELETE /api/roomtype/{id}
-                await apiClient.delete(`http://localhost:5028/api/roomtype/${roomTypeId}`);
+                await apiClient.delete(`https://viagium.azurewebsites.netapi/roomtype/${roomTypeId}`);
 
                 // Atualiza o estado local
                 setRoomTypes((prev) => prev.map((room) =>
@@ -312,7 +312,7 @@ export default function RoomTypeManagement() {
                 console.log(`Tipo de quarto ${roomTypeId} desativado com sucesso`);
             } else {
                 // Ativar: chama POST /api/roomtype/{id}/activate
-                await apiClient.post(`http://localhost:5028/api/roomtype/${roomTypeId}/activate`, {});
+                await apiClient.post(`https://viagium.azurewebsites.net/api/roomtype/${roomTypeId}/activate`, {});
 
                 // Atualiza o estado local
                 setRoomTypes((prev) => prev.map((room) =>
@@ -346,7 +346,7 @@ export default function RoomTypeManagement() {
     const fetchAmenities = async () => {
         try {
             setLoadingAmenities(true);
-            const response = await fetch('http://localhost:5028/api/Amenity/TypeRoom');
+            const response = await fetch('https://viagium.azurewebsites.net/api/Amenity/TypeRoom');
             if (response.ok) {
                 const data = await response.json();
                 setAmenities(data);
@@ -787,7 +787,7 @@ export default function RoomTypeManagement() {
                     }
 
                     // Usar PUT como mostra na documentação
-                    await apiClient.put(`http://localhost:5028/api/roomtype/${roomType.roomTypeId}`, formData);
+                    await apiClient.put(`https://viagium.azurewebsites.net/api/roomtype/${roomType.roomTypeId}`, formData);
                 } else {
                     // Se não há imagem nova, usar JSON
                     console.log('Enviando JSON sem imagem...');
@@ -805,7 +805,7 @@ export default function RoomTypeManagement() {
 
                     console.log('Dados JSON:', jsonData);
 
-                    await apiClient.put(`http://localhost:5028/api/roomtype`, jsonData, {
+                    await apiClient.put(`https://viagium.azurewebsites.net/api/roomtype`, jsonData, {
                         headers: {
                             'Content-Type': 'application/json',
                         },

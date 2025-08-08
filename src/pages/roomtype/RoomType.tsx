@@ -219,7 +219,7 @@ function RoomType() {
     const fetchAmenities = async () => { // Função para buscar os diferenciais da API
       try {
         setLoadingAmenities(true) // Indica que os diferenciais estão sendo carregados
-        const response = await fetch('http://localhost:5028/api/Amenity/TypeRoom') // Requisição para a API
+        const response = await fetch('https://viagium.azurewebsites.net/api/Amenity/TypeRoom') // Requisição para a API
 
         if (!response.ok) { // Verifica se a resposta foi bem sucedida
           throw new Error(`Erro na API: ${response.status}`) // Lança erro se a resposta não for

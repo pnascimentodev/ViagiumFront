@@ -73,7 +73,7 @@ function AffiliateDashboard() {
     try {
       // Buscar reservas ordenadas por data de criação (mais recentes primeiro)
       // Se a API suportar parâmetros de ordenação, seria ideal usar algo como:
-      // const response = await axios.get('http://localhost:5028/api/Reservation?orderBy=createdAt&order=desc&limit=20');
+      // const response = await axios.get('https://viagium.azurewebsites.net/api/Reservation?orderBy=createdAt&order=desc&limit=20');
       const response = await axios.get('https://viagium.azurewebsites.net/api/Reservation');
 
       if (response.data && Array.isArray(response.data)) {

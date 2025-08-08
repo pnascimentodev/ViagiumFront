@@ -29,11 +29,11 @@ useEffect(() => {
     try {
       if (reservationId) {
         // Buscar apenas a reserva específica
-        const response = await axios.get(`http://localhost:5028/api/Reservation/${reservationId}`);
+        const response = await axios.get(`https://viagium.azurewebsites.net/api/Reservation/${reservationId}`);
         setReservations(response.data ? [response.data] : []);
       } else if (userId) {
         // Buscar todas as reservas finalizadas do usuário
-        const response = await axios.get(`http://localhost:5028/api/Reservation/user/${userId}`);
+        const response = await axios.get(`https://viagium.azurewebsites.net/api/Reservation/user/${userId}`);
         const finishedReservations = response.data.filter((reservation: Reservation) => {
           const status = reservation.status?.toLowerCase();
           return status === 'finalizada' || status === 'finished' || status === 'concluida';
@@ -127,7 +127,7 @@ function StarRating({
       };
       console.log('Payload enviado para o backend:', reviewData);
 
-      await axios.post("http://localhost:5028/api/Review", reviewData, {
+      await axios.post("https://viagium.azurewebsites.net/api/Review", reviewData, {
         headers: {
           'Content-Type': 'application/json'
         }

@@ -103,9 +103,9 @@ function Login({ userType, newUserOption }: LoginProps) {
 
         // chamando o endpoint pra login e autenticação
         let endpoint = "";
-        if (userType === "affiliate") endpoint = "http://localhost:5028/api/Affiliate/login";
-        if (userType === "client") endpoint = "http://localhost:5028/api/User/auth";
-        if (userType === "admin") endpoint = "http://localhost:5028/api/User/auth";
+        if (userType === "affiliate") endpoint = "https://viagium.azurewebsites.net/api/Affiliate/login";
+        if (userType === "client") endpoint = "https://viagium.azurewebsites.net/api/User/auth";
+        if (userType === "admin") endpoint = "https://viagium.azurewebsites.net/api/User/auth";
 
         axios.post(endpoint, { email, password })
         .then(response => {

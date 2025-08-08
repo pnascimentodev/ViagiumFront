@@ -29,7 +29,7 @@ export default function PackagesPage() {
 
   // Fetch packages from API
   useEffect(() => {
-    fetch("http://localhost:5028/api/TravelPackage/list-active")
+    fetch("https://viagium.azurewebsites.net/api/TravelPackage/list-active")
       .then(res => res.json())
       .then(data => {
         const mappedPackages = data.map((apiPkg: any) => ({

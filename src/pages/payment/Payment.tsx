@@ -70,7 +70,7 @@ export default function Payment() {
             const formData = new URLSearchParams();
             formData.append('cpf', cpf);
 
-            const response = await fetch("http://localhost:5028/api/Payment/GetPixQrCodeByCpf", {
+            const response = await fetch("https://viagium.azurewebsites.net/api/Payment/GetPixQrCodeByCpf", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -199,7 +199,7 @@ export default function Payment() {
                 console.log(`${key}: ${value}`);
             }
 
-            const response = await fetch("http://localhost:5028/api/Payment/CreatePayment", {
+            const response = await fetch("https://viagium.azurewebsites.netapi/Payment/CreatePayment", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",

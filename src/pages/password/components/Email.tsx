@@ -48,11 +48,11 @@ function Email({ userType }: EmailProps) {
 
         try {
             if (userType === "client") {
-                await axios.post(`http://localhost:5028${endpoint}`, email, {
+                await axios.post(`https://viagium.azurewebsites.net${endpoint}`, email, {
                     headers: { 'Content-Type': 'application/json' }
                 });
             } else if (userType === "affiliate") {
-                await axios.post(`http://localhost:5028${endpoint}`, email, {
+                await axios.post(`https://viagium.azurewebsites.net${endpoint}`, email, {
                     headers: { 'Content-Type': 'application/json' }
                 });
             }

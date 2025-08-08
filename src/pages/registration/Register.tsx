@@ -242,7 +242,7 @@ function Register() {
 
     // Aqui você pode seguir com o registro (ex: chamar API)
     try {
-      await axios.post("http://localhost:5028/api/User", {
+      await axios.post("https://viagium.azurewebsites.net/api/User", {
         firstName: nome,
         lastName: sobrenome,
         email: email,

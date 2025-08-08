@@ -3,7 +3,7 @@ import { AuthService } from './auth';
 
 // Configuração base do axios
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5028/api',
+  baseURL: 'https://viagium.azurewebsites.net/api',
 });
 
 // Interceptor para incluir automaticamente o token Bearer nas requisições

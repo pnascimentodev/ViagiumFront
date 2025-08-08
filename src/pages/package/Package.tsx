@@ -133,7 +133,7 @@ function Package() {
   setError('');
   
   try {
-    const response = await axios.get(`http://localhost:5028/api/TravelPackage/getById/${packageId}`, {
+    const response = await axios.get(`https://viagium.azurewebsites.net/api/TravelPackage/getById/${packageId}`, {
       headers: {
         'accept': '*/*'
       }
@@ -221,7 +221,7 @@ function Package() {
       return;
     }
     try {
-      const response = await axios.get('http://localhost:5028/api/TravelPackage/cupom-discount', {
+      const response = await axios.get('https://viagium.azurewebsites.net/api/TravelPackage/cupom-discount', {
         params: { travelPackageId: currentPackage.travelPackageId ?? currentPackage.id, cupom: input }
       });
       setCupomAplicado(true);

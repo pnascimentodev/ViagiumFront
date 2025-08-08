@@ -77,7 +77,7 @@ function Navbar({ navType = 'default' }: NavbarProps) {
     const fetchUserData = async (userId: string) => {
         try {
             const token = AuthService.getUserToken();
-            const response = await fetch(`http://localhost:5028/api/User/${userId}`, {
+            const response = await fetch(`https://viagium.azurewebsites.net/api/User/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

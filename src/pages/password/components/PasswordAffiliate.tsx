@@ -121,14 +121,14 @@ function Password({actualPassword}: ForgotProps) {
         }
 
         if (actualPassword) {
-            axios.put('http://localhost:5028/api/Affiliate/update-password', {
+            axios.put('https://viagium.azurewebsites.net/api/Affiliate/update-password', {
                 currentPassword,
                 newPassword,
             }).then(() => {
                 setSuccessMessage("Senha alterada com sucesso");
             });
         } else {
-            axios.post(`http://localhost:5028/api/Affiliate/forgot-password/${affiliateId}`, {
+            axios.post(`https://viagium.azurewebsites.net/api/Affiliate/forgot-password/${affiliateId}`, {
                 newPassword,
             }).then(() => {
                 setSuccessMessage("Senha alterada com sucesso");
