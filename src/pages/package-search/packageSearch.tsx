@@ -5,13 +5,10 @@ import Footer from "../../components/Footer";
 import { FaCalendarAlt, FaChevronDown, FaSearch } from "react-icons/fa";
 import { ImCross } from "react-icons/im";
 import Slider from '@mui/material/Slider';
-import { travelPackages } from "../../mocks/travelPackagesMock";
+
 import { validateArrivalAfterDeparture } from "../../utils/validations";
 import type { TravelPackage } from "../../types/travelPackageTypes";
 
-const durations = ["Todos", "1-5 dias", "6-10 dias", "11+ dias"]
-const origins = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originCity))).sort()]
-const destinations = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationCity))).sort()]
 
 export default function PackagesPage() {
   const [travelPackages, setTravelPackages] = useState<TravelPackage[]>([]);
@@ -26,6 +23,10 @@ export default function PackagesPage() {
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("featured")
   const isArrivalValid = validateArrivalAfterDeparture(departureDate, arrivalDate);
+
+  const durations = ["Todos", "1-5 dias", "6-10 dias", "11+ dias"]
+  const origins = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.originCity))).sort()]
+  const destinations = ["Todos", ...Array.from(new Set(travelPackages.map((pkg) => pkg.destinationCity))).sort()]
 
   // Fetch packages from API
   useEffect(() => {
