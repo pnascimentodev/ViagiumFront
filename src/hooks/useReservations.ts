@@ -73,8 +73,8 @@ export const useReservations = (userId: string): UseReservationsReturn => {
       destination: destination,
       duration: travelPackage.duration ? `${travelPackage.duration} dias` : 'Duração não informada',
       image: hotel.imageUrl || roomType.imageUrl || 'https://via.placeholder.com/300x200?text=Pacote+de+Viagem',
-      startDate: apiData.checkInDate || '', // Você pode adicionar essas datas na sua API se necessário
-      endDate: apiData.checkOutDate || '',
+      startDate: new Date(apiData.startDate).toLocaleDateString('pt-BR') || '',
+      endDate: new Date(apiData.endDate).toLocaleDateString('pt-BR') || '',
       status: (apiData.status?.toLowerCase() || 'confirmed') as 'confirmed' | 'finished' | 'cancelled',
       price: travelPackage.price ? `R$ ${travelPackage.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Preço não informado',
       createdAt: user.createdAt || new Date().toISOString(),
