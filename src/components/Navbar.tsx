@@ -44,12 +44,14 @@ function Navbar({ navType = 'default' }: NavbarProps) {
         { label: 'Vantagens', href: '/#vantagens' },
         { label: 'Parceiros', href: '/#parceiros' },
         { label: 'Área do afiliado', href: '/affiliatepage' },
+        { label: 'FAQ', href: '/faq' },
         { label: 'Sobre Nós', href: '/aboutus' },
     ];
     const navLinksAffiliate: NavLink[] = [
         { label: 'Vantagens', href: '/affiliatepage#vantagens' },
         { label: 'Nossos Parceiros', href: '/affiliatepage#nossos-parceiros' },
         { label: 'Cadastre-se', href: '/affiliatepage#cadastre-se' },
+        { label: 'FAQ', href: '/faq' },
         { label: 'Sobre Nós', href: '/aboutus' },
     ];
     const navLinksAdmin: NavLink[] = [
