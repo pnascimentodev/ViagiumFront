@@ -3155,9 +3155,7 @@ function AdminDashboard() {
                 fetchUsers()
             ]);
 
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 1000); // aguarda 1 segundo antes de fechar o loading
+            setIsLoading(false);
         }
         fetchAll();
     }, []);

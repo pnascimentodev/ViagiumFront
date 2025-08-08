@@ -46,6 +46,7 @@ export default function HomePage() {
         axios.get("https://viagium.azurewebsites.net/api/TravelPackage/list-active")
             .then(res => {
                 const mappedPackages = res.data.map(mapApiToTravelPackage);
+                mappedPackages.sort(() => Math.random() - 0.5);
                 setPackages(mappedPackages);
             })
             .catch(err => {
@@ -107,8 +108,8 @@ export default function HomePage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        {packages.slice(0, 3).map((pkg) => (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                        {packages.slice(0, 4).map((pkg) => (
                             <TravelPackageCard
                                 key={pkg.id}
                                 pkg={{
