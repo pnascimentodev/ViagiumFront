@@ -1,4 +1,5 @@
 import React from "react";
+import logo from '../../../assets/img/logo.svg'
 
 interface MenuItem {
     id: string;
@@ -21,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, activeTab, onTabChange }) 
             <div className="p-6 border-b border-white border-opacity-20 flex items-center justify-center lg:justify-start">
                 <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded flex items-center justify-center">
-                        <img src="/../src/assets/img/logo.svg" alt="Viagium Logo" className="w-8 h-8" />
+                        <img src={logo} alt="Viagium Logo" className="w-8 h-8" />
                     </div>
                     <span className="text-lg font-semibold text-white ml-3 hidden lg:inline">Admin Viagium</span>
                 </div>
