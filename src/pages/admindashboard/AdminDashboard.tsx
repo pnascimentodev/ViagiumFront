@@ -132,7 +132,7 @@ function AdminDashboard() {
     const fetchAdminData = async (userId: string) => {
         try {
             const token = AuthService.getUserToken();
-            const response = await fetch(`https://viagium.azurewebsites.net/api/User/${userId}`, {
+            const response = await fetch(`https://viagium.azurewebsites.net/api/admin/${userId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
